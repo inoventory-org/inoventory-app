@@ -36,10 +36,9 @@ test:
   coverage: '/lines\.*: \d+\.\d+\%/'
   artifacts:
     name: coverage
-    paths:
-      - $CI_PROJECT_DIR/coverage
+    when: always
     reports:
-      junit: report.xml
+      junit: $CI_PROJECT_DIR/coverage/report.xml
 
 deploy:
   stage: deploy
