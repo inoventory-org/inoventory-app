@@ -15,15 +15,15 @@ default:
 
 
 code_quality:
- stage: test
- before_script:
-   - pub global activate dart_code_metrics
-   - export PATH="$PATH:$HOME/.pub-cache/bin"
- script:
-   - metrics lib -r codeclimate  > gl-code-quality-report.json
- artifacts:
-   reports:
-     codequality: gl-code-quality-report.json
+  stage: test
+  before_script:
+    - pub global activate dart_code_metrics
+    - export PATH="$PATH:$HOME/.pub-cache/bin"
+  script:
+    - metrics lib -r codeclimate  > gl-code-quality-report.json
+  artifacts:
+    reports:
+      codequality: gl-code-quality-report.json
 
 test:
   stage: test
@@ -37,9 +37,11 @@ test:
   coverage: '/lines\.*: \d+\.\d+\%/'
   artifacts:
     name: coverage
-    when: always
+    paths:
+      - $CI_PROJECT_DIR/coverage
     reports:
-      junit: $CI_PROJECT_DIR/coverage/report.xml
+      junit: report.xml
+
 
 deploy:
   stage: deploy
