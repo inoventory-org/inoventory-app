@@ -7,19 +7,19 @@
 # This specific template is located at:
 # https://gitlab.com/gitlab-org/gitlab/-/blob/master/lib/gitlab/ci/templates/Flutter.gitlab-ci.yml
 
-code_quality:
-  stage: test
-  image: "cirrusci/flutter:1.22.5"
-  tags: 
-    - shared
-  before_script:
-    - pub global activate dart_code_metrics
-    - export PATH="$PATH:$HOME/.pub-cache/bin"
-  script:
-    - metrics lib -r codeclimate  > gl-code-quality-report.json
-  artifacts:
-    reports:
-      codequality: gl-code-quality-report.json
+#code_quality:
+#  stage: test
+#  image: "cirrusci/flutter:1.22.5"
+#  tags:
+#    - shared
+#  before_script:
+#    - pub global activate dart_code_metrics
+#    - export PATH="$PATH:$HOME/.pub-cache/bin"
+#  script:
+#    - metrics lib -r codeclimate  > gl-code-quality-report.json
+#  artifacts:
+#    reports:
+#      codequality: gl-code-quality-report.json
 
 test:
   stage: test
