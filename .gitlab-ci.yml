@@ -10,6 +10,8 @@
 code_quality:
   stage: test
   image: "cirrusci/flutter:1.22.5"
+  tags: 
+    - shared
   before_script:
     - pub global activate dart_code_metrics
     - export PATH="$PATH:$HOME/.pub-cache/bin"
@@ -22,6 +24,8 @@ code_quality:
 test:
   stage: test
   image: "cirrusci/flutter:1.22.5"
+  tags: 
+    - shared
   before_script:
     - pub global activate junitreport
     - export PATH="$PATH:$HOME/.pub-cache/bin"
@@ -39,5 +43,7 @@ test:
 
 deploy:
   stage: deploy
+  tags: 
+    - shared
   script: echo "Define your deployment script!"
   environment: production
