@@ -13,6 +13,21 @@ default:
   tags:
     - shared
 
+stages:
+  - build
+  - test
+  - deploy
+
+build_job:
+  image: cirrusci/flutter:latest
+  stage: build
+  script:
+    - flutter build web
+    - cp -r build/web public
+  artifacts:
+    paths:
+      - public
+
 code_quality:
   stage: test
   before_script:
