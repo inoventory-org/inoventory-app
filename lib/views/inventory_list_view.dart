@@ -18,7 +18,7 @@ class _InventoryListWidgetState extends State<InventoryListWidget> {
   @override
   void initState() {
     super.initState();
-    _inventoryLists = inventoryListService.get_all();
+    _inventoryLists = inventoryListService.all();
   }
 
   @override

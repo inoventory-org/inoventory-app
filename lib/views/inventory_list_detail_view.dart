@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:inoventory_ui/models/inventory_list.dart';
 import 'package:inoventory_ui/models/inventory_list_item.dart';
+import 'package:inoventory_ui/views/product_search_view.dart';
 
 import '../services/barcode_scanner.dart';
 import '../widgets/expandable_floating_action_button.dart';
@@ -18,6 +19,7 @@ class InventoryListDetailWidget extends StatefulWidget {
 
 class _InventoryListDetailWidgetState extends State<InventoryListDetailWidget> {
   final BarcodeScanner _barcodeScanner = BarcodeScanner();
+  String barcodeScanResult = "";
 
   final List<InventoryListItem> _items = <InventoryListItem>[
     InventoryListItem("id", "myItem")
@@ -26,6 +28,13 @@ class _InventoryListDetailWidgetState extends State<InventoryListDetailWidget> {
   @override
   void initState() {
     super.initState();
+  }
+
+  void barcodeScanned(String barcode) {
+    setState(() {
+      barcodeScanResult = barcode;
+      print(barcodeScanResult);
+    });
   }
 
   @override
@@ -48,17 +57,25 @@ class _InventoryListDetailWidgetState extends State<InventoryListDetailWidget> {
       floatingActionButton: ExpandableFab(distance: 50, children: [
         ActionButton(
           icon: const Icon(Icons.camera_alt, color: Colors.black),
+          onPressed: () async {
+            barcodeScanResult = await _barcodeScanner.scanBarcodeNormal();
+            Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => ProductSearchView(initialValue: barcodeScanResult)));
+            }
+        ),
+        ActionButton(
+          icon: Icon(Icons.edit, color: Colors.black),
           onPressed: () {
-             _barcodeScanner.scanBarcodeNormal();
-            // Navigator.push(
-            //     context,
-            //     MaterialPageRoute(
-            //         builder: (context) => const EanScannerWidget()));
+            Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) =>  const ProductSearchView()
+                )
+            );
           },
         ),
-        const ActionButton(
-          icon: Icon(Icons.edit, color: Colors.black),
-        )
       ]),
     );
   }
