@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:inoventory_ui/models/inventory_list.dart';
 import 'package:inoventory_ui/models/inventory_list_item.dart';
-import 'package:inoventory_ui/views/ean_scanner_view.dart';
 
+import '../services/barcode_scanner.dart';
+import '../widgets/expandable_floating_action_button.dart';
 import '../widgets/inoventory_appbar.dart';
 
 class InventoryListDetailWidget extends StatefulWidget {
@@ -16,6 +17,8 @@ class InventoryListDetailWidget extends StatefulWidget {
 }
 
 class _InventoryListDetailWidgetState extends State<InventoryListDetailWidget> {
+  final BarcodeScanner _barcodeScanner = BarcodeScanner();
+
   final List<InventoryListItem> _items = <InventoryListItem>[
     InventoryListItem("id", "myItem")
   ];
@@ -42,14 +45,21 @@ class _InventoryListDetailWidgetState extends State<InventoryListDetailWidget> {
               );
             })).toList(),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(context,
-              MaterialPageRoute(builder: (context) => const EanScannerWidget())
-          );
-        },
-        child: const Icon(Icons.add),
-      ),
+      floatingActionButton: ExpandableFab(distance: 50, children: [
+        ActionButton(
+          icon: const Icon(Icons.camera_alt, color: Colors.black),
+          onPressed: () {
+             _barcodeScanner.scanBarcodeNormal();
+            // Navigator.push(
+            //     context,
+            //     MaterialPageRoute(
+            //         builder: (context) => const EanScannerWidget()));
+          },
+        ),
+        const ActionButton(
+          icon: Icon(Icons.edit, color: Colors.black),
+        )
+      ]),
     );
   }
 }
