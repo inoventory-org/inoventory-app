@@ -38,23 +38,34 @@ class _ProductSearchViewState extends State<ProductSearchView> {
                 _products = productService.search(value);
               });
             }),
-        body: ListView(
-          children: ListTile.divideTiles(
-              context: context,
-              tiles: _products.map((product) {
-                return ListTile(
-                  title:
-                      Text(product.name, style: const TextStyle(fontSize: 24)),
-                  trailing: const Icon(Icons.more_vert),
-                  // onTap: () {
-                  //   Navigator.push(
-                  //       context,
-                  //       MaterialPageRoute(
-                  //           builder: (context) =>
-                  //               InventoryListDetailWidget(list: e)));
-                  // },
-                );
-              })).toList(),
-        ));
+        body: (_products.isNotEmpty)
+            ? ListView(
+                children: ListTile.divideTiles(
+                    context: context,
+                    tiles: _products.map((product) {
+                      return ListTile(
+                        title: Text(product.name,
+                            style: const TextStyle(fontSize: 24)),
+                        trailing: const Icon(Icons.more_vert),
+                      );
+                    })).toList())
+            : Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const Center(child: Text("No results found")),
+                  const SizedBox(height: 10),
+                  Center(
+                      child: CircleAvatar(
+                          radius: 30,
+                          backgroundColor: Colors.black,
+                          child: IconButton(
+                              onPressed: () {
+                                print("button pressed!"); // Todo: Navigate to add product page
+                              },
+                              color: Colors.white,
+                              icon: const Icon(Icons.add))))
+                ],
+              ));
   }
 }

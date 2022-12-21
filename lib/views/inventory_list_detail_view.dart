@@ -58,7 +58,7 @@ class _InventoryListDetailWidgetState extends State<InventoryListDetailWidget> {
         ActionButton(
           icon: const Icon(Icons.camera_alt, color: Colors.black),
           onPressed: () async {
-            final navigator = Navigator.of(context); // <- Add this
+            final navigator = Navigator.of(context);
             barcodeScanResult = await _barcodeScanner.scanBarcodeNormal();
             navigator.push(
                 MaterialPageRoute(
