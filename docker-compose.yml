@@ -2,8 +2,9 @@ version: '3.5'
 
 services:
   app:
-    build:
-      context: .
+    image: registry.inovex.de:4567/railabouni/inoventory-ui
+#    build:
+#      context: .
     container_name: inoventory-web-ui
     ports:
       - "80:80"
