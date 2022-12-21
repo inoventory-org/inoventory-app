@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:inoventory_ui/models/product.dart';
 import 'package:inoventory_ui/services/product_service.dart';
+import 'package:inoventory_ui/views/edit_product_view.dart';
 import 'package:inoventory_ui/widgets/inoventory_search_bar.dart';
 
 class ProductSearchView extends StatefulWidget {
@@ -61,7 +62,11 @@ class _ProductSearchViewState extends State<ProductSearchView> {
                           backgroundColor: Colors.black,
                           child: IconButton(
                               onPressed: () {
-                                print("button pressed!"); // Todo: Navigate to add product page
+                                Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                        builder: (context) =>  const EditProductView()
+                                    )
+                                );;
                               },
                               color: Colors.white,
                               icon: const Icon(Icons.add))))
