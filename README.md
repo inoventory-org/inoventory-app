@@ -2,6 +2,8 @@
 
 inoventory UI
 
+Running at: http://10.100.253.181/
+
 ## Getting Started
 
 This project is a starting point for a Flutter application.
