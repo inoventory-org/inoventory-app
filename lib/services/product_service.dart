@@ -11,7 +11,7 @@ class ProductService {
   ];
 
   List<Product> search(String barcode) {
-    return products.where((product) => product.EAN == barcode).toList();
+    return products.where((product) => product.EAN.startsWith(barcode)).toList();
   }
 
   List<Product> all() {
