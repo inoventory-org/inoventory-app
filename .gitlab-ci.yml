@@ -19,7 +19,6 @@ stages:
   - deploy
 
 build_job:
-  image: cirrusci/flutter:latest
   stage: build
   script:
     - flutter build web
