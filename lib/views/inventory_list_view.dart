@@ -35,7 +35,8 @@ class _InventoryListWidgetState extends State<InventoryListWidget> {
                     context,
                     MaterialPageRoute(
                         builder: (context) =>
-                            InventoryListDetailWidget(list: e)));
+                            InventoryListDetailWidget(list: e))
+                );
               },
             );
           })).toList(),
