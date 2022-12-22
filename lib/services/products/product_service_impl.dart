@@ -26,7 +26,8 @@ class ProductServiceImpl implements ProductService {
     } else {
       // If the server did not return a 200 OK response,
       // then throw an exception.
-      throw Exception('Failed to load products');
+      // throw Exception('Failed to load products');
+      return [];
     }
   }
 
@@ -37,9 +38,25 @@ class ProductServiceImpl implements ProductService {
   }
 
   @override
-  Future<List<Product>> search(String barcode) {
-    // TODO: implement search
-    throw UnimplementedError();
+  Future<List<Product>> search(String barcode) async {
+    final response = await http.get(Uri.parse("$backend_url/api/v1/products?ean=$barcode"));
+    if (response.statusCode == 200) {
+
+      String jsonStr = response.body;
+      // print(jsonStr);
+      Map<String, dynamic> json = jsonDecode(jsonStr);
+      Product product = Product.fromJson(json);
+
+      print("MyProduct: $product");
+      return <Product>[product];
+    }
+    else {
+     // 3017620425035
+      // If the server did not return a 200 OK response,
+      // then throw an exception.
+      // throw Exception('Failed to load product with barcode: $barcode');
+      return <Product>[];
+    }
   }
 
   @override

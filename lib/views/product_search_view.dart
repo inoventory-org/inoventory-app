@@ -36,11 +36,10 @@ class _ProductSearchViewState extends State<ProductSearchView> {
 
   @override
   Widget build(BuildContext context) {
+
     return Scaffold(
         appBar: InoventorySearchBar(
-            initialValue: widget.initialValue,
-            onChanged: onSearchBarChanged
-        ),
+            initialValue: widget.initialValue, onChanged: onSearchBarChanged),
         body: FutureBuilder<List<Product>>(
             future: futureProducts,
             builder: (context, snapshot) {
@@ -49,32 +48,7 @@ class _ProductSearchViewState extends State<ProductSearchView> {
               } else if (snapshot.hasError) {
                 return Center(child: Text('${snapshot.error}'));
               }
-
               return const Center(child: CircularProgressIndicator());
-
             }));
-
-    // return FutureBuilder<List<Product>>(
-    //     future: futureProducts,
-    //     builder: (context, snapshot) {
-    //       if (snapshot.hasData) {
-    //         return Scaffold(
-    //             appBar: InoventorySearchBar(
-    //                 initialValue: widget.initialValue,
-    //                 onChanged: (value) => onSearchBarChanged(value)),
-    //             body: (snapshot.hasData)
-    //                 ? ProductListView(products: snapshot.data) : const Center(child: CircularProgressIndicator())
-    //         );
-    //       } else if (snapshot.hasError) {
-    //         return Text('${snapshot.error}');
-    //        } else {
-    //         return const Text("failure");
-    //       }
-    //
-    //       //   return Scaffold(
-    //       //       appBar: AppBar(title: const Text("Loading")),
-    //       //       body: const Center(child: CircularProgressIndicator()));
-    //       // }
-    //     });
   }
 }

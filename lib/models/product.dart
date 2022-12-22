@@ -3,22 +3,31 @@ enum ProductSource {
 }
 
 class Product {
-  final String id;
   final String name;
-  final String EAN;
-  final String source;
-  final String? imageUrl;
+  final String ean;
+  final String? id;
+  final List<String>? tags;
+  // final String? source;
+  // final String? imageUrl;
 
-  Product(this.id, this.name, this.EAN,
-      {this.imageUrl, this.source = "USER"});
+  Product(this.name, this.ean, {this.id, this.tags});
+  // Product(this.id, this.name, this.EAN,
+  //     {this.tags, this.imageUrl, this.source = "USER"});
 
+  /**
+   * "id": null,
+      "name": "Nutella",
+      "ean": "3017620425035",
+      "tags": []
+   */
   factory Product.fromJson(Map<String, dynamic> json) {
     return Product(
-        json['id'].toString(),
         json['name'],
         json['ean'],
-        source: json['source'],
-        imageUrl: json['imageUrl']
+        id: json['id'] == null ? "some-id" : json['id'].toString(),
+        tags: <String>[] // TODO: change
+        // source: json['source'],
+        // imageUrl: json['imageUrl']
     );
   }
 }
