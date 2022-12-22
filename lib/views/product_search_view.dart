@@ -5,6 +5,8 @@ import 'package:inoventory_ui/services/products/product_service_impl.dart';
 import 'package:inoventory_ui/services/products/product_service_interface.dart';
 import 'package:inoventory_ui/views/edit_product_view.dart';
 import 'package:inoventory_ui/widgets/inoventory_search_bar.dart';
+import 'package:inoventory_ui/widgets/product/no_products_found.dart';
+import 'package:inoventory_ui/widgets/product/product_list.dart';
 
 class ProductSearchView extends StatefulWidget {
   final String? initialValue;
@@ -45,37 +47,8 @@ class _ProductSearchViewState extends State<ProductSearchView> {
                       });
                     }),
                 body: (snapshot.hasData)
-                    ? ListView(
-                        children: ListTile.divideTiles(
-                            context: context,
-                            tiles: snapshot.data!.map((product) {
-                              return ListTile(
-                                title: Text(product.name,
-                                    style: const TextStyle(fontSize: 24)),
-                                trailing: const Icon(Icons.more_vert),
-                              );
-                            })).toList())
-                    : Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          const Center(child: Text("No results found")),
-                          const SizedBox(height: 10),
-                          Center(
-                              child: CircleAvatar(
-                                  radius: 30,
-                                  backgroundColor: Colors.black,
-                                  child: IconButton(
-                                      onPressed: () {
-                                        Navigator.of(context).push(
-                                            MaterialPageRoute(
-                                                builder: (context) =>
-                                                    const EditProductView()));
-                                      },
-                                      color: Colors.white,
-                                      icon: const Icon(Icons.add))))
-                        ],
-                      ));
+                    ? ProductListView(products: snapshot.data)
+                    : const NoProductsFound(nextWidget: EditProductView()));
           } else if (snapshot.hasError) {
             return Text('${snapshot.error}');
           } else {
