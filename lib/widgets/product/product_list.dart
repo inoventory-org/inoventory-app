@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:inoventory_ui/models/product.dart';
 import 'package:inoventory_ui/views/edit_product_view.dart';
+import 'package:inoventory_ui/widgets/product/no_products_found.dart';
 import 'package:inoventory_ui/widgets/product/product_list_item.dart';
 
 class ProductListView extends StatefulWidget {
@@ -16,26 +17,8 @@ class ProductListView extends StatefulWidget {
 class _ProductListViewState extends State<ProductListView> {
   @override
   Widget build(BuildContext context) {
-    if (widget.products == null) {
-      return Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          const Center(child: Text("No results found")),
-          const SizedBox(height: 10),
-          Center(
-              child: CircleAvatar(
-                  radius: 30,
-                  backgroundColor: Colors.black,
-                  child: IconButton(
-                      onPressed: () {
-                        Navigator.of(context).push(MaterialPageRoute(
-                            builder: (context) => const EditProductView()));
-                      },
-                      color: Colors.white,
-                      icon: const Icon(Icons.add))))
-        ],
-      );
+    if (widget.products!.isEmpty) {
+      return const NoProductsFound(nextWidget: EditProductView());
     }
     return ListView(
         children: ListTile.divideTiles(

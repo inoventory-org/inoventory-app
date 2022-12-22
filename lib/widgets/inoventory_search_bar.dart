@@ -10,7 +10,7 @@ class InoventorySearchBar extends AppBar {
               border: const OutlineInputBorder(),
               labelText: label,
             ),
-            onChanged: onChanged,
-          )
+            onChanged: onChanged
+          ),
         );
 }

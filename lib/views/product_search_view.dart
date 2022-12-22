@@ -1,11 +1,8 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:inoventory_ui/models/product.dart';
-import 'package:inoventory_ui/services/products/product_service_impl.dart';
 import 'package:inoventory_ui/services/products/product_service_interface.dart';
-import 'package:inoventory_ui/views/edit_product_view.dart';
+import 'package:inoventory_ui/services/products/product_service_mock.dart';
 import 'package:inoventory_ui/widgets/inoventory_search_bar.dart';
-import 'package:inoventory_ui/widgets/product/no_products_found.dart';
 import 'package:inoventory_ui/widgets/product/product_list.dart';
 
 class ProductSearchView extends StatefulWidget {
@@ -18,9 +15,8 @@ class ProductSearchView extends StatefulWidget {
 }
 
 class _ProductSearchViewState extends State<ProductSearchView> {
-  final ProductService productService = ProductServiceImpl();
+  final ProductService productService = ProductServiceMock();
   late Future<List<Product>> futureProducts;
-  final String searchQuery = "";
 
   @override
   void initState() {
@@ -32,30 +28,53 @@ class _ProductSearchViewState extends State<ProductSearchView> {
     }
   }
 
+  void onSearchBarChanged(String value) {
+    setState(() {
+      futureProducts = productService.search(value);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<List<Product>>(
-        future: futureProducts,
-        builder: (context, snapshot) {
-          if (snapshot.hasData) {
-            return Scaffold(
-                appBar: InoventorySearchBar(
-                    initialValue: widget.initialValue,
-                    onChanged: (value) {
-                      setState(() {
-                        futureProducts = productService.search(value);
-                      });
-                    }),
-                body: (snapshot.hasData)
-                    ? ProductListView(products: snapshot.data)
-                    : const NoProductsFound(nextWidget: EditProductView()));
-          } else if (snapshot.hasError) {
-            return Text('${snapshot.error}');
-          } else {
-            return Scaffold(
-                appBar: AppBar(title: const Text("Loading")),
-                body: const Center(child: CircularProgressIndicator()));
-          }
-        });
+    return Scaffold(
+        appBar: InoventorySearchBar(
+            initialValue: widget.initialValue,
+            onChanged: onSearchBarChanged
+        ),
+        body: FutureBuilder<List<Product>>(
+            future: futureProducts,
+            builder: (context, snapshot) {
+              if (snapshot.hasData) {
+                return ProductListView(products: snapshot.data);
+              } else if (snapshot.hasError) {
+                return Center(child: Text('${snapshot.error}'));
+              }
+
+              return const Center(child: CircularProgressIndicator());
+
+            }));
+
+    // return FutureBuilder<List<Product>>(
+    //     future: futureProducts,
+    //     builder: (context, snapshot) {
+    //       if (snapshot.hasData) {
+    //         return Scaffold(
+    //             appBar: InoventorySearchBar(
+    //                 initialValue: widget.initialValue,
+    //                 onChanged: (value) => onSearchBarChanged(value)),
+    //             body: (snapshot.hasData)
+    //                 ? ProductListView(products: snapshot.data) : const Center(child: CircularProgressIndicator())
+    //         );
+    //       } else if (snapshot.hasError) {
+    //         return Text('${snapshot.error}');
+    //        } else {
+    //         return const Text("failure");
+    //       }
+    //
+    //       //   return Scaffold(
+    //       //       appBar: AppBar(title: const Text("Loading")),
+    //       //       body: const Center(child: CircularProgressIndicator()));
+    //       // }
+    //     });
   }
 }
