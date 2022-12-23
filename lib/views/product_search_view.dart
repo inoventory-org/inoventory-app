@@ -6,9 +6,10 @@ import 'package:inoventory_ui/widgets/inoventory_search_bar.dart';
 import 'package:inoventory_ui/widgets/product/product_list.dart';
 
 class ProductSearchView extends StatefulWidget {
-  final String? initialValue;
+  final String? initialSearchValue;
+  final ProductService productService;
 
-  const ProductSearchView({Key? key, this.initialValue}) : super(key: key);
+  const ProductSearchView({Key? key, this.initialSearchValue, required this.productService}) : super(key: key);
 
   @override
   State<ProductSearchView> createState() => _ProductSearchViewState();
@@ -21,8 +22,8 @@ class _ProductSearchViewState extends State<ProductSearchView> {
   @override
   void initState() {
     super.initState();
-    if (widget.initialValue != null) {
-      futureProducts = productService.search(widget.initialValue ?? "");
+    if (widget.initialSearchValue != null) {
+      futureProducts = productService.search(widget.initialSearchValue ?? "");
     } else {
       futureProducts = productService.all();
     }
@@ -38,7 +39,7 @@ class _ProductSearchViewState extends State<ProductSearchView> {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: InoventorySearchBar(
-            initialValue: widget.initialValue, onChanged: onSearchBarChanged),
+            initialValue: widget.initialSearchValue, onChanged: onSearchBarChanged),
         body: FutureBuilder<List<Product>>(
             future: futureProducts,
             builder: (context, snapshot) {

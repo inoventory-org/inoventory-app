@@ -9,16 +9,10 @@ class InoventoryHome extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'inoventory',
-      // theme: ThemeData(
-      //   primarySwatch: Colors.blue,
-      // ),
-      theme: ThemeData.dark(),
-      home: Scaffold(
-          appBar: InoventoryAppBar(),
-          drawer: const Drawer(),
-          body: const InventoryListWidget()),
+    return Scaffold(
+        appBar: InoventoryAppBar(),
+        drawer: const Drawer(),
+        body: const InventoryListWidget()
     );
   }
 }

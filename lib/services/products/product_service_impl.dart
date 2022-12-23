@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:inoventory_ui/models/product.dart';
 import 'package:inoventory_ui/services/products/product_service_interface.dart';
-import 'package:inoventory_ui/utils/constants.dart';
+import 'package:inoventory_ui/config/constants.dart';
 import 'package:http/http.dart' as http;
 
 class ProductServiceImpl implements ProductService {

@@ -7,7 +7,11 @@ class BarcodeScanner {
     try {
       barcodeScanRes = await FlutterBarcodeScanner.scanBarcode(
           '#ff6666', 'Cancel', true, ScanMode.BARCODE);
-      print(barcodeScanRes);
+
+      // Result is -1 when cancelling the scanning
+      if (barcodeScanRes == '-1') {
+        return "";
+      }
       return barcodeScanRes;
     } on PlatformException {
       barcodeScanRes = 'Failed to get platform version.';

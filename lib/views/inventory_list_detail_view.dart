@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:inoventory_ui/models/inventory_list.dart';
 import 'package:inoventory_ui/models/inventory_list_item.dart';
+import 'package:inoventory_ui/services/products/product_service_interface.dart';
 import 'package:inoventory_ui/views/product_search_view.dart';
+import 'package:inoventory_ui/services/products/product_service_impl.dart';
+
 
 import '../services/barcode_scanner.dart';
 import '../widgets/expandable_floating_action_button.dart';
@@ -19,6 +22,7 @@ class InventoryListDetailWidget extends StatefulWidget {
 
 class _InventoryListDetailWidgetState extends State<InventoryListDetailWidget> {
   final BarcodeScanner _barcodeScanner = BarcodeScanner();
+  final ProductService productService = ProductServiceImpl();
   String barcodeScanResult = "";
 
   final List<InventoryListItem> _items = <InventoryListItem>[
@@ -33,7 +37,6 @@ class _InventoryListDetailWidgetState extends State<InventoryListDetailWidget> {
   void barcodeScanned(String barcode) {
     setState(() {
       barcodeScanResult = barcode;
-      print(barcodeScanResult);
     });
   }
 
@@ -62,7 +65,7 @@ class _InventoryListDetailWidgetState extends State<InventoryListDetailWidget> {
             barcodeScanResult = await _barcodeScanner.scanBarcodeNormal();
             navigator.push(
                 MaterialPageRoute(
-                    builder: (context) => ProductSearchView(initialValue: barcodeScanResult)));
+                    builder: (context) => ProductSearchView(initialSearchValue: barcodeScanResult, productService: productService)));
             }
         ),
         ActionButton(
@@ -71,7 +74,7 @@ class _InventoryListDetailWidgetState extends State<InventoryListDetailWidget> {
             Navigator.push(
                 context,
                 MaterialPageRoute(
-                    builder: (context) =>  const ProductSearchView()
+                    builder: (context) => ProductSearchView(productService: productService)
                 )
             );
           },
