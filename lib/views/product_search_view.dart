@@ -36,14 +36,15 @@ class _ProductSearchViewState extends State<ProductSearchView> {
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
         appBar: InoventorySearchBar(
             initialValue: widget.initialValue, onChanged: onSearchBarChanged),
         body: FutureBuilder<List<Product>>(
             future: futureProducts,
             builder: (context, snapshot) {
-              if (snapshot.hasData) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              } else if (snapshot.hasData) {
                 return ProductListView(products: snapshot.data);
               } else if (snapshot.hasError) {
                 return Center(child: Text('${snapshot.error}'));
