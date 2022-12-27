@@ -136,7 +136,7 @@ class _ExpandableFabState extends State<ExpandableFab>
       height: 56.0,
       child: Center(
         child: Material(
-          textStyle: TextStyle(backgroundColor: Colors.white),
+          textStyle: TextStyle(backgroundColor: Theme.of(context).primaryColor),
           shape: const CircleBorder(),
           clipBehavior: Clip.antiAlias,
           elevation: 4.0,
@@ -146,7 +146,7 @@ class _ExpandableFabState extends State<ExpandableFab>
               padding: const EdgeInsets.all(8.0),
               child: Icon(
                 Icons.close,
-                color: Colors.white, //Theme.of(context).primaryColor,
+                color: Theme.of(context).primaryColor,
               ),
             ),
           ),
@@ -192,7 +192,7 @@ class _ExpandableFabState extends State<ExpandableFab>
           duration: const Duration(milliseconds: 250),
           child: FloatingActionButton(
             onPressed: _toggle,
-            child: const Icon(Icons.add),
+            child: const Icon(Icons.add_outlined),
           ),
         ),
       ),

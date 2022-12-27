@@ -7,7 +7,7 @@ import 'package:http/http.dart' as http;
 
 class ProductServiceImpl implements ProductService {
 
-  static const backend_url = Constants.inoventory_backend_url;
+  static const backend_url = Constants.inoventoryBackendUrl;
 
   @override
   Future<Product> add(Product product) {
