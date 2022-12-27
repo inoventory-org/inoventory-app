@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:inoventory_ui/models/inventory_list.dart';
 import 'package:inoventory_ui/models/inventory_list_item.dart';
-import 'package:inoventory_ui/services/products/product_service_interface.dart';
-import 'package:inoventory_ui/views/product_search_view.dart';
-import 'package:inoventory_ui/services/products/product_service_impl.dart';
+import 'package:inoventory_ui/services/product/product_service_interface.dart';
+import 'package:inoventory_ui/services/product/product_service_impl.dart';
+import 'package:inoventory_ui/views/product/product_search_view.dart';
 
 
 import '../services/barcode_scanner.dart';

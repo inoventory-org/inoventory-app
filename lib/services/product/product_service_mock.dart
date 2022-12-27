@@ -1,5 +1,5 @@
 import 'package:inoventory_ui/models/product.dart';
-import 'package:inoventory_ui/services/products/product_service_interface.dart';
+import 'package:inoventory_ui/services/product/product_service_interface.dart';
 
 class ProductServiceMock implements ProductService {
   final List<Product> products = [

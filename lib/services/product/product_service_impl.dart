@@ -1,13 +1,13 @@
 import 'dart:convert';
 
 import 'package:inoventory_ui/models/product.dart';
-import 'package:inoventory_ui/services/products/product_service_interface.dart';
+import 'package:inoventory_ui/services/product/product_service_interface.dart';
 import 'package:inoventory_ui/config/constants.dart';
 import 'package:http/http.dart' as http;
 
 class ProductServiceImpl implements ProductService {
 
-  static const backend_url = Constants.inoventoryBackendUrl;
+  static const backendUrl = Constants.inoventoryBackendUrl;
 
   @override
   Future<Product> add(Product product) {
@@ -17,7 +17,7 @@ class ProductServiceImpl implements ProductService {
 
   @override
   Future<List<Product>> all() async {
-    final response = await http.get(Uri.parse("$backend_url/api/v1/products"));
+    final response = await http.get(Uri.parse("$backendUrl/api/v1/products"));
     if (response.statusCode == 200) {
       // If the server did return a 200 OK response,
       // then parse the JSON.
@@ -39,7 +39,7 @@ class ProductServiceImpl implements ProductService {
 
   @override
   Future<List<Product>> search(String barcode) async {
-    final response = await http.get(Uri.parse("$backend_url/api/v1/products?ean=$barcode"));
+    final response = await http.get(Uri.parse("$backendUrl/api/v1/products?ean=$barcode"));
     if (response.statusCode == 200) {
 
       String jsonStr = response.body;

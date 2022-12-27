@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:inoventory_ui/models/product.dart';
-import 'package:inoventory_ui/services/products/product_service_impl.dart';
-import 'package:inoventory_ui/services/products/product_service_interface.dart';
+import 'package:inoventory_ui/services/product/product_service_impl.dart';
+import 'package:inoventory_ui/services/product/product_service_interface.dart';
 import 'package:inoventory_ui/widgets/inoventory_search_bar.dart';
 import 'package:inoventory_ui/widgets/product/product_list.dart';
 

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:inoventory_ui/models/product.dart';
-import 'package:inoventory_ui/views/edit_product_view.dart';
+import 'package:inoventory_ui/views/product/edit_product_view.dart';
 import 'package:inoventory_ui/widgets/product/no_products_found.dart';
 import 'package:inoventory_ui/widgets/product/product_list_item.dart';
 
