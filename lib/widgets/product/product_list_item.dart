@@ -9,23 +9,40 @@ class ProductListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      title: Padding(
-        padding: const EdgeInsets.all(5),
-        child: Container(
-            decoration: BoxDecoration(
-                color: Theme.of(context).backgroundColor,
-                boxShadow: const [
-                  BoxShadow(
-                    blurRadius: 4,
-                    color: Color(0x320E151B),
-                    offset: Offset(0, 1),
-                  )
-                ], borderRadius: BorderRadius.circular(12)),
-            child: Text(product.name, style: const TextStyle(fontSize: 24))),
-      ),
-      trailing: const Icon(Icons.more_vert),
-      onTap: onTap,
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Container(
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.secondary,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: ListTile(
+            leading: Container(
+              height: 50,
+              width: 50,
+              decoration: BoxDecoration(
+                image: product.thumbUrl != null
+                    ? DecorationImage(
+                        image: NetworkImage(product.thumbUrl!),
+                        fit: BoxFit.cover,
+                      )
+                    : null,
+              ),
+              child: product.thumbUrl == null ? const Icon(Icons.image) : null,
+            ),
+            title: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(product.name, style: const TextStyle(fontSize: 24)),
+                if (product.ean != null) ...[
+                  const SizedBox(height: 5),
+                  Text(product.ean!, style: const TextStyle(fontSize: 16)),
+                ],
+              ],
+            ),
+            trailing: const Icon(Icons.more_vert),
+            onTap: onTap,
+          )),
     );
   }
 }

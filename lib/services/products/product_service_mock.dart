@@ -15,7 +15,7 @@ class ProductServiceMock implements ProductService {
   Future<List<Product>> search(String barcode) async {
     return Future.delayed(const Duration(seconds: 2), () {
       return products
-          .where((product) => product.ean.startsWith(barcode))
+          .where((product) => product.ean.startsWith!!(barcode))
           .toList();
     });
   }
