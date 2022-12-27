@@ -1,15 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:inoventory_ui/models/inventory_list.dart';
 import 'package:inoventory_ui/models/product.dart';
 import 'package:inoventory_ui/services/product/product_service_impl.dart';
 import 'package:inoventory_ui/services/product/product_service_interface.dart';
+import 'package:inoventory_ui/views/product/product_detail_view.dart';
 import 'package:inoventory_ui/widgets/inoventory_search_bar.dart';
 import 'package:inoventory_ui/widgets/product/product_list.dart';
 
 class ProductSearchView extends StatefulWidget {
   final String? initialSearchValue;
   final ProductService productService;
+  final InventoryList list;
 
-  const ProductSearchView({Key? key, this.initialSearchValue, required this.productService}) : super(key: key);
+  const ProductSearchView(
+      {Key? key, this.initialSearchValue, required this.productService, required this.list})
+      : super(key: key);
 
   @override
   State<ProductSearchView> createState() => _ProductSearchViewState();
@@ -38,19 +43,32 @@ class _ProductSearchViewState extends State<ProductSearchView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: InoventorySearchBar(
-            initialValue: widget.initialSearchValue, onChanged: onSearchBarChanged),
-        body: FutureBuilder<List<Product>>(
-            future: futureProducts,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              } else if (snapshot.hasData) {
-                return ProductListView(products: snapshot.data);
-              } else if (snapshot.hasError) {
-                return Center(child: Text('${snapshot.error}'));
-              }
-              return const Center(child: CircularProgressIndicator());
-            }));
+      appBar: InoventorySearchBar(
+        initialValue: widget.initialSearchValue,
+        onChanged: onSearchBarChanged,
+      ),
+      body: FutureBuilder<List<Product>>(
+        future: futureProducts,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasData) {
+            return ProductListView(
+              products: snapshot.data,
+              onProductTap: (product) {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => ProductDetailView(product: product, list: widget.list),
+                  ),
+                );
+              },
+            );
+          } else if (snapshot.hasError) {
+            return Center(child: Text('${snapshot.error}'));
+          }
+          return const Center(child: CircularProgressIndicator());
+        },
+      ),
+    );
   }
 }

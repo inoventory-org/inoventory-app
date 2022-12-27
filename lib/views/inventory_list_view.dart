@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:inoventory_ui/models/inventory_list.dart';
-import 'package:inoventory_ui/services/inventory_list_service.dart';
+import 'package:inoventory_ui/services/inventory_list/inventory_list_service.dart';
 
 import 'inventory_list_detail_view.dart';
 
