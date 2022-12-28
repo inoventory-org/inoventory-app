@@ -14,7 +14,10 @@ import 'package:inoventory_ui/services/product/product_service_interface.dart';
 import 'package:inoventory_ui/views/product/product_search_view.dart';
 
 class FakeProductService implements ProductService {
-  final List<Product> _products = [Product('Nutella', '3017620425035'), Product('Coca-Cola 1L', '5449000054227')];
+  final List<Product> _products = [
+    Product("0", "Nutella", ean: "3017620425035"),
+    Product("1", "Coca-Cola 1L", ean: "5449000054227")
+  ];
 
   @override
   Future<List<Product>> search(String query) async {
@@ -51,11 +54,11 @@ void main() {
     final productService = FakeProductService();
     final InventoryList list = InventoryList("0", "rudy", "pantry");
 
-
     // Build the ProductSearchView widget
     await tester.pumpWidget(MaterialApp(
-      home: ProductSearchView(initialSearchValue: '3017620425035', productService: productService, list: list),
+      home: ProductSearchView(initialSearchValue: "3017620425035", productService: productService, list: list),
     ));
+    await tester.pump();
 
 
     // Verify that the products are displayed

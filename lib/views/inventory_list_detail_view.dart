@@ -4,7 +4,6 @@ import 'package:inoventory_ui/models/inventory_list.dart';
 import 'package:inoventory_ui/models/inventory_list_item.dart';
 import 'package:inoventory_ui/services/inventory_list/inventory_list_service.dart';
 import 'package:inoventory_ui/services/product/product_service_interface.dart';
-import 'package:inoventory_ui/services/product/product_service_impl.dart';
 import 'package:inoventory_ui/views/product/product_search_view.dart';
 
 
@@ -24,7 +23,7 @@ class InventoryListDetailWidget extends StatefulWidget {
 
 class _InventoryListDetailWidgetState extends State<InventoryListDetailWidget> {
   final BarcodeScanner _barcodeScanner = BarcodeScanner();
-  final ProductService productService = ProductServiceImpl();
+  final ProductService productService = Dependencies.productService;
   final InventoryListService listService = Dependencies.inoventoryListService;
 
   String barcodeScanResult = "";
@@ -50,6 +49,18 @@ class _InventoryListDetailWidgetState extends State<InventoryListDetailWidget> {
     });
   }
 
+  void transitToProductSearchPage(BuildContext context, String? initialSearchValue) {
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) =>
+                ProductSearchView(productService: productService,
+                    initialSearchValue: initialSearchValue,
+                    list: widget.list)
+        )
+    ).then((value) => _refreshList());
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -65,7 +76,6 @@ class _InventoryListDetailWidgetState extends State<InventoryListDetailWidget> {
                 return ListTile(
                   title: Text(e.name, style: const TextStyle(fontSize: 24)),
                   trailing: const Icon(Icons.more_vert),
-                  // onTap: () { Navigator.push(context, ) },
                 );
               })).toList(),
         ),
@@ -78,18 +88,16 @@ class _InventoryListDetailWidgetState extends State<InventoryListDetailWidget> {
             barcodeScanResult = await _barcodeScanner.scanBarcodeNormal();
             navigator.push(
                 MaterialPageRoute(
-                    builder: (context) => ProductSearchView(initialSearchValue: barcodeScanResult, productService: productService, list: widget.list)));
+                    builder: (context) => ProductSearchView(initialSearchValue: barcodeScanResult,
+                        productService: productService,
+                        list: widget.list))
+            ).then((value) => _refreshList());
             }
         ),
         ActionButton(
           icon: const Icon(Icons.edit, color: Colors.black),
           onPressed: () {
-            Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => ProductSearchView(productService: productService, initialSearchValue: "", list: widget.list)
-                )
-            );
+            transitToProductSearchPage(context, "3017620425035");
           },
         ),
       ]),

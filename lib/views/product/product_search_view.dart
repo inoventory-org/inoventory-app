@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:inoventory_ui/models/inventory_list.dart';
 import 'package:inoventory_ui/models/product.dart';
-import 'package:inoventory_ui/services/product/product_service_impl.dart';
 import 'package:inoventory_ui/services/product/product_service_interface.dart';
 import 'package:inoventory_ui/views/product/product_detail_view.dart';
 import 'package:inoventory_ui/widgets/inoventory_search_bar.dart';
@@ -21,12 +20,13 @@ class ProductSearchView extends StatefulWidget {
 }
 
 class _ProductSearchViewState extends State<ProductSearchView> {
-  final ProductService productService = ProductServiceImpl();
+  late ProductService productService;
   late Future<List<Product>> futureProducts;
 
   @override
   void initState() {
     super.initState();
+    productService = widget.productService;
     if (widget.initialSearchValue != null) {
       futureProducts = productService.search(widget.initialSearchValue ?? "");
     } else {
