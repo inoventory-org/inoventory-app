@@ -1,9 +1,17 @@
-import 'dart:convert';
-
 import 'package:inoventory_ui/models/product.dart';
-import 'package:inoventory_ui/services/product/product_service_interface.dart';
 import 'package:inoventory_ui/config/constants.dart';
 import 'package:http/http.dart' as http;
+import 'dart:convert';
+
+abstract class ProductService {
+
+  Future<List<Product>> search(String barcode);
+  Future<List<Product>> all();
+  Future<Product> add(Product product);
+  Future<Product> update(String productId, Product product);
+  Future<bool> delete(String productId);
+
+}
 
 class ProductServiceImpl implements ProductService {
 
@@ -51,7 +59,7 @@ class ProductServiceImpl implements ProductService {
       return <Product>[product];
     }
     else {
-     // 3017620425035
+      // 3017620425035
       // If the server did not return a 200 OK response,
       // then throw an exception.
       // throw Exception('Failed to load product with barcode: $barcode');
