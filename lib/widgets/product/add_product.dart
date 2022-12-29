@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:inoventory_ui/config/dependencies.dart';
 import 'package:inoventory_ui/models/inventory_list.dart';
 import 'package:inoventory_ui/models/inventory_list_item.dart';
 import 'package:inoventory_ui/models/product.dart';
-import 'package:inoventory_ui/services/inventory_list/inventory_list_service.dart';
+import 'package:inoventory_ui/services/inventory_list_service.dart';
 import 'package:inoventory_ui/widgets/InoventoryNetworkImage.dart';
 import 'package:inoventory_ui/widgets/amount_input.dart';
 import 'package:inoventory_ui/widgets/expiry_date_input.dart';
@@ -20,24 +19,24 @@ class AddProductView extends StatefulWidget {
 
 class _AddProductViewState extends State<AddProductView> {
   int _amount = 0;
-  final InventoryListService listService = Dependencies.inoventoryListService; // TODO: real dependency injection here
+  final InventoryListServiceMock listService =
+      InventoryListServiceMock(); // TODO: real dependency injection here
   final List<InventoryListItem> _items = <InventoryListItem>[];
 
   @override
   void initState() {
     super.initState();
-    _items.add(InventoryListItem(_amount.toString(), widget.product.name,
-        expiryDate: "2022-12-31"));
+    _items.add(InventoryListItem(_amount, widget.list.id, widget.product.ean));
     _amount++;
   }
 
   void _increaseAmount() {
     setState(() {
       String? lastExpiryDate;
-      lastExpiryDate = _items[_amount-1].expiryDate;
+      lastExpiryDate = _items[_amount - 1].expirationDate;
 
-      _items.add(InventoryListItem(_amount.toString(), widget.product.name,
-          expiryDate: lastExpiryDate));
+      _items.add(InventoryListItem(_amount, widget.list.id, widget.product.ean,
+          expirationDate: lastExpiryDate));
       _amount++;
     });
   }
@@ -65,20 +64,24 @@ class _AddProductViewState extends State<AddProductView> {
             AmountInput(
                 onIncrease: _increaseAmount, onDecrease: _decreaseAmount),
             for (var item in _items)
-              ExpiryDateEntry(initialDate: item.expiryDate, onDateSet: (date) {
-                item.expiryDate = date;
-              })
+              ExpiryDateEntry(
+                  initialDate: item.expirationDate,
+                  onDateSet: (date) {
+                    item.expirationDate = date;
+                  })
           ]),
         ),
       ),
-      floatingActionButton: FloatingActionButton(onPressed: (){
-        for (var item in _items) {
-          listService.addItemToList(widget.list, item);
-        }
-        Navigator.of(context).pop();
-        Navigator.of(context).pop();
-        Navigator.of(context).pop();
-      }, child: const Icon(Icons.bookmark)),
+      floatingActionButton: FloatingActionButton(
+          onPressed: () {
+            for (var item in _items) {
+              listService.addItemToList(widget.list, item);
+            }
+            Navigator.of(context).pop();
+            Navigator.of(context).pop();
+            Navigator.of(context).pop();
+          },
+          child: const Icon(Icons.bookmark)),
     );
   }
 }

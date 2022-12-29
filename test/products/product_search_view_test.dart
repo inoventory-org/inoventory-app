@@ -10,7 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:inoventory_ui/models/inventory_list.dart';
 import 'package:inoventory_ui/models/product.dart';
 
-import 'package:inoventory_ui/services/product/product_service_interface.dart';
+import 'package:inoventory_ui/services/product_service.dart';
 import 'package:inoventory_ui/views/product/product_search_view.dart';
 
 class FakeProductService implements ProductService {
@@ -52,7 +52,7 @@ class FakeProductService implements ProductService {
 void main() {
   testWidgets('ProductSearchView', (tester) async {
     final productService = FakeProductService();
-    final InventoryList list = InventoryList("0", "rudy", "pantry");
+    final InventoryList list = InventoryList(0, "pantry");
 
     // Build the ProductSearchView widget
     await tester.pumpWidget(MaterialApp(

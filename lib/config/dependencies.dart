@@ -1,8 +1,11 @@
-import 'package:inoventory_ui/services/inventory_list/inventory_list_service.dart';
-import 'package:inoventory_ui/services/product/product_service_interface.dart';
-import 'package:inoventory_ui/services/product/product_service_impl.dart';
+import 'package:inoventory_ui/services/inventory_list_service.dart';
+import 'package:inoventory_ui/services/item_service.dart';
+import 'package:inoventory_ui/services/product_service.dart';
 
 abstract class Dependencies {
-  static InventoryListService inoventoryListService = InventoryListService();
+  static InventoryListService inoventoryListService = InventoryListServiceImpl();
   static ProductService productService = ProductServiceImpl();
+  static ItemService itemService = ItemServiceImpl();
+
+
 }

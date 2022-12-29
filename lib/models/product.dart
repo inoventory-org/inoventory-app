@@ -6,13 +6,13 @@ class Product {
 
   final String id;
   final String name;
-  final String? ean;
+  final String ean;
   final List<String>? tags;
   final String? source;
   final String? imageUrl;
   final String? thumbUrl;
 
-  Product(this.id, this.name, {this.ean, this.tags, this.source, this.imageUrl, this.thumbUrl});
+  Product(this.id, this.name, {required this.ean, this.tags, this.source, this.imageUrl, this.thumbUrl});
 
   factory Product.fromJson(Map<String, dynamic> json) {
     return Product(

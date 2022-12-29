@@ -2,14 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:inoventory_ui/config/dependencies.dart';
 import 'package:inoventory_ui/models/inventory_list.dart';
 import 'package:inoventory_ui/models/inventory_list_item.dart';
-import 'package:inoventory_ui/services/inventory_list/inventory_list_service.dart';
-import 'package:inoventory_ui/services/product/product_service_interface.dart';
+import 'package:inoventory_ui/services/inventory_list_service.dart';
+import 'package:inoventory_ui/services/item_service.dart';
+import 'package:inoventory_ui/services/product_service.dart';
 import 'package:inoventory_ui/views/product/product_search_view.dart';
+import 'package:inoventory_ui/widgets/MyFutureBuilder.dart';
+import 'package:inoventory_ui/widgets/list/item_list_widget.dart';
 
 
-import '../services/barcode_scanner.dart';
-import '../widgets/expandable_floating_action_button.dart';
-import '../widgets/inoventory_appbar.dart';
+import '../../services/barcode_scanner.dart';
+import '../../widgets/expandable_floating_action_button.dart';
+import '../../widgets/inoventory_appbar.dart';
 
 class InventoryListDetailWidget extends StatefulWidget {
   final InventoryList list;
@@ -24,16 +27,17 @@ class InventoryListDetailWidget extends StatefulWidget {
 class _InventoryListDetailWidgetState extends State<InventoryListDetailWidget> {
   final BarcodeScanner _barcodeScanner = BarcodeScanner();
   final ProductService productService = Dependencies.productService;
-  final InventoryListService listService = Dependencies.inoventoryListService;
+  final InventoryListServiceMock listService = InventoryListServiceMock();
+  final ItemService itemService = Dependencies.itemService;
 
   String barcodeScanResult = "";
 
-  late List<InventoryListItem> _items;
+  late Future<List<InventoryListItem>> futureItems;
 
   @override
   void initState() {
     super.initState();
-   _items = listService.getListItems(widget.list);
+   futureItems = itemService.all(widget.list.id);
   }
 
   void barcodeScanned(String barcode) {
@@ -42,12 +46,16 @@ class _InventoryListDetailWidgetState extends State<InventoryListDetailWidget> {
     });
   }
 
+  void deleteItem(listId, itemId) async {
+  itemService.delete(listId, itemId);
+  await _refreshList();
+}
 
-  Future<void> _refreshList() async {
-    setState(() {
-      _items = listService.getListItems(widget.list);
-    });
-  }
+Future<void> _refreshList() async {
+  setState(() {
+    futureItems = itemService.all(widget.list.id);
+  });
+}
 
   void transitToProductSearchPage(BuildContext context, String? initialSearchValue) {
     Navigator.push(
@@ -67,18 +75,14 @@ class _InventoryListDetailWidgetState extends State<InventoryListDetailWidget> {
       appBar: InoventoryAppBar(
         title: widget.list.name,
       ),
-      body: RefreshIndicator(
-        onRefresh: _refreshList,
-        child: ListView(
-          children: ListTile.divideTiles(
-              context: context,
-              tiles: _items.map((e) {
-                return ListTile(
-                  title: Text(e.name, style: const TextStyle(fontSize: 24)),
-                  trailing: const Icon(Icons.more_vert),
-                );
-              })).toList(),
-        ),
+      body: MyFutureBuilder<List<InventoryListItem>>(
+        future: futureItems,
+        futureFetcher: () {
+          return itemService.all(widget.list.id);
+        },
+        successBuilder: (context, snapshot) {
+          return ItemListWidget(items: snapshot.data ?? [], onDelete: deleteItem);
+        },
       ),
       floatingActionButton: ExpandableFab(distance: 50, children: [
         ActionButton(
