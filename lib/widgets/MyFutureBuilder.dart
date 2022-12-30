@@ -29,7 +29,7 @@ class _MyFutureBuilderState<T> extends State<MyFutureBuilder<T>> {
     _future = widget.futureFetcher();
   }
 
-  void _refresh() {
+  Future<void> _refresh() async {
     setState(() {
       _future = widget.futureFetcher();
     });
@@ -56,7 +56,6 @@ class _MyFutureBuilderState<T> extends State<MyFutureBuilder<T>> {
               }
               return Center(child: Text('${snapshot.error}'));
             }
-
             return widget.successBuilder(context, snapshot);
           }),
     );

@@ -53,6 +53,13 @@ final ThemeData lightTheme = ThemeData(
         // textStyle: MaterialStateProperty.all<TextStyle>(const TextStyle(color: Colors.white)),
       )
   ),
+  elevatedButtonTheme: ElevatedButtonThemeData(
+      style: ButtonStyle(
+        backgroundColor: MaterialStateProperty.all<Color>(Colors.amber),
+        foregroundColor: MaterialStateProperty.all<Color>(Colors.black),
+        // textStyle: MaterialStateProperty.all<TextStyle>(const TextStyle(color: Colors.white)),
+      )
+  ),
   buttonTheme: const ButtonThemeData(
     textTheme: ButtonTextTheme.normal,
     minWidth: 88,

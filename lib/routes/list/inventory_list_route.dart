@@ -3,6 +3,7 @@ import 'package:inoventory_ui/config/dependencies.dart';
 import 'package:inoventory_ui/models/inventory_list.dart';
 import 'package:inoventory_ui/widgets/ConfirmationModal.dart';
 import 'package:inoventory_ui/widgets/list/create_list_widget.dart';
+import 'package:inoventory_ui/widgets/list/edit_list_widget.dart';
 import 'package:inoventory_ui/widgets/list/lists_widget.dart';
 
 class InventoryListRoute extends StatefulWidget {
@@ -22,7 +23,18 @@ class _InventoryListRouteState extends State<InventoryListRoute> {
     futureLists = listService.all();
   }
 
-  Future<void> deleteList(int listId, BuildContext context) {
+  Future<void> onEdit(InventoryList list) async {
+    final navigator = Navigator.of(context);
+    navigator
+        .push(MaterialPageRoute(
+        builder: (context) => EditListWidget(oldList: list)))
+        .whenComplete(_refreshList);
+    await _refreshList();
+  }
+
+
+
+    Future<void> onDelete(int listId, BuildContext context) {
     return showDialog(
         context: context,
         builder: (context) {
@@ -35,6 +47,8 @@ class _InventoryListRouteState extends State<InventoryListRoute> {
               });
         });
   }
+
+
 
   Future<void> _refreshList() async {
     setState(() {
@@ -57,7 +71,7 @@ class _InventoryListRouteState extends State<InventoryListRoute> {
                 return Center(child: Text('${snapshot.error}'));
               }
               if (snapshot.hasData) {
-                return MyInventoryListsWidget(lists: snapshot.data!, deleteList: deleteList);
+                return MyInventoryListsWidget(lists: snapshot.data!, onDelete: onDelete, onEdit: onEdit);
               }
             }
             return const Center(child: CircularProgressIndicator());
@@ -79,3 +93,28 @@ class _InventoryListRouteState extends State<InventoryListRoute> {
 }
 
 
+// body: MyFutureBuilder<List<InventoryList>>(
+// future: futureLists,
+// futureFetcher: listService.all,
+// successBuilder: (context, snapshot) {
+// return ListsWidget(lists: snapshot.data ?? [], listService: listService);
+// }),
+
+// return ListView(
+// children: ListTile.divideTiles(
+// context: context,
+// tiles: snapshot.data!.map((myList) {
+// return ListTile(
+// onLongPress: () => deleteList(myList.id, context),
+// title: Text(myList.name,
+// style: const TextStyle(fontSize: 24)),
+// onTap: () {
+// Navigator.push(
+// context,
+// MaterialPageRoute(
+// builder: (context) =>
+// InventoryListDetailRoute(
+// list: myList)));
+// },
+// );
+// })).toList());

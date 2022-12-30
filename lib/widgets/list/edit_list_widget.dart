@@ -2,26 +2,35 @@ import 'package:flutter/material.dart';
 import 'package:inoventory_ui/config/dependencies.dart';
 import 'package:inoventory_ui/models/inventory_list.dart';
 
-class CreateListWidget extends StatefulWidget {
-  const CreateListWidget({super.key});
+class EditListWidget extends StatefulWidget {
+  final InventoryList oldList;
+  const EditListWidget({super.key, required this.oldList});
 
   @override
-  _CreateListWidgetState createState() => _CreateListWidgetState();
+  EditeListWidgetState createState() => EditeListWidgetState();
 }
 
-class _CreateListWidgetState extends State<CreateListWidget> {
+class EditeListWidgetState extends State<EditListWidget> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
   final _listService = Dependencies.inoventoryListService;
+  late TextEditingController _nameController;
 
-  void _createList() async {
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    _nameController = TextEditingController(text: widget.oldList.name);
+  }
+
+  void _updateList() async {
     if (_formKey.currentState == null) {
       return;
     }
     if (_formKey.currentState!.validate()) {
       final navigator = Navigator.of(context);
-      final listName = _nameController.text;
-      await _listService.add(InventoryList(0, listName));
+      final newListName = _nameController.text;
+      await _listService.update(
+          widget.oldList.id, InventoryList(0, newListName));
       navigator.pop();
     }
   }
@@ -29,7 +38,7 @@ class _CreateListWidgetState extends State<CreateListWidget> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Add List")),
+      appBar: AppBar(title: const Text("Update List")),
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(8.0),
@@ -40,22 +49,22 @@ class _CreateListWidgetState extends State<CreateListWidget> {
                 TextFormField(
                   controller: _nameController,
                   decoration: const InputDecoration(
-                    labelText: 'Name',
+                    labelText: 'New List Name',
                     border: OutlineInputBorder(),
                   ),
                   validator: (value) {
                     if (value == null) {
                       return null;
                     }
-                    return value.isEmpty
+                    return (value.isEmpty || value == widget.oldList.name)
                         ? 'Enter a new name'
                         : null;
                   },
                 ),
                 const SizedBox(height: 8),
                 ElevatedButton(
-                    onPressed: _createList,
-                    child: const Text('Create List',
+                    onPressed: _updateList,
+                    child: const Text('Update List',
                         style: TextStyle(
                           fontSize: 24,
                           color: Colors.white,
