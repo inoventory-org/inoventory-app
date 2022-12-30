@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:inoventory_ui/config/dependencies.dart';
 import 'package:inoventory_ui/models/inventory_list.dart';
 import 'package:inoventory_ui/models/inventory_list_item.dart';
 import 'package:inoventory_ui/models/product.dart';
-import 'package:inoventory_ui/services/inventory_list_service.dart';
+import 'package:inoventory_ui/services/item_service.dart';
 import 'package:inoventory_ui/widgets/InoventoryNetworkImage.dart';
 import 'package:inoventory_ui/widgets/amount_input.dart';
 import 'package:inoventory_ui/widgets/expiry_date_input.dart';
@@ -19,8 +20,7 @@ class AddProductView extends StatefulWidget {
 
 class _AddProductViewState extends State<AddProductView> {
   int _amount = 0;
-  final InventoryListServiceMock listService =
-      InventoryListServiceMock(); // TODO: real dependency injection here
+  final ItemService itemService = Dependencies.itemService;
   final List<InventoryListItem> _items = <InventoryListItem>[];
 
   @override
@@ -53,7 +53,6 @@ class _AddProductViewState extends State<AddProductView> {
 
   @override
   Widget build(BuildContext context) {
-    print(_amount);
     return Scaffold(
       appBar: AppBar(title: Text("Adding ${widget.product.name} to List")),
       body: SingleChildScrollView(
@@ -75,7 +74,7 @@ class _AddProductViewState extends State<AddProductView> {
       floatingActionButton: FloatingActionButton(
           onPressed: () {
             for (var item in _items) {
-              listService.addItemToList(widget.list, item);
+              itemService.add(item);
             }
             Navigator.of(context).pop();
             Navigator.of(context).pop();

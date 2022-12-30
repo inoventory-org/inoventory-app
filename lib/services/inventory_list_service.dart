@@ -24,6 +24,7 @@ abstract class InventoryListService {
 class InventoryListServiceImpl extends InventoryListService {
 
   final http.Client client;
+  final timeoutDuration = const Duration(seconds: 10);
 
   InventoryListServiceImpl({required this.client});
 
@@ -32,7 +33,7 @@ class InventoryListServiceImpl extends InventoryListService {
     final response = await http.post(Uri.parse(InventoryListService.listUrl),
         headers: {HttpHeaders.contentTypeHeader: "application/json"},
         body: jsonEncode(<String, String>{"name": list.name})
-    ).timeout(const Duration(seconds: 5));
+    ).timeout(timeoutDuration);
 
     if (response.statusCode != HttpStatus.created) {
       throw Exception("Failed to create list");
@@ -44,7 +45,7 @@ class InventoryListServiceImpl extends InventoryListService {
   @override
   Future<List<InventoryList>> all() async {
     final response = await http.get(Uri.parse(InventoryListService.listUrl))
-        .timeout(const Duration(seconds: 5));
+        .timeout(timeoutDuration);
 
     if (response.statusCode != HttpStatus.ok) {
       throw Exception("Failed to fetch lists");
@@ -59,7 +60,7 @@ class InventoryListServiceImpl extends InventoryListService {
     final response = await http.put(Uri.parse(getSpecificListUrl(listId)),
         headers: {HttpHeaders.contentTypeHeader: "application/json"},
         body: jsonEncode(<String, String>{"name": updatedList.name})
-    ).timeout(const Duration(seconds: 5));
+    ).timeout(timeoutDuration);
 
     if (response.statusCode != HttpStatus.ok) {
       throw Exception("Failed to update list");
@@ -71,7 +72,7 @@ class InventoryListServiceImpl extends InventoryListService {
   @override
   Future<void> delete(int listId) async {
     final response = await http.delete(Uri.parse(getSpecificListUrl(listId)))
-        .timeout(const Duration(seconds: 5));
+        .timeout(timeoutDuration);
 
     if (response.statusCode != HttpStatus.ok) {
       throw Exception("Failed to delete list");

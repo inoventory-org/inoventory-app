@@ -8,7 +8,7 @@ abstract class ItemService {
   static const backendUrl = Constants.inoventoryBackendUrl;
   static const listUrl = "$backendUrl/api/v1/inventory-lists";
 
-  Future<List<InventoryListItem>> all(int listId);
+  Future< List<InventoryListItemWrapper>> all(int listId);
   Future<InventoryListItem> add(InventoryListItem item);
   Future<InventoryListItem> update(int itemId, InventoryListItem updatedItem);
   Future<void> delete(int listId, int itemId);
@@ -41,7 +41,7 @@ class ItemServiceImpl extends ItemService {
   }
 
   @override
-  Future<List<InventoryListItem>> all(int listId) async {
+  Future< List<InventoryListItemWrapper>> all(int listId) async {
     final response = await http.get(Uri.parse(getSpecificListUrl(listId)))
         .timeout(const Duration(seconds: 5));
 
@@ -49,8 +49,14 @@ class ItemServiceImpl extends ItemService {
       throw Exception("Failed to fetch lists");
     }
 
-    Iterable itemsJson = jsonDecode(response.body);
-    return itemsJson.map((json) => InventoryListItem.fromJson(json)).toList();
+    // For some reason decoding to Map<String, List<InventoryListItemWrapper>> is not working
+    // hence the following complex code
+    final Map<String, dynamic> itemsJson = jsonDecode(response.body);
+    final Map<String, List<InventoryListItem>> items = {};
+    itemsJson.forEach((productEan, value) {
+      items[productEan] = (value as List).map((i) => InventoryListItem.fromJson(i)).toList();
+    });
+    return items.entries.map((e) => InventoryListItemWrapper.fromItems(e.value)).toList();
   }
 
   @override
