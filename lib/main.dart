@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:inoventory_ui/views/InoventoryApp.dart';
+import 'package:inoventory_ui/routes/InoventoryApp.dart';
 
 void main() {
   // ErrorWidget.builder =

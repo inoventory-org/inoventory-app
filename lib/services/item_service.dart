@@ -31,7 +31,7 @@ class ItemServiceImpl extends ItemService {
           "listId": item.listId.toString(),
           "productEan": item.productEan,
           "expirationDate": item.expirationDate
-        }));
+        })).timeout(const Duration(seconds: 5));
 
     if (response.statusCode != HttpStatus.created) {
       throw Exception("Failed to create list");
@@ -42,7 +42,8 @@ class ItemServiceImpl extends ItemService {
 
   @override
   Future<List<InventoryListItem>> all(int listId) async {
-    final response = await http.get(Uri.parse(getSpecificListUrl(listId)));
+    final response = await http.get(Uri.parse(getSpecificListUrl(listId)))
+        .timeout(const Duration(seconds: 5));
 
     if (response.statusCode != HttpStatus.ok) {
       throw Exception("Failed to fetch lists");
@@ -62,7 +63,7 @@ class ItemServiceImpl extends ItemService {
           "listId": updatedItem.listId.toString(),
           "productEan": updatedItem.productEan,
           "expirationDate": updatedItem.expirationDate
-        }));
+        })).timeout(const Duration(seconds: 5));
 
     if (response.statusCode != HttpStatus.ok) {
       throw Exception("Failed to create list");
@@ -74,7 +75,8 @@ class ItemServiceImpl extends ItemService {
   @override
   Future<void> delete(int listId, int itemId) async {
     final response =
-        await http.delete(Uri.parse(getSpecificItemUrl(listId, itemId)));
+        await http.delete(Uri.parse(getSpecificItemUrl(listId, itemId)))
+            .timeout(const Duration(seconds: 5));
 
     if (response.statusCode != HttpStatus.ok) {
       throw Exception("Failed to delete list");

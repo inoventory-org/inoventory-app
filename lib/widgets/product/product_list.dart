@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:inoventory_ui/models/product.dart';
-import 'package:inoventory_ui/views/product/edit_product_view.dart';
+import 'package:inoventory_ui/routes/product/edit_product_route.dart';
 import 'package:inoventory_ui/widgets/product/no_products_found.dart';
 import 'package:inoventory_ui/widgets/product/product_list_item.dart';
 
@@ -18,7 +18,7 @@ class _ProductListViewState extends State<ProductListView> {
   @override
   Widget build(BuildContext context) {
     if (widget.products!.isEmpty) {
-      return const CentralizedElementWithPlusButton(nextWidget: EditProductView());
+      return const CentralizedElementWithPlusButton(nextWidget: EditProductRoute());
     }
     return ListView(
         children: ListTile.divideTiles(

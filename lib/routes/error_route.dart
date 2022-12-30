@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-class ErrorView extends StatelessWidget {
+class ErrorRoute extends StatelessWidget {
   final FlutterErrorDetails errorDetails;
 
-  const ErrorView({Key? key, required this.errorDetails}) : super(key: key);
+  const ErrorRoute({Key? key, required this.errorDetails}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {

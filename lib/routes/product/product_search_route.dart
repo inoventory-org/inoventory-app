@@ -1,25 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:inoventory_ui/models/inventory_list.dart';
 import 'package:inoventory_ui/models/product.dart';
+import 'package:inoventory_ui/routes/product/product_detail_route.dart';
 import 'package:inoventory_ui/services/product_service.dart';
-import 'package:inoventory_ui/views/product/product_detail_view.dart';
 import 'package:inoventory_ui/widgets/inoventory_search_bar.dart';
 import 'package:inoventory_ui/widgets/product/product_list.dart';
 
-class ProductSearchView extends StatefulWidget {
+class ProductSearchRoute extends StatefulWidget {
   final String? initialSearchValue;
   final ProductService productService;
   final InventoryList list;
 
-  const ProductSearchView(
+  const ProductSearchRoute(
       {Key? key, this.initialSearchValue, required this.productService, required this.list})
       : super(key: key);
 
   @override
-  State<ProductSearchView> createState() => _ProductSearchViewState();
+  State<ProductSearchRoute> createState() => _ProductSearchRouteState();
 }
 
-class _ProductSearchViewState extends State<ProductSearchView> {
+class _ProductSearchRouteState extends State<ProductSearchRoute> {
   late ProductService productService;
   late Future<List<Product>> futureProducts;
 
@@ -58,7 +58,7 @@ class _ProductSearchViewState extends State<ProductSearchView> {
               onProductTap: (product) {
                 Navigator.of(context).push(
                   MaterialPageRoute(
-                    builder: (context) => ProductDetailView(product: product, list: widget.list),
+                    builder: (context) => ProductDetailRoute(product: product, list: widget.list),
                   ),
                 );
               },

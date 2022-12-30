@@ -11,7 +11,7 @@ import 'package:inoventory_ui/models/inventory_list.dart';
 import 'package:inoventory_ui/models/product.dart';
 
 import 'package:inoventory_ui/services/product_service.dart';
-import 'package:inoventory_ui/views/product/product_search_view.dart';
+import 'package:inoventory_ui/routes/product/product_search_route.dart';
 
 class FakeProductService implements ProductService {
   final List<Product> _products = [
@@ -56,7 +56,7 @@ void main() {
 
     // Build the ProductSearchView widget
     await tester.pumpWidget(MaterialApp(
-      home: ProductSearchView(initialSearchValue: "3017620425035", productService: productService, list: list),
+      home: ProductSearchRoute(initialSearchValue: "3017620425035", productService: productService, list: list),
     ));
     await tester.pump();
 

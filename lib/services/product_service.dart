@@ -25,7 +25,8 @@ class ProductServiceImpl implements ProductService {
 
   @override
   Future<List<Product>> all() async {
-    final response = await http.get(Uri.parse("$backendUrl/api/v1/products"));
+    final response = await http.get(Uri.parse("$backendUrl/api/v1/products"))
+        .timeout(const Duration(seconds: 5));
     if (response.statusCode == 200) {
       // If the server did return a 200 OK response,
       // then parse the JSON.
@@ -47,7 +48,8 @@ class ProductServiceImpl implements ProductService {
 
   @override
   Future<List<Product>> search(String barcode) async {
-    final response = await http.get(Uri.parse("$backendUrl/api/v1/products?ean=$barcode"));
+    final response = await http.get(Uri.parse("$backendUrl/api/v1/products?ean=$barcode"))
+        .timeout(const Duration(seconds: 5));
     if (response.statusCode == 200) {
 
       String jsonStr = response.body;

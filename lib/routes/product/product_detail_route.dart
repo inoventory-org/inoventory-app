@@ -7,18 +7,18 @@ import '../../widgets/inoventory_appbar.dart';
 import '../../widgets/product/product_info.dart';
 import '../../models/product.dart';
 
-class ProductDetailView extends StatefulWidget {
+class ProductDetailRoute extends StatefulWidget {
   final Product product;
   final InventoryList list;
 
-  const ProductDetailView({Key? key, required this.product, required this.list
+  const ProductDetailRoute({Key? key, required this.product, required this.list
   }) : super(key: key);
 
   @override
-  State<ProductDetailView> createState() => _ProductDetailViewState();
+  State<ProductDetailRoute> createState() => _ProductDetailRouteState();
 }
 
-class _ProductDetailViewState extends State<ProductDetailView> {
+class _ProductDetailRouteState extends State<ProductDetailRoute> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(

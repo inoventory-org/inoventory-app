@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 
-class EditProductView extends StatefulWidget {
-  const EditProductView({Key? key}) : super(key: key);
+class EditProductRoute extends StatefulWidget {
+  const EditProductRoute({Key? key}) : super(key: key);
 
   @override
-  State<EditProductView> createState() => _EditProductViewState();
+  State<EditProductRoute> createState() => _EditProductRouteState();
 }
 
-class _EditProductViewState extends State<EditProductView> {
+class _EditProductRouteState extends State<EditProductRoute> {
   // Create a global key that uniquely identifies the Form widget
   // and allows validation of the form.
   //

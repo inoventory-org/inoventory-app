@@ -18,11 +18,13 @@ class ItemListWidget extends StatelessWidget {
                 title:
                     Text(item.productEan, style: const TextStyle(fontSize: 24)),
                 trailing: PopupMenuButton<TextButton>(
+                  onSelected: (TextButton button) {
+                    onDelete(item.listId, item.id);
+                  },
                   itemBuilder: (BuildContext subContext) =>
                   <PopupMenuEntry<TextButton>>[
-                    PopupMenuItem<TextButton>(
-                        child: const Text("Delete"),
-                        onTap: () => onDelete(item.listId, item.id)
+                    const PopupMenuItem<TextButton>(
+                        child: Text("Delete"),
                     )
                   ],
                 ),

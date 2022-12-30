@@ -7,7 +7,7 @@
 
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:inoventory_ui/views/InoventoryApp.dart';
+import 'package:inoventory_ui/routes/InoventoryApp.dart';
 
 void main() {
   testWidgets('MyWidget has a title and message', (tester) async {

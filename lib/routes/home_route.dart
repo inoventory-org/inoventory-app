@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:inoventory_ui/views/list/inventory_list_view.dart';
+import 'package:inoventory_ui/routes/list/inventory_list_route.dart';
 import 'package:inoventory_ui/widgets/ContainerWithBoxDecoration.dart';
 import 'package:inoventory_ui/widgets/inoventory_appbar.dart';
 
-class InoventoryHome extends StatelessWidget {
-  const InoventoryHome({super.key});
+class InoventoryHomeRoute extends StatelessWidget {
+  const InoventoryHomeRoute({super.key});
 
   // This widget is the root of your application.
   @override
@@ -23,7 +23,7 @@ class InoventoryHome extends StatelessWidget {
                   )),
               onPressed: () {
                 Navigator.of(context).push(MaterialPageRoute(
-                    builder: (context) => const InventoryListWidget()));
+                    builder: (context) => const InventoryListRoute()));
               }),
         );
   }

@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:inoventory_ui/config/constants.dart';
 import 'package:inoventory_ui/config/themes.dart';
-import 'package:inoventory_ui/views/home_view.dart';
+import 'package:inoventory_ui/routes/home_route.dart';
 
 class InoventoryApp extends StatelessWidget {
   final String title;
@@ -16,7 +16,7 @@ class InoventoryApp extends StatelessWidget {
     return MaterialApp(
       title: title,
       theme: Constants.darkMode ? darkTheme : lightTheme, // themeDataLight,
-      home: const InoventoryHome()
+      home: const InoventoryHomeRoute()
     );
   }
 }

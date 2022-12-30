@@ -5,7 +5,7 @@ import 'package:inoventory_ui/models/inventory_list_item.dart';
 import 'package:inoventory_ui/services/inventory_list_service.dart';
 import 'package:inoventory_ui/services/item_service.dart';
 import 'package:inoventory_ui/services/product_service.dart';
-import 'package:inoventory_ui/views/product/product_search_view.dart';
+import 'package:inoventory_ui/routes/product/product_search_route.dart';
 import 'package:inoventory_ui/widgets/MyFutureBuilder.dart';
 import 'package:inoventory_ui/widgets/list/item_list_widget.dart';
 
@@ -14,17 +14,17 @@ import '../../services/barcode_scanner.dart';
 import '../../widgets/expandable_floating_action_button.dart';
 import '../../widgets/inoventory_appbar.dart';
 
-class InventoryListDetailWidget extends StatefulWidget {
+class InventoryListDetailRoute extends StatefulWidget {
   final InventoryList list;
 
-  const InventoryListDetailWidget({super.key, required this.list});
+  const InventoryListDetailRoute({super.key, required this.list});
 
   @override
-  State<InventoryListDetailWidget> createState() =>
-      _InventoryListDetailWidgetState();
+  State<InventoryListDetailRoute> createState() =>
+      _InventoryListDetailRouteState();
 }
 
-class _InventoryListDetailWidgetState extends State<InventoryListDetailWidget> {
+class _InventoryListDetailRouteState extends State<InventoryListDetailRoute> {
   final BarcodeScanner _barcodeScanner = BarcodeScanner();
   final ProductService productService = Dependencies.productService;
   final InventoryListServiceMock listService = InventoryListServiceMock();
@@ -46,9 +46,14 @@ class _InventoryListDetailWidgetState extends State<InventoryListDetailWidget> {
     });
   }
 
-  void deleteItem(listId, itemId) async {
+  void deleteItem(listId, itemId) {
+    print("Deleting...");
   itemService.delete(listId, itemId);
-  await _refreshList();
+  setState(() {
+    print("old future: $futureItems");
+    futureItems = itemService.all(widget.list.id);
+    print("New future: $futureItems");
+  });
 }
 
 Future<void> _refreshList() async {
@@ -62,7 +67,7 @@ Future<void> _refreshList() async {
         context,
         MaterialPageRoute(
             builder: (context) =>
-                ProductSearchView(productService: productService,
+                ProductSearchRoute(productService: productService,
                     initialSearchValue: initialSearchValue,
                     list: widget.list)
         )
@@ -92,7 +97,7 @@ Future<void> _refreshList() async {
             barcodeScanResult = await _barcodeScanner.scanBarcodeNormal();
             navigator.push(
                 MaterialPageRoute(
-                    builder: (context) => ProductSearchView(initialSearchValue: barcodeScanResult,
+                    builder: (context) => ProductSearchRoute(initialSearchValue: barcodeScanResult,
                         productService: productService,
                         list: widget.list))
             ).then((value) => _refreshList());
