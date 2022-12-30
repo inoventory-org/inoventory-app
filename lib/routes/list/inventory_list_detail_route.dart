@@ -8,11 +8,9 @@ import 'package:inoventory_ui/services/product_service.dart';
 import 'package:inoventory_ui/routes/product/product_search_route.dart';
 import 'package:inoventory_ui/widgets/MyFutureBuilder.dart';
 import 'package:inoventory_ui/widgets/list/item_list_widget.dart';
-
-
-import '../../services/barcode_scanner.dart';
-import '../../widgets/expandable_floating_action_button.dart';
-import '../../widgets/inoventory_appbar.dart';
+import 'package:inoventory_ui/services/barcode_scanner.dart';
+import 'package:inoventory_ui/widgets/expandable_floating_action_button.dart';
+import 'package:inoventory_ui/widgets/inoventory_appbar.dart';
 
 class InventoryListDetailRoute extends StatefulWidget {
   final InventoryList list;
