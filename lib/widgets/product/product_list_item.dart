@@ -34,10 +34,8 @@ class ProductListItem extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(product.name, style: const TextStyle(fontSize: 24)),
-                if (product.ean != null) ...[
-                  const SizedBox(height: 5),
-                  Text(product.ean!, style: const TextStyle(fontSize: 16)),
-                ],
+                const SizedBox(height: 5),
+                Text(product.ean, style: const TextStyle(fontSize: 16)),
               ],
             ),
             trailing: const Icon(Icons.more_vert),

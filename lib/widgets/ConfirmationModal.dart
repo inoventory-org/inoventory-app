@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class ConfirmationModal extends StatelessWidget {
   final String title;
   final String message;
-  final void Function()? onConfirm;
+  final Future<void> Function()? onConfirm;
   final void Function()? onCancel;
 
   const ConfirmationModal(
@@ -28,11 +28,20 @@ class ConfirmationModal extends StatelessWidget {
           },
         ),
         TextButton(
-          child: const Text('Confirm'),
-          onPressed: () {
-            onConfirm?.call();
-            Navigator.of(context).pop();
+          style: ButtonStyle(
+              backgroundColor: MaterialStateProperty.all<Color>(
+                  Theme.of(context).primaryColor),
+              foregroundColor: MaterialStateProperty.all<Color>(
+                  Theme.of(context).textTheme.bodyText1?.color ??
+                      Colors.black)),
+          onPressed: () async {
+            final navigator = Navigator.of(context);
+            if (onConfirm != null) {
+              await onConfirm!();
+            }
+            navigator.pop();
           },
+          child: const Text('Confirm'),
         ),
       ],
     );

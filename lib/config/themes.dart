@@ -46,6 +46,13 @@ final ThemeData lightTheme = ThemeData(
       bodyText1: TextStyle(color: Colors.black),
       bodyText2: TextStyle(color: Colors.black),
   ),
+  textButtonTheme: TextButtonThemeData(
+      style: ButtonStyle(
+        backgroundColor: MaterialStateProperty.all<Color>(Colors.amber),
+        foregroundColor: MaterialStateProperty.all<Color>(Colors.black),
+        // textStyle: MaterialStateProperty.all<TextStyle>(const TextStyle(color: Colors.white)),
+      )
+  ),
   buttonTheme: const ButtonThemeData(
     textTheme: ButtonTextTheme.normal,
     minWidth: 88,
@@ -105,6 +112,13 @@ final ThemeData darkTheme = ThemeData(
   indicatorColor: const Color( 0xff64ffda ),
   hintColor: const Color( 0x80ffffff ),
   errorColor: const Color( 0xffd32f2f ),
+  textButtonTheme: TextButtonThemeData(
+    style: ButtonStyle(
+      backgroundColor: MaterialStateProperty.all<Color>(Colors.orange),
+      foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
+      // textStyle: MaterialStateProperty.all<TextStyle>(const TextStyle(color: Colors.white)),
+    )
+  ),
   buttonTheme: const ButtonThemeData(
     textTheme: ButtonTextTheme.normal,
     minWidth: 88,

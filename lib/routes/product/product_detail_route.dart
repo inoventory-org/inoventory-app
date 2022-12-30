@@ -31,7 +31,6 @@ class _ProductDetailRouteState extends State<ProductDetailRoute> {
               InoventoryNetworkImage(url: widget.product.imageUrl!),
               ProductInfo(product: widget.product),
               AddToListButton(onPressed: () {
-                print("Add ${widget.product.name} to list that was used to access this view. The list context is needed.");
                 Navigator.of(context).push(
                   MaterialPageRoute(builder: (context) {
                     return AddProductView(widget.product, widget.list);

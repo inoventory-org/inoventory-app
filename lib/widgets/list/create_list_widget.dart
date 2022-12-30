@@ -14,15 +14,15 @@ class _CreateListWidgetState extends State<CreateListWidget> {
   final _nameController = TextEditingController();
   final _listService = Dependencies.inoventoryListService;
 
-  void _createList() {
+  void _createList() async {
     if (_formKey.currentState == null) {
       return;
     }
     if (_formKey.currentState!.validate()) {
-      // POST the list to the backend
+      final navigator = Navigator.of(context);
       final listName = _nameController.text;
-      _listService.add(InventoryList(0, listName));
-      Navigator.of(context).pop();
+      await _listService.add(InventoryList(0, listName));
+      navigator.pop();
     }
   }
 

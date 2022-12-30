@@ -1,29 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:inoventory_ui/models/inventory_list.dart';
 import 'package:inoventory_ui/routes/list/inventory_list_detail_route.dart';
-import 'package:inoventory_ui/services/inventory_list_service.dart';
-import 'package:inoventory_ui/widgets/ConfirmationModal.dart';
 
-class ListsWidget extends StatelessWidget {
+
+class MyInventoryListsWidget extends StatelessWidget {
   final List<InventoryList> lists;
-  final InventoryListService listService;
+  final Future<void> Function(int listId, BuildContext context) deleteList;
 
-  const ListsWidget({Key? key, required this.lists, required this.listService})
+  const MyInventoryListsWidget({Key? key, required this.lists, required this.deleteList})
       : super(key: key);
 
-  Future deleteList(int listId, BuildContext context) {
-    return showDialog(
-        context: context,
-        builder: (context) {
-          return ConfirmationModal(
-              title: "Delete List?",
-              message:
-              "Are you sure you want to delete the list?",
-              onConfirm: () async {
-                await listService.delete(listId);
-              });
-        });
-  }
 
   @override
   Widget build(BuildContext context) {
