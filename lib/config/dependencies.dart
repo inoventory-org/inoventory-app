@@ -1,4 +1,5 @@
 import 'package:http/http.dart';
+import 'package:inoventory_ui/services/auth_service.dart';
 
 
 import 'package:inoventory_ui/services/inventory_list_service.dart';
@@ -12,7 +13,5 @@ abstract class Dependencies {
   static InventoryListService inoventoryListService = InventoryListServiceImpl(client: httpClient);
   static ProductService productService = ProductServiceImpl();
   static ItemService itemService = ItemServiceImpl();
-
-
-
+  static AuthService authService = AuthService(httpClient);
 }
