@@ -2,6 +2,7 @@
     package="com.railabouni.inoventory_ui">
     <uses-permission android:name="android.permission.INTERNET" />
     <application
+        android:usesCleartextTraffic="true"
         android:label="inoventory_ui"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
