@@ -1,10 +1,11 @@
+import 'package:dio/dio.dart';
 import 'package:flutter_appauth/flutter_appauth.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:inoventory_ui/config/constants.dart';
 import 'package:inoventory_ui/models/auth_response.dart';
 import 'package:openid_client/openid_client_io.dart' as oidc;
 import 'package:url_launcher/url_launcher.dart';
-import 'package:http/http.dart' as http;
+
 
 abstract class AuthService {
   Future<AuthState> login();
@@ -14,11 +15,8 @@ abstract class AuthService {
 class FlutterAppAuthService implements AuthService {
   final FlutterAppAuth appAuth = const FlutterAppAuth();
   final FlutterSecureStorage secureStorage = const FlutterSecureStorage();
-
-  final http.Client client;
-  final timeoutDuration = const Duration(seconds: 10);
-
-  FlutterAppAuthService(this.client);
+  final Dio dio;
+  FlutterAppAuthService(this.dio);
 
   Future<AuthState?> refreshLogin() async {
     final String? refreshToken = await secureStorage.read(key: 'refresh_token');
@@ -72,27 +70,26 @@ class FlutterAppAuthService implements AuthService {
 
   @override
   Future<void> logout() async {
-    final logoutUrl = Uri.parse(Constants.keycloakConf.endSessionUrl);
     final accessToken = await secureStorage.read(key: "access_token");
     final refreshToken = await secureStorage.read(key: "refresh_token");
     final body = {
       'client_id': Constants.keycloakConf.clientId,
       'refresh_token': refreshToken,
     };
-    await client.post(logoutUrl, headers: {
+    await dio.post(Constants.keycloakConf.endSessionUrl, options: Options(headers: {
       "Content-Type": "application/x-www-form-urlencoded",
       "Authorization": "Bearer $accessToken",
-    }, body: body);
+    }), data: body);
     await secureStorage.deleteAll();
   }
 }
 
 class OIDCAuthService implements AuthService {
   final FlutterSecureStorage secureStorage = const FlutterSecureStorage();
-  final http.Client client;
   final timeoutDuration = const Duration(seconds: 10);
+  final Dio dio;
 
-  OIDCAuthService(this.client);
+  OIDCAuthService(this.dio);
 
   @override
   Future<AuthState> login() async {
@@ -145,7 +142,6 @@ class OIDCAuthService implements AuthService {
 
   @override
   Future<void> logout() async {
-    final logoutUrl = Uri.parse(Constants.keycloakConf.endSessionUrl);
     final accessToken = await secureStorage.read(key: "access_token");
     final refreshToken = await secureStorage.read(key: "refresh_token");
     final body = {
@@ -153,10 +149,10 @@ class OIDCAuthService implements AuthService {
       'refresh_token': refreshToken,
     };
 
-    await client.post(logoutUrl, headers: {
+    await dio.post(Constants.keycloakConf.endSessionUrl, options: Options(headers: {
       "Content-Type": "application/x-www-form-urlencoded",
       "Authorization": "Bearer $accessToken",
-    }, body: body);
+    }), data: body);
     await secureStorage.deleteAll();
   }
 }

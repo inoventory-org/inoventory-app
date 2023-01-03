@@ -13,12 +13,13 @@ dependencies:
     sdk: flutter
   cupertino_icons: ^1.0.2
   flutter_barcode_scanner: ^2.0.0
-  http: ^0.13.5
+  dio: ^4.0.6
   intl: ^0.17.0
   flutter_appauth: ^4.2.1
   openid_client: ^0.4.7
   flutter_secure_storage: ^7.0.1
   url_launcher: ^6.1.7
+
 
 
 dev_dependencies:

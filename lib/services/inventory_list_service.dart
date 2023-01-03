@@ -1,10 +1,9 @@
 import 'dart:async';
 
+import 'package:dio/dio.dart';
 import 'package:inoventory_ui/models/inventory_list.dart';
 import 'package:inoventory_ui/config/constants.dart';
 import 'dart:io';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'package:inoventory_ui/models/inventory_list_item.dart';
 
 abstract class InventoryListService {
@@ -23,55 +22,57 @@ abstract class InventoryListService {
 
 class InventoryListServiceImpl extends InventoryListService {
 
-  final http.Client client;
   final timeoutDuration = const Duration(seconds: 10);
+  final Dio dio;
 
-  InventoryListServiceImpl({required this.client});
+  InventoryListServiceImpl(this.dio);
 
   @override
   Future<InventoryList> add(InventoryList list) async {
-    final response = await http.post(Uri.parse(InventoryListService.listUrl),
-        headers: {HttpHeaders.contentTypeHeader: "application/json"},
-        body: jsonEncode(<String, String>{"name": list.name})
-    ).timeout(timeoutDuration);
+    final response = await dio.post(InventoryListService.listUrl,
+        options: Options(headers: {HttpHeaders.contentTypeHeader: "application/json"}),
+        data: {"name": list.name})
+    .timeout(timeoutDuration);
 
     if (response.statusCode != HttpStatus.created) {
       throw Exception("Failed to create list");
     }
 
-    return InventoryList.fromJson(jsonDecode(response.body));
+    return InventoryList.fromJson(response.data);
   }
 
   @override
   Future<List<InventoryList>> all() async {
-    final response = await http.get(Uri.parse(InventoryListService.listUrl))
+    final response = await dio.get(InventoryListService.listUrl)
         .timeout(timeoutDuration);
 
     if (response.statusCode != HttpStatus.ok) {
       throw Exception("Failed to fetch lists");
     }
 
-    Iterable listsJson = jsonDecode(response.body);
+    print("response: $response");
+
+    Iterable listsJson = response.data;
     return listsJson.map((json) => InventoryList.fromJson(json)).toList();
   }
 
   @override
   Future<InventoryList> update(int listId, InventoryList updatedList) async {
-    final response = await http.put(Uri.parse(getSpecificListUrl(listId)),
-        headers: {HttpHeaders.contentTypeHeader: "application/json"},
-        body: jsonEncode(<String, String>{"name": updatedList.name})
+    final response = await dio.put(getSpecificListUrl(listId),
+        options: Options(headers: {HttpHeaders.contentTypeHeader: "application/json"}),
+        data: <String, String>{"name": updatedList.name}
     ).timeout(timeoutDuration);
 
     if (response.statusCode != HttpStatus.ok) {
       throw Exception("Failed to update list");
     }
 
-    return InventoryList.fromJson(jsonDecode(response.body));
+    return InventoryList.fromJson(response.data);
   }
 
   @override
   Future<void> delete(int listId) async {
-    final response = await http.delete(Uri.parse(getSpecificListUrl(listId)))
+    final response = await dio.delete(getSpecificListUrl(listId))
         .timeout(timeoutDuration);
 
     if (response.statusCode != HttpStatus.ok) {
