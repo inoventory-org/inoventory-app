@@ -3,10 +3,12 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 
 class KeycloakConf {
   static const baseUrl = "http://10.100.255.76:8081";
-  final discoveryUrl = "$baseUrl/realms/inoventory/.well-known/openid-configuration";
+  static const realm = "inoventory";
+  static const baseUrlWithRealm = "$baseUrl/realms/$realm";
+  final discoveryUrl = "$baseUrlWithRealm/.well-known/openid-configuration";
+  final endSessionUrl = "$baseUrlWithRealm/protocol/openid-connect/logout";
   final clientId = "app";
   final redirectUrl = kIsWeb ? "http://localhost" : "com.railabouni.inoventory://auth";
-  // final redirectUrl = "http://localhost";
 }
 
 abstract class Constants {

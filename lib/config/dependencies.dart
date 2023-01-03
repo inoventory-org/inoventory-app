@@ -12,7 +12,7 @@ abstract class Dependencies {
   static InventoryListService inoventoryListService = InventoryListServiceImpl(client: httpClient);
   static ProductService productService = ProductServiceImpl();
   static ItemService itemService = ItemServiceImpl();
-  // static FlutterAppAuthService authService = FlutterAppAuthService();
-  static AuthService authService = OIDCAuthService();
+  // static FlutterAppAuthService authService = FlutterAppAuthService(httpClient);
+  static AuthService authService = OIDCAuthService(httpClient);
 
 }

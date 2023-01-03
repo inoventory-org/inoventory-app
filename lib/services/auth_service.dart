@@ -4,23 +4,25 @@ import 'package:inoventory_ui/config/constants.dart';
 import 'package:inoventory_ui/models/auth_response.dart';
 import 'package:openid_client/openid_client_io.dart' as oidc;
 import 'package:url_launcher/url_launcher.dart';
+import 'package:http/http.dart' as http;
 
 abstract class AuthService {
   Future<AuthState> login();
-  Future<bool> logout();
+  Future<void> logout();
 }
 
 class FlutterAppAuthService implements AuthService {
   final FlutterAppAuth appAuth = const FlutterAppAuth();
   final FlutterSecureStorage secureStorage = const FlutterSecureStorage();
 
-  FlutterAppAuthService();
+  final http.Client client;
+  final timeoutDuration = const Duration(seconds: 10);
+
+  FlutterAppAuthService(this.client);
 
   Future<AuthState?> refreshLogin() async {
-    print("Refershing Login...");
     final String? refreshToken = await secureStorage.read(key: 'refresh_token');
     if (refreshToken == null) return null;
-    print("Retrieved refreshToken");
 
     final TokenResponse? result = await appAuth.token(TokenRequest(
         Constants.keycloakConf.clientId, Constants.keycloakConf.redirectUrl,
@@ -52,13 +54,14 @@ class FlutterAppAuthService implements AuthService {
         ),
       );
 
-      print("Refresh Token: ${result?.refreshToken}");
-      await secureStorage.write(
-          key: 'refresh_token', value: result?.refreshToken);
+      if (result == null) {return AuthState.empty();}
 
-      return (result != null)
-          ? AuthState.fromTokenResponse(result)
-          : AuthState.empty();
+      await secureStorage.write(
+          key: 'refresh_token', value: result.refreshToken);
+      await secureStorage.write(
+          key: 'access_token', value: result.accessToken);
+
+      return AuthState.fromTokenResponse(result);
     } catch (e, s) {
       print('login error: $e - stack: $s');
       final response = AuthState.empty();
@@ -68,26 +71,36 @@ class FlutterAppAuthService implements AuthService {
   }
 
   @override
-  Future<bool> logout() async {
-    await secureStorage.delete(key: 'refresh_token');
-    return true;
+  Future<void> logout() async {
+    final logoutUrl = Uri.parse(Constants.keycloakConf.endSessionUrl);
+    final accessToken = await secureStorage.read(key: "access_token");
+    final refreshToken = await secureStorage.read(key: "refresh_token");
+    final body = {
+      'client_id': Constants.keycloakConf.clientId,
+      'refresh_token': refreshToken,
+    };
+    await client.post(logoutUrl, headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+      "Authorization": "Bearer $accessToken",
+    }, body: body);
+    await secureStorage.deleteAll();
   }
 }
 
 class OIDCAuthService implements AuthService {
   final FlutterSecureStorage secureStorage = const FlutterSecureStorage();
+  final http.Client client;
+  final timeoutDuration = const Duration(seconds: 10);
+
+  OIDCAuthService(this.client);
 
   @override
   Future<AuthState> login() async {
-    // create the client
     final issuer = await oidc.Issuer.discover(
         Uri.parse("${KeycloakConf.baseUrl}/realms/inoventory/"));
     final client = oidc.Client(issuer, Constants.keycloakConf.clientId);
-    print("Created client");
 
-    // create a function to open a browser with an url
     urlLauncher(String url) async {
-      print("URL to launch: $url");
       if (await canLaunchUrl(Uri.parse(url))) {
         await launchUrl(Uri.parse(url), mode: LaunchMode.inAppWebView);
       } else {
@@ -95,28 +108,31 @@ class OIDCAuthService implements AuthService {
       }
     }
 
-    // create an authenticator
+    /** This authenticator automatically uses the recommended PKCE, which
+     * does not require speicying a redirect url.
+     * The authenticator automatically starts a local HTTP server and redirects
+     * to http:/localhost:<port>/ -> This URL must be configured as a valid
+     * redirect URL at the IdP.
+     * See more: https://stackoverflow.com/questions/60814356/authenticate-flutter-app-with-keycloak-and-openid-client
+     */
     final authenticator = oidc.Authenticator(client,
         port: 4000,
         urlLancher: urlLauncher,
-        redirectUri: Uri.parse("http://localhost:4000/")
-      // redirectUri: Uri.parse(Constants.keycloakConf.redirectUrl)
     );
-    print("Created authenticator");
 
     // starts the authentication
     final creds = await authenticator.authorize();
-    print("Authenticated");
 
     // close the webview when finished
     closeInAppWebView();
+
     oidc.TokenResponse tokenResponse = await creds.getTokenResponse();
     final isLoggedIn = (tokenResponse.accessToken != null);
-    print("Access token: ${tokenResponse.accessToken}");
 
     await secureStorage.write(
+        key: 'access_token', value: tokenResponse.accessToken);
+    await secureStorage.write(
         key: 'refresh_token', value: tokenResponse.refreshToken);
-    print("Persisted refresh token");
 
     // return the user info
     return AuthState.partial(
@@ -128,8 +144,19 @@ class OIDCAuthService implements AuthService {
   }
 
   @override
-  Future<bool> logout() async {
-    await secureStorage.delete(key: 'refresh_token');
-    return true;
+  Future<void> logout() async {
+    final logoutUrl = Uri.parse(Constants.keycloakConf.endSessionUrl);
+    final accessToken = await secureStorage.read(key: "access_token");
+    final refreshToken = await secureStorage.read(key: "refresh_token");
+    final body = {
+      'client_id': Constants.keycloakConf.clientId,
+      'refresh_token': refreshToken,
+    };
+
+    await client.post(logoutUrl, headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+      "Authorization": "Bearer $accessToken",
+    }, body: body);
+    await secureStorage.deleteAll();
   }
 }
