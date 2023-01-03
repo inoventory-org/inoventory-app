@@ -54,7 +54,7 @@ class _ProductSearchRouteState extends State<ProductSearchRoute> {
             return const Center(child: CircularProgressIndicator());
           } else if (snapshot.hasData) {
             return ProductListView(
-              products: snapshot.data,
+              products: snapshot.data ?? [],
               onProductTap: (product) {
                 Navigator.of(context).push(
                   MaterialPageRoute(

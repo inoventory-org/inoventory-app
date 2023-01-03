@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:inoventory_ui/config/dependencies.dart';
 import 'package:inoventory_ui/models/inventory_list.dart';
 import 'package:inoventory_ui/widgets/ConfirmationModal.dart';
+import 'package:inoventory_ui/widgets/inoventory_appbar.dart';
 import 'package:inoventory_ui/widgets/list/create_list_widget.dart';
 import 'package:inoventory_ui/widgets/list/edit_list_widget.dart';
 import 'package:inoventory_ui/widgets/list/lists_widget.dart';
 
 class InventoryListRoute extends StatefulWidget {
-  const InventoryListRoute({Key? key}) : super(key: key);
+  final Future<void> Function() logout;
+  const InventoryListRoute({Key? key, required this.logout}) : super(key: key);
 
   @override
   State<InventoryListRoute> createState() => _InventoryListRouteState();
@@ -27,14 +29,12 @@ class _InventoryListRouteState extends State<InventoryListRoute> {
     final navigator = Navigator.of(context);
     navigator
         .push(MaterialPageRoute(
-        builder: (context) => EditListWidget(oldList: list)))
+            builder: (context) => EditListWidget(oldList: list)))
         .whenComplete(_refreshList);
     await _refreshList();
   }
 
-
-
-    Future<void> onDelete(int listId, BuildContext context) {
+  Future<void> onDelete(int listId, BuildContext context) {
     return showDialog(
         context: context,
         builder: (context) {
@@ -48,8 +48,6 @@ class _InventoryListRouteState extends State<InventoryListRoute> {
         });
   }
 
-
-
   Future<void> _refreshList() async {
     setState(() {
       futureLists = listService.all();
@@ -59,7 +57,29 @@ class _InventoryListRouteState extends State<InventoryListRoute> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("My Lists")),
+      appBar: InoventoryAppBar(), //AppBar(title: const Text("My Lists")),
+      drawer: Drawer(
+          child: ListView(padding: EdgeInsets.zero, children: [
+        DrawerHeader(
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.primary,
+          ),
+          child: const Spacer(),
+        ),
+        ListTile(
+          title: const Text('Logout'),
+          onTap: () async {
+            final navigator = Navigator.of(context);
+            final scaffoldMessenger = ScaffoldMessenger.of(context);
+            await widget.logout();
+            scaffoldMessenger.showSnackBar(const SnackBar(
+                content: Text("Successfully logged out",
+                    style: TextStyle(color: Colors.white)),
+                backgroundColor: Colors.green));
+            navigator.pop();
+          },
+        )
+      ])),
       body: RefreshIndicator(
         onRefresh: _refreshList,
         backgroundColor: Theme.of(context).colorScheme.secondary,
@@ -71,7 +91,8 @@ class _InventoryListRouteState extends State<InventoryListRoute> {
                 return Center(child: Text('${snapshot.error}'));
               }
               if (snapshot.hasData) {
-                return MyInventoryListsWidget(lists: snapshot.data!, onDelete: onDelete, onEdit: onEdit);
+                return MyInventoryListsWidget(
+                    lists: snapshot.data!, onDelete: onDelete, onEdit: onEdit);
               }
             }
             return const Center(child: CircularProgressIndicator());
@@ -91,7 +112,6 @@ class _InventoryListRouteState extends State<InventoryListRoute> {
     );
   }
 }
-
 
 // body: MyFutureBuilder<List<InventoryList>>(
 // future: futureLists,

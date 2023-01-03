@@ -5,9 +5,9 @@ import 'package:inoventory_ui/widgets/product/no_products_found.dart';
 import 'package:inoventory_ui/widgets/product/product_list_item.dart';
 
 class ProductListView extends StatefulWidget {
-  final List<Product>? products;
+  final List<Product> products;
   final void Function(Product product)? onProductTap;
-  const ProductListView({Key? key, this.products, this.onProductTap})
+  const ProductListView({Key? key, required this.products, this.onProductTap})
       : super(key: key);
 
   @override
@@ -17,17 +17,17 @@ class ProductListView extends StatefulWidget {
 class _ProductListViewState extends State<ProductListView> {
   @override
   Widget build(BuildContext context) {
-    if (widget.products!.isEmpty) {
+    if (widget.products.isEmpty) {
       return const CentralizedElementWithPlusButton(nextWidget: EditProductRoute());
     }
     return ListView(
         children: ListTile.divideTiles(
             context: context,
-            tiles: widget.products!.map((product) {
+            tiles: widget.products.map((product) {
               return ProductListItem(
                   product: product,
                   onTap: () {
-                    widget.onProductTap!(product);
+                    widget.onProductTap?.call(product);
                   });
             })).toList());
   }

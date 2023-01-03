@@ -1,8 +1,11 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
+
+
 class KeycloakConf {
   static const baseUrl = "http://10.100.255.76:8081";
   final discoveryUrl = "$baseUrl/realms/inoventory/.well-known/openid-configuration";
   final clientId = "app";
-  final redirectUrl = "com.railabouni.inoventory://auth";
+  final redirectUrl = kIsWeb ? "http://localhost" : "com.railabouni.inoventory://auth";
   // final redirectUrl = "http://localhost";
 }
 

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:inoventory_ui/config/dependencies.dart';
 import 'package:inoventory_ui/models/inventory_list.dart';
 import 'package:inoventory_ui/models/inventory_list_item.dart';
-import 'package:inoventory_ui/services/inventory_list_service.dart';
 import 'package:inoventory_ui/services/item_service.dart';
 import 'package:inoventory_ui/services/product_service.dart';
 import 'package:inoventory_ui/routes/product/product_search_route.dart';
@@ -24,7 +23,6 @@ class InventoryListDetailRoute extends StatefulWidget {
 class _InventoryListDetailRouteState extends State<InventoryListDetailRoute> {
   final BarcodeScanner _barcodeScanner = BarcodeScanner();
   final ProductService productService = Dependencies.productService;
-  final InventoryListServiceMock listService = InventoryListServiceMock();
   final ItemService itemService = Dependencies.itemService;
 
   String barcodeScanResult = "";
