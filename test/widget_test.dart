@@ -8,7 +8,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:inoventory_ui/routes/list/inventory_list_route.dart';
+import 'package:inoventory_ui/inventory/lists/inventory_list_route.dart';
 
 void main() {
   testWidgets('MyWidget has a title and message', (tester) async {

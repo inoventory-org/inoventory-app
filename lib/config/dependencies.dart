@@ -1,10 +1,10 @@
-import 'package:inoventory_ui/services/auth_service.dart';
+import 'package:inoventory_ui/auth/auth_service.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-import 'package:inoventory_ui/services/inventory_list_service.dart';
-import 'package:inoventory_ui/services/item_service.dart';
-import 'package:inoventory_ui/services/product_service.dart';
+import 'package:inoventory_ui/inventory/lists/inventory_list_service.dart';
+import 'package:inoventory_ui/inventory/items/item_service.dart';
+import 'package:inoventory_ui/products/product_service.dart';
 
 
 abstract class Dependencies {

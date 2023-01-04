@@ -7,11 +7,11 @@
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/material.dart';
-import 'package:inoventory_ui/models/inventory_list.dart';
-import 'package:inoventory_ui/models/product.dart';
+import 'package:inoventory_ui/inventory/lists/inventory_list.dart';
+import 'package:inoventory_ui/products/product_model.dart';
 
-import 'package:inoventory_ui/services/product_service.dart';
-import 'package:inoventory_ui/routes/product/product_search_route.dart';
+import 'package:inoventory_ui/products/product_service.dart';
+import 'package:inoventory_ui/products/routes/product_search_route.dart';
 
 class FakeProductService implements ProductService {
   final List<Product> _products = [
