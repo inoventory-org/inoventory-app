@@ -17,4 +17,5 @@ abstract class Constants {
   // static const inoventoryBackendUrl = "http://ec2-18-157-81-199.eu-central-1.compute.amazonaws.com";
   static const darkMode = true;
   static final keycloakConf = KeycloakConf();
+  static const accessTokenRefreshIntervalSeconds = 60;
 }

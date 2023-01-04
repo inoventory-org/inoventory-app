@@ -1,4 +1,4 @@
-import 'package:flutter_appauth/flutter_appauth.dart';
+// import 'package:flutter_appauth/flutter_appauth.dart';
 
 class AuthState {
   bool isLoggedIn;
@@ -35,19 +35,19 @@ class AuthState {
       this.errorMessage});
 
 
-  factory AuthState.fromTokenResponse(TokenResponse response) {
-    final isLoggedIn = (response.accessToken != null);
-    return AuthState(
-        isLoggedIn,
-        response.accessToken,
-        response.refreshToken,
-        response.accessTokenExpirationDateTime,
-        response.idToken,
-        response.tokenType,
-        response.scopes,
-        response.tokenAdditionalParameters,
-        null);
-  }
+  // factory AuthState.fromTokenResponse(TokenResponse response) {
+  //   final isLoggedIn = (response.accessToken != null);
+  //   return AuthState(
+  //       isLoggedIn,
+  //       response.accessToken,
+  //       response.refreshToken,
+  //       response.accessTokenExpirationDateTime,
+  //       response.idToken,
+  //       response.tokenType,
+  //       response.scopes,
+  //       response.tokenAdditionalParameters,
+  //       null);
+  // }
 
   factory AuthState.empty() {
     return AuthState(false, null, null, null, null, null, null, null, null);

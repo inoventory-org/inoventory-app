@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:inoventory_ui/config/constants.dart';
 import 'package:inoventory_ui/config/dependencies.dart';
-import 'package:inoventory_ui/models/auth_response.dart';
 import 'package:inoventory_ui/routes/list/inventory_list_route.dart';
 import 'package:inoventory_ui/routes/login_route.dart';
 import 'package:inoventory_ui/services/auth_service.dart';
@@ -18,54 +21,58 @@ class InoventoryHomeRoute extends StatefulWidget {
 
 class _InoventoryHomeRouteState extends State<InoventoryHomeRoute> {
   final AuthService authService = Dependencies.authService;
-  late Future<AuthState> futureAuthState;
+  final FlutterSecureStorage secureStorage = Dependencies.secureStorage;
+  final dio = Dependencies.dio;
+  late Future<bool> futureLoginState;
+  final accessTokenRefreshIntervalSeconds = Constants.accessTokenRefreshIntervalSeconds;
+
 
   @override
   void initState() {
     super.initState();
-    futureAuthState = authService.login();
+    futureLoginState = authService.login();
+    setUpHttpInterceptors();
+    Timer.periodic(Duration(seconds: accessTokenRefreshIntervalSeconds), (Timer timer) async {
+      await authService.login();
+    });
   }
 
   Future<void> login() async {
     setState(() {
-      futureAuthState = authService.login();
+      futureLoginState = authService.login();
     });
   }
 
   Future<void> logout() async {
     authService.logout();
     setState(() {
-      futureAuthState = Future.value(AuthState.empty());
+      futureLoginState = Future.value(false);
     });
   }
 
-  void updateAccessToken(String? accessToken) {
-    if (accessToken == null) {
-      developer.log("Access token is null");
-      return;
-    }
-    final dio = Dependencies.dio;
+  void setUpHttpInterceptors()  {
     dio.interceptors.add(InterceptorsWrapper(
-        onRequest:(options, handler){
-          // Do something before request is sent
+        onRequest:(options, handler) async {
+          final accessToken = await secureStorage.read(key: "access_token");
+          if (accessToken == null) {
+            developer.log("Access token is null");
+            return;
+          }
           options.headers.addAll({"Authorization": "Bearer $accessToken"});
-          return handler.next(options); //continue
-          // If you want to resolve the request with some custom data，
-          // you can resolve a `Response` object eg: `handler.resolve(response)`.
-          // If you want to reject the request with a error message,
-          // you can reject a `DioError` object eg: `handler.reject(dioError)`
+          return handler.next(options);
         },
         onResponse:(response,handler) {
-          // Do something with response data
-          return handler.next(response); // continue
-          // If you want to reject the request with a error message,
-          // you can reject a `DioError` object eg: `handler.reject(dioError)`
+          return handler.next(response);
         },
-        onError: (DioError e, handler) {
-          // Do something with response error
-          return  handler.next(e);//continue
-          // If you want to resolve the request with some custom data，
-          // you can resolve a `Response` object eg: `handler.resolve(response)`.
+        onError: (DioError e, handler) async {
+          if (e.response?.statusCode == 401) {
+              if (await secureStorage.containsKey(key: "refresh_token")) {
+                setState(() {
+                  futureLoginState = authService.login();
+                });
+              }
+          }
+          return handler.next(e);
         }
     ));
   }
@@ -74,9 +81,9 @@ class _InoventoryHomeRouteState extends State<InoventoryHomeRoute> {
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<AuthState>(
-        future: futureAuthState,
-        initialData: AuthState.empty(),
+    return FutureBuilder<bool>(
+        future: futureLoginState,
+        initialData: false,
         builder: ((context, snapshot) {
           if (snapshot.connectionState == ConnectionState.done) {
             if (snapshot.hasError) {
@@ -95,8 +102,8 @@ class _InoventoryHomeRouteState extends State<InoventoryHomeRoute> {
                   ));
             }
             if (snapshot.hasData) {
-              updateAccessToken(snapshot.data?.accessToken);
-              return snapshot.data!.isLoggedIn
+              final isLoggedIn = snapshot.data!;
+              return isLoggedIn
                   ? InventoryListRoute(logout: logout)
                   : Scaffold(appBar: InoventoryAppBar(), body: LoginRoute(login: login)
               );
