@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:inoventory_ui/models/inventory_list.dart';
 import 'package:inoventory_ui/widgets/product/add_product.dart';
 import 'package:inoventory_ui/widgets/add_to_list_btn.dart';
-import 'package:inoventory_ui/widgets/InoventoryNetworkImage.dart';
+import 'package:inoventory_ui/widgets/inoventory_network_image.dart';
 import 'package:inoventory_ui/widgets/inoventory_appbar.dart';
 import 'package:inoventory_ui/widgets/product/product_info.dart';
 import 'package:inoventory_ui/models/product.dart';

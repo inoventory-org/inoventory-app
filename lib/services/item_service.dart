@@ -1,14 +1,13 @@
 import 'package:dio/dio.dart';
 import 'package:inoventory_ui/config/constants.dart';
 import 'dart:io';
-import 'package:inoventory_ui/config/dependencies.dart';
 import 'package:inoventory_ui/models/inventory_list_item.dart';
+import 'dart:developer' as developer;
 
 abstract class ItemService {
   static const backendUrl = Constants.inoventoryBackendUrl;
   static const listUrl = "$backendUrl/api/v1/inventory-lists";
   final timeout = const Duration(seconds: 5);
-  final dio = Dependencies.dio;
 
   Future< List<InventoryListItemWrapper>> all(int listId);
   Future<InventoryListItem> add(InventoryListItem item);
@@ -92,6 +91,6 @@ class ItemServiceImpl extends ItemService {
     if (response.statusCode != HttpStatus.ok) {
       throw Exception("Failed to delete list");
     }
-    print("Successfully deleted!");
+    developer.log("Successfully deleted!");
   }
 }

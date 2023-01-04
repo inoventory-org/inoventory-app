@@ -1,5 +1,5 @@
 enum ProductSource {
-  API, USER
+  api, user
 }
 
 class Product {

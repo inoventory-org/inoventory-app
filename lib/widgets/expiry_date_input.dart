@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:inoventory_ui/widgets/ContainerWithBoxDecoration.dart';
+import 'package:inoventory_ui/widgets/container_with_box_decoration.dart';
 import 'package:intl/intl.dart';
+import 'dart:developer' as developer;
 
 class ExpiryDateEntry extends StatefulWidget {
   final String? initialDate;
@@ -49,10 +50,8 @@ class _ExpiryDateEntryState extends State<ExpiryDateEntry> {
                         lastDate: DateTime(2101));
 
                     if (pickedDate != null) {
-                      print(pickedDate); //pickedDate output format => 2021-03-10 00:00:00.000
                       String formattedDate =
                           DateFormat('yyyy-MM-dd').format(pickedDate);
-                      print(formattedDate); //formatted date output using intl package =>  2021-03-16
                       //you can implement different kind of Date Format here according to your requirement
                       if(widget.onDateSet != null) {
                         widget.onDateSet!(formattedDate);
@@ -61,7 +60,7 @@ class _ExpiryDateEntryState extends State<ExpiryDateEntry> {
                         dateInput.text = formattedDate; //set output date to TextField value.
                       });
                     } else {
-                      print("Date is not selected");
+                      developer.log("Date is not selected");
                     }
                   },
                 ))));

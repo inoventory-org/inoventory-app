@@ -59,7 +59,6 @@ class ProductServiceImpl implements ProductService {
       Map<String, dynamic> json = response.data;
       Product product = Product.fromJson(json);
 
-      print("MyProduct: $product");
       return <Product>[product];
     }
     else {

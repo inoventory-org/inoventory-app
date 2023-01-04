@@ -5,6 +5,7 @@ import 'package:inoventory_ui/config/constants.dart';
 import 'package:inoventory_ui/models/auth_response.dart';
 import 'package:openid_client/openid_client_io.dart' as oidc;
 import 'package:url_launcher/url_launcher.dart';
+import 'dart:developer' as developer;
 
 
 abstract class AuthService {
@@ -61,7 +62,7 @@ class FlutterAppAuthService implements AuthService {
 
       return AuthState.fromTokenResponse(result);
     } catch (e, s) {
-      print('login error: $e - stack: $s');
+      developer.log('login error: $e - stack: $s');
       final response = AuthState.empty();
       response.errorMessage = e.toString();
       return response;

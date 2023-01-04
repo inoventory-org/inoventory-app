@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:inoventory_ui/widgets/ContainerWithBoxDecoration.dart';
+import 'package:inoventory_ui/widgets/container_with_box_decoration.dart';
+import 'dart:developer' as developer;
 
 class AmountInput extends StatefulWidget {
   final int? initialAmount;
@@ -36,7 +37,7 @@ class _AmountInputState extends State<AmountInput> {
     }
     setState(() {
       if (_amount > 1) _amount--;
-      print("Amount cannot be less than 1");
+      developer.log("Amount cannot be less than 1");
     });
   }
 

@@ -50,8 +50,6 @@ class InventoryListServiceImpl extends InventoryListService {
       throw Exception("Failed to fetch lists");
     }
 
-    print("response: $response");
-
     Iterable listsJson = response.data;
     return listsJson.map((json) => InventoryList.fromJson(json)).toList();
   }

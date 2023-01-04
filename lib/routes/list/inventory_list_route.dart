@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:inoventory_ui/config/dependencies.dart';
 import 'package:inoventory_ui/models/inventory_list.dart';
-import 'package:inoventory_ui/widgets/ConfirmationModal.dart';
+import 'package:inoventory_ui/widgets/confirmation_modal.dart';
 import 'package:inoventory_ui/widgets/inoventory_appbar.dart';
 import 'package:inoventory_ui/widgets/list/create_list_widget.dart';
 import 'package:inoventory_ui/widgets/list/edit_list_widget.dart';

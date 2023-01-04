@@ -4,7 +4,7 @@ import 'package:inoventory_ui/models/inventory_list.dart';
 import 'package:inoventory_ui/models/inventory_list_item.dart';
 import 'package:inoventory_ui/models/product.dart';
 import 'package:inoventory_ui/services/item_service.dart';
-import 'package:inoventory_ui/widgets/InoventoryNetworkImage.dart';
+import 'package:inoventory_ui/widgets/inoventory_network_image.dart';
 import 'package:inoventory_ui/widgets/amount_input.dart';
 import 'package:inoventory_ui/widgets/expiry_date_input.dart';
 
@@ -47,7 +47,6 @@ class _AddProductViewState extends State<AddProductView> {
         _items.removeLast();
         _amount--;
       }
-      ;
     });
   }
 

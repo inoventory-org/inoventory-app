@@ -7,6 +7,8 @@ import 'package:inoventory_ui/routes/login_route.dart';
 import 'package:inoventory_ui/services/auth_service.dart';
 import 'package:inoventory_ui/widgets/inoventory_appbar.dart';
 
+import 'dart:developer' as developer;
+
 class InoventoryHomeRoute extends StatefulWidget {
   const InoventoryHomeRoute({super.key});
 
@@ -39,7 +41,7 @@ class _InoventoryHomeRouteState extends State<InoventoryHomeRoute> {
 
   void updateAccessToken(String? accessToken) {
     if (accessToken == null) {
-      print("Access token is null");
+      developer.log("Access token is null");
       return;
     }
     final dio = Dependencies.dio;
@@ -78,7 +80,7 @@ class _InoventoryHomeRouteState extends State<InoventoryHomeRoute> {
         builder: ((context, snapshot) {
           if (snapshot.connectionState == ConnectionState.done) {
             if (snapshot.hasError) {
-              print("Error: ${snapshot.error}");
+              developer.log("Error: ${snapshot.error}");
               return Scaffold(appBar: InoventoryAppBar(),
                   body: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
