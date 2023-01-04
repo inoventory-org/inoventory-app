@@ -1,16 +1,71 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:inoventory_ui/auth/jwt.dart';
 import 'package:inoventory_ui/config/constants.dart';
 import 'package:openid_client/openid_client_io.dart' as oidc;
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:developer' as developer;
 
 abstract class AuthService {
-  Future<bool> login();
-  Future<void> logout();
+
+  Future<JWT?> login();
+  Future<JWT?> attemptToRefreshLogin();
+  FlutterSecureStorage _getSecureStorage();
+  Dio _getDioClient();
+
+  Future<bool> authenticate() async {
+    final refreshedJwt = await attemptToRefreshLogin();
+    if (refreshedJwt?.accessToken != null) {
+      developer.log("Successfully refreshed token");
+      await storeToken(refreshedJwt);
+      return true;
+    }
+
+    final jwt = await login();
+    if (jwt?.accessToken == null) {
+      return false;
+    }
+
+    await storeToken(jwt);
+    return true;
+  }
+
+  Future<void> logout() async {
+    final secureStorage = _getSecureStorage();
+    final dio = _getDioClient();
+    final accessToken = await secureStorage.read(key: "accessToken");
+    final refreshToken = await secureStorage.read(key: "refreshToken");
+    final body = {
+      'client_id': Constants.keycloakConf.clientId,
+      'refresh_token': refreshToken,
+    };
+
+    await dio.post(Constants.keycloakConf.endSessionUrl,
+        options: Options(headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          "Authorization": "Bearer $accessToken",
+        }),
+        data: body);
+    await clearStorage();
+  }
+
+  Future<void> storeToken(JWT? jwt) async {
+    final secureStorage = _getSecureStorage();
+    await secureStorage.write(
+        key: 'accessToken', value: jwt?.accessToken);
+    await secureStorage.write(
+        key: 'refreshToken', value: jwt?.refreshToken);
+    await secureStorage.write(
+        key: 'tokenType', value: jwt?.tokenType);
+  }
+
+  Future<void> clearStorage() async {
+    await _getSecureStorage().deleteAll();
+  }
+
 }
 
-class OIDCAuthService implements AuthService {
+class OIDCAuthService extends AuthService {
   final FlutterSecureStorage secureStorage;
   final timeoutDuration = const Duration(seconds: 10);
   final Dio dio;
@@ -18,13 +73,7 @@ class OIDCAuthService implements AuthService {
   OIDCAuthService(this.dio, this.secureStorage);
 
   @override
-  Future<bool> login() async {
-    final successTokenRefresh = await attemptToRefreshLogin();
-    if (successTokenRefresh) {
-      developer.log("Successfully refreshed token");
-      return true;
-    }
-    developer.log("Trying classic login");
+  Future<JWT?> login() async {
     final issuer = await oidc.Issuer.discover(
         Uri.parse("${KeycloakConf.baseUrl}/realms/inoventory/"));
     final client = oidc.Client(issuer, Constants.keycloakConf.clientId);
@@ -49,47 +98,28 @@ class OIDCAuthService implements AuthService {
     closeInAppWebView();
 
     try {
-      oidc.TokenResponse tokenResponse = await creds.getTokenResponse();
-      final isLoggedIn = (tokenResponse.accessToken != null);
-      await _saveToken(tokenResponse);
+      oidc.TokenResponse tr = await creds.getTokenResponse();
+      final isLoggedIn = (tr.accessToken != null);
       if (isLoggedIn) {
-        return true;
+        return JWT(tr.accessToken, tr.refreshToken, tr.tokenType);
       }
     } catch (e) {
       developer.log("An error occurred while logging in: ${e.toString()}",
           error: e);
     }
 
-    await secureStorage.deleteAll();
-    return false;
+    await clearStorage();
+    return null;
   }
 
   @override
-  Future<void> logout() async {
-    final accessToken = await secureStorage.read(key: "access_token");
-    final refreshToken = await secureStorage.read(key: "refresh_token");
-    final body = {
-      'client_id': Constants.keycloakConf.clientId,
-      'refresh_token': refreshToken,
-    };
-
-    await dio.post(Constants.keycloakConf.endSessionUrl,
-        options: Options(headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-          "Authorization": "Bearer $accessToken",
-        }),
-        data: body);
-    await secureStorage.deleteAll();
-  }
-
-  Future<bool> attemptToRefreshLogin() async {
-    final refreshToken = await secureStorage.read(key: "refresh_token");
+  Future<JWT?> attemptToRefreshLogin() async {
+    final refreshToken = await secureStorage.read(key: "refreshToken");
     if (refreshToken == null) {
       developer.log("No stored refresh token found");
-      return false;
+      return null;
     }
-    final tokenType = await secureStorage.read(key: "token_type");
-
+    final tokenType = await secureStorage.read(key: "tokenType");
     final issuer = await oidc.Issuer.discover(
         Uri.parse("${KeycloakConf.baseUrl}/realms/inoventory/"));
     final client = oidc.Client(issuer, Constants.keycloakConf.clientId);
@@ -101,25 +131,17 @@ class OIDCAuthService implements AuthService {
 
     credential.validateToken(validateClaims: true, validateExpiry: true);
     try {
-      final tokenResponse = await credential.getTokenResponse();
-      await _saveToken(tokenResponse);
-      return true;
+      final tr = await credential.getTokenResponse();
+      final jwt = JWT(tr.accessToken, tr.refreshToken, tr.tokenType);
+      return jwt;
     } catch (e) {
       developer.log("An error occurred while refreshing login: ${e.toString()}",
           error: e);
     }
-    await secureStorage.deleteAll();
-    return false;
+    await clearStorage();
+    return null;
   }
 
-  Future<void> _saveToken(oidc.TokenResponse tokenResponse) async {
-    await secureStorage.write(
-        key: 'access_token', value: tokenResponse.accessToken);
-    await secureStorage.write(
-        key: 'refresh_token', value: tokenResponse.refreshToken);
-    await secureStorage.write(
-        key: 'token_type', value: tokenResponse.tokenType);
-  }
 
   Future<void> _urlLauncher(String url) async {
     try {
@@ -127,6 +149,16 @@ class OIDCAuthService implements AuthService {
     } catch (e) {
       developer.log("Could not launch URL ${Uri.parse(url)}", error: e);
     }
+  }
+
+  @override
+  FlutterSecureStorage _getSecureStorage() {
+    return secureStorage;
+  }
+
+  @override
+  Dio _getDioClient() {
+    return dio;
   }
 }
 
@@ -137,7 +169,7 @@ class OIDCAuthService implements AuthService {
 //   FlutterAppAuthService(this.dio, this.secureStorage);
 //
 //   Future<AuthState?> refreshLogin() async {
-//     final String? refreshToken = await secureStorage.read(key: 'refresh_token');
+//     final String? refreshToken = await secureStorage.read(key: 'refreshToken');
 //     if (refreshToken == null) return null;
 //
 //     final TokenResponse? result = await appAuth.token(TokenRequest(
@@ -146,7 +178,7 @@ class OIDCAuthService implements AuthService {
 //         refreshToken: refreshToken));
 //     if (result == null) return null;
 //
-//     await secureStorage.write(key: 'refresh_token', value: result.refreshToken);
+//     await secureStorage.write(key: 'refreshToken', value: result.refreshToken);
 //
 //     return AuthState.fromTokenResponse(result);
 //   }
@@ -173,9 +205,9 @@ class OIDCAuthService implements AuthService {
 //       if (result == null) {return AuthState.empty();}
 //
 //       await secureStorage.write(
-//           key: 'refresh_token', value: result.refreshToken);
+//           key: 'refreshToken', value: result.refreshToken);
 //       await secureStorage.write(
-//           key: 'access_token', value: result.accessToken);
+//           key: 'accessToken', value: result.accessToken);
 //
 //       return AuthState.fromTokenResponse(result);
 //     } catch (e, s) {
@@ -188,11 +220,11 @@ class OIDCAuthService implements AuthService {
 //
 //   @override
 //   Future<void> logout() async {
-//     final accessToken = await secureStorage.read(key: "access_token");
-//     final refreshToken = await secureStorage.read(key: "refresh_token");
+//     final accessToken = await secureStorage.read(key: "accessToken");
+//     final refreshToken = await secureStorage.read(key: "refreshToken");
 //     final body = {
 //       'client_id': Constants.keycloakConf.clientId,
-//       'refresh_token': refreshToken,
+//       'refreshToken': refreshToken,
 //     };
 //     await dio.post(Constants.keycloakConf.endSessionUrl, options: Options(headers: {
 //       "Content-Type": "application/x-www-form-urlencoded",

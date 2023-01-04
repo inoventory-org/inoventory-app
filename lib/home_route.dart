@@ -30,16 +30,16 @@ class _InoventoryHomeRouteState extends State<InoventoryHomeRoute> {
   @override
   void initState() {
     super.initState();
-    futureLoginState = authService.login();
+    futureLoginState = authService.authenticate();
     setUpHttpInterceptors();
     Timer.periodic(Duration(seconds: accessTokenRefreshIntervalSeconds), (Timer timer) async {
-      await authService.login();
+      await authService.authenticate();
     });
   }
 
   Future<void> login() async {
     setState(() {
-      futureLoginState = authService.login();
+      futureLoginState = authService.authenticate();
     });
   }
 
@@ -53,7 +53,7 @@ class _InoventoryHomeRouteState extends State<InoventoryHomeRoute> {
   void setUpHttpInterceptors()  {
     dio.interceptors.add(InterceptorsWrapper(
         onRequest:(options, handler) async {
-          final accessToken = await secureStorage.read(key: "access_token");
+          final accessToken = await secureStorage.read(key: "accessToken");
           if (accessToken == null) {
             developer.log("Access token is null");
             return;
@@ -67,9 +67,9 @@ class _InoventoryHomeRouteState extends State<InoventoryHomeRoute> {
         onError: (DioError e, handler) async {
           developer.log("Response has status code: ${e.response?.statusCode}");
           if (e.response?.statusCode == 401) {
-              if (await secureStorage.containsKey(key: "refresh_token")) {
+              if (await secureStorage.containsKey(key: "refreshToken")) {
                 setState(() {
-                  futureLoginState = authService.login();
+                  futureLoginState = authService.authenticate();
                 });
               }
           }
