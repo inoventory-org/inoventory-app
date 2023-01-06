@@ -3,8 +3,10 @@ import 'package:inoventory_ui/inventory/lists/inventory_list.dart';
 import 'package:inoventory_ui/products/product_model.dart';
 import 'package:inoventory_ui/products/routes/product_detail_route.dart';
 import 'package:inoventory_ui/products/product_service.dart';
+import 'package:inoventory_ui/shared/widgets/future_error_retry_widget.dart';
 import 'package:inoventory_ui/shared/widgets/inoventory_search_bar.dart';
 import 'package:inoventory_ui/products/widgets/product_list.dart';
+import 'dart:developer' as developer;
 
 class ProductSearchRoute extends StatefulWidget {
   final String? initialSearchValue;
@@ -64,7 +66,11 @@ class _ProductSearchRouteState extends State<ProductSearchRoute> {
               },
             );
           } else if (snapshot.hasError) {
-            return Center(child: Text('${snapshot.error}'));
+            developer.log("An error occurred while retrieving products.", error: snapshot.error);
+            return FutureErrorRetryWidget(onRetry: () {
+              setState(() {
+            });},
+                child: const Center(child: Text('An error occurred while retrieving products. Please try again.')));
           }
           return const Center(child: CircularProgressIndicator());
         },

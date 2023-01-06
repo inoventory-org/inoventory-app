@@ -55,7 +55,6 @@ class ProductServiceImpl implements ProductService {
     final response = await dio.get("$backendUrl/api/v1/products?ean=$barcode")
         .timeout(timeout);
     if (response.statusCode == 200) {
-
       Map<String, dynamic> json = response.data;
       Product product = Product.fromJson(json);
 

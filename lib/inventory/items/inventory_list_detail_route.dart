@@ -8,7 +8,9 @@ import 'package:inoventory_ui/products/routes/product_search_route.dart';
 import 'package:inoventory_ui/inventory/lists/widgets/inventory_list_widget.dart';
 import 'package:inoventory_ui/ean/barcode_scanner.dart';
 import 'package:inoventory_ui/shared/widgets/expandable_floating_action_button.dart';
+import 'package:inoventory_ui/shared/widgets/future_error_retry_widget.dart';
 import 'package:inoventory_ui/shared/widgets/inoventory_appbar.dart';
+import 'dart:developer' as developer;
 
 class InventoryListDetailRoute extends StatefulWidget {
   final InventoryList list;
@@ -81,7 +83,10 @@ class _InventoryListDetailRouteState extends State<InventoryListDetailRoute> {
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.done) {
               if (snapshot.hasError) {
-                return Center(child: Text('${snapshot.error}'));
+                developer.log("An error occurred while retrieving items.", error: snapshot.error);
+                return FutureErrorRetryWidget(
+                    onRetry: _refreshList,
+                    child: const Center(child: Text('An error occurred while retrieving items. Please try again.')));
               }
               if (snapshot.hasData) {
                 return InventoryListWidget(

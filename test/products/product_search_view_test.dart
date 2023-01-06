@@ -50,6 +50,7 @@ class FakeProductService implements ProductService {
 }
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
   testWidgets('ProductSearchView', (tester) async {
     final productService = FakeProductService();
     final InventoryList list = InventoryList(0, "pantry");
