@@ -1,116 +1,99 @@
 import 'dart:async';
-
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:inoventory_ui/config/http_config.dart';
 import 'package:inoventory_ui/config/constants.dart';
 import 'package:inoventory_ui/config/dependencies.dart';
 import 'package:inoventory_ui/inventory/lists/inventory_list_route.dart';
 import 'package:inoventory_ui/auth/login_route.dart';
-import 'package:inoventory_ui/auth/auth_service.dart';
+import 'package:inoventory_ui/auth/services/auth_service.dart';
 import 'package:inoventory_ui/shared/widgets/inoventory_appbar.dart';
-
+import 'dart:io';
 import 'dart:developer' as developer;
+import 'package:jwt_decode/jwt_decode.dart';
+
+import 'package:url_launcher/url_launcher.dart';
 
 class InoventoryHomeRoute extends StatefulWidget {
-  const InoventoryHomeRoute({super.key});
+  final AuthService authService;
+
+  const InoventoryHomeRoute({super.key, required this.authService});
 
   @override
   State<InoventoryHomeRoute> createState() => _InoventoryHomeRouteState();
 }
 
 class _InoventoryHomeRouteState extends State<InoventoryHomeRoute> {
-  final AuthService authService = Dependencies.authService;
-  final FlutterSecureStorage secureStorage = Dependencies.secureStorage;
+  late final AuthService authService = widget.authService;
   final dio = Dependencies.dio;
-  late Future<bool> futureLoginState;
-  final accessTokenRefreshIntervalSeconds = Constants.accessTokenRefreshIntervalSeconds;
-
+  String? authenticatedUserName;
+  final accessTokenRefreshIntervalSeconds =
+      Constants.accessTokenRefreshIntervalSeconds;
 
   @override
   void initState() {
+    // whenAuthenticated();
+    authService.credential.then((creds) {
+      creds?.getTokenResponse().then((tr) {
+        setState(() {
+          authenticatedUserName = (tr.accessToken != null)
+              ? Jwt.parseJwt(tr.accessToken!)["preferred_username"]
+              : null;
+        });
+      });
+    });
     super.initState();
-    futureLoginState = authService.authenticate();
-    setUpHttpInterceptors();
-    Timer.periodic(Duration(seconds: accessTokenRefreshIntervalSeconds), (Timer timer) async {
-      await authService.authenticate();
+    _setUpHttpInterceptors();
+    _setUpAutomaticAccessTokenRefreshing();
+  }
+
+  void whenAuthenticated() {
+    authService.credential.then((creds) {
+      creds?.getTokenResponse().then((tr) {
+        setState(() {
+          authenticatedUserName = (tr.accessToken != null)
+              ? Jwt.parseJwt(tr.accessToken!)["preferred_username"]
+              : null;
+        });
+      });
+    });
+  }
+
+  Future<void> whenNotAuthenticated() async {
+    await authService.authenticate();
+    whenAuthenticated();
+  }
+
+  void _setUpHttpInterceptors() {
+    developer.log("Setting up HTTP Interceptors");
+    dio.interceptors.add(InoventoryHttpInterceptor(
+        dio, authService, whenAuthenticated, whenNotAuthenticated));
+  }
+
+  void _setUpAutomaticAccessTokenRefreshing() {
+    Timer.periodic(Duration(seconds: accessTokenRefreshIntervalSeconds),
+        (Timer timer) async {
+      final c = await authService.credential;
+      final tr = await c?.getTokenResponse(true);
     });
   }
 
   Future<void> login() async {
-    setState(() {
-      futureLoginState = authService.authenticate();
-    });
+    await authService.authenticate();
+    if (Platform.isAndroid || Platform.isIOS) {
+      closeInAppWebView();
+    }
   }
 
   Future<void> logout() async {
-    authService.logout();
-    setState(() {
-      futureLoginState = Future.value(false);
-    });
+    throw UnimplementedError();
   }
-
-  void setUpHttpInterceptors()  {
-    dio.interceptors.add(InterceptorsWrapper(
-        onRequest:(options, handler) async {
-          final accessToken = await secureStorage.read(key: "accessToken");
-          if (accessToken == null) {
-            developer.log("Access token is null");
-            return;
-          }
-          options.headers.addAll({"Authorization": "Bearer $accessToken"});
-          return handler.next(options);
-        },
-        onResponse:(response,handler) {
-          return handler.next(response);
-        },
-        onError: (DioError e, handler) async {
-          developer.log("Response has status code: ${e.response?.statusCode}");
-          if (e.response?.statusCode == 401) {
-              if (await secureStorage.containsKey(key: "refreshToken")) {
-                setState(() {
-                  futureLoginState = authService.authenticate();
-                });
-              }
-          }
-          return handler.next(e);
-        }
-    ));
-  }
-
-
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<bool>(
-        future: futureLoginState,
-        initialData: false,
-        builder: ((context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.done) {
-            if (snapshot.hasError) {
-              developer.log("Error: ${snapshot.error}");
-              return Scaffold(appBar: InoventoryAppBar(),
-                  body: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Center(child: Text('${snapshot.error}')
-                      ),
-                      const SizedBox(height: 10),
-                      ElevatedButton(child: const Text("Retry Login"), onPressed: () {
-                        login();
-                      })
-                    ],
-                  ));
-            }
-            if (snapshot.hasData) {
-              final isLoggedIn = snapshot.data!;
-              return isLoggedIn
-                  ? InventoryListRoute(logout: logout)
-                  : Scaffold(appBar: InoventoryAppBar(), body: LoginRoute(login: login)
-              );
-            }
-          }
-          return const Center(child: CircularProgressIndicator());
-        }));
+    developer.log("authenticatedUserName: $authenticatedUserName");
+    return authenticatedUserName != null
+        ? InventoryListRoute(logout: logout)
+        : Scaffold(appBar: InoventoryAppBar(), body: LoginRoute(login: login));
   }
+
 }
