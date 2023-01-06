@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'dart:developer' as developer;
+
+import 'package:inoventory_ui/shared/widgets/future_error_retry_widget.dart';
 
 class MyFutureBuilder<T> extends StatefulWidget {
   final Future<T> future;
@@ -51,10 +54,10 @@ class _MyFutureBuilderState<T> extends State<MyFutureBuilder<T>> {
               }
               return const Center(child: CircularProgressIndicator());
             } else if (snapshot.hasError) {
-              if (widget.errorBuilder != null) {
-                return widget.errorBuilder!(context, snapshot);
-              }
-              return Center(child: Text('${snapshot.error}'));
+              developer.log("An error occurred while retrieving products.", error: snapshot.error);
+              return FutureErrorRetryWidget(
+                onRetry: _refresh,
+                child: const Center(child: Text('An error occurred while fetching data. Please try again.')));
             }
             return widget.successBuilder(context, snapshot);
           }),

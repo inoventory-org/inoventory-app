@@ -19,7 +19,7 @@ dependencies:
   flutter_secure_storage: ^7.0.1
   url_launcher: ^6.1.7
   jwt_decode: ^0.3.1
-
+  flutter_web_auth: ^0.5.0
 
 dev_dependencies:
   flutter_test:

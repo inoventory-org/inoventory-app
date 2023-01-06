@@ -11,6 +11,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:inoventory_ui/inventory/lists/inventory_list_route.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
   testWidgets('MyWidget has a title and message', (tester) async {
     // Create the widget by telling the tester to build it.
     const String title = "inoventory";
