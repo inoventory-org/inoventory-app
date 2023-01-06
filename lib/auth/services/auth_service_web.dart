@@ -41,7 +41,6 @@ class AuthServiceImpl extends AuthService {
   @override
   Future<Credential?> get credential async {
     await _updateCredentials();
-    developer.log("Credentials: $_credential");
     return _credential;
   }
 
@@ -53,10 +52,16 @@ class AuthServiceImpl extends AuthService {
 
   @override
   Future<TokenResponse?> getTokenResponse({forceRefresh = false, List<String> scopes = const []}) async {
+    Credential? c;
     if (forceRefresh) {
-      developer.log("Automatic token refreshing is currently not supported for the web");
+      try {
+        c = await authenticator.trySilentRefresh();
+      } catch (e) {
+        developer.log("Silently refreshing the access token failed.", error: e);
+      }
+    } else {
+      c = await authenticator.credential;
     }
-    final c = await authenticator.credential;
     return c?.getTokenResponse();
   }
 

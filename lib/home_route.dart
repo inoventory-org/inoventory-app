@@ -70,8 +70,7 @@ class _InoventoryHomeRouteState extends State<InoventoryHomeRoute> {
     }
     Timer.periodic(Duration(seconds: refreshIntervalSeconds),
         (Timer timer) async {
-      final tr = await authService.getTokenResponse(
-          forceRefresh: kIsWeb ? false : true);
+      final tr = await authService.getTokenResponse(forceRefresh: true);
     });
   }
 
