@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:inoventory_ui/config/http_config.dart';
 import 'package:inoventory_ui/config/constants.dart';
@@ -10,7 +11,6 @@ import 'package:inoventory_ui/shared/widgets/inoventory_appbar.dart';
 import 'dart:io';
 import 'dart:developer' as developer;
 import 'package:jwt_decode/jwt_decode.dart';
-
 import 'package:url_launcher/url_launcher.dart';
 
 class InoventoryHomeRoute extends StatefulWidget {
@@ -31,24 +31,16 @@ class _InoventoryHomeRouteState extends State<InoventoryHomeRoute> {
 
   @override
   void initState() {
-    // whenAuthenticated();
-    authService.credential.then((creds) {
-      creds?.getTokenResponse().then((tr) {
-        setState(() {
-          authenticatedUserName = (tr.accessToken != null)
-              ? Jwt.parseJwt(tr.accessToken!)["preferred_username"]
-              : null;
-        });
-      });
-    });
+    whenAuthenticated();
     super.initState();
     _setUpHttpInterceptors();
-    _setUpAutomaticAccessTokenRefreshing();
+    _setUpAutomaticAccessTokenRefreshing(
+        refreshIntervalSeconds: Constants.accessTokenRefreshIntervalSeconds);
   }
 
   void whenAuthenticated() {
-    authService.credential.then((creds) {
-      creds?.getTokenResponse().then((tr) {
+    authService.credential.then((c) {
+      c?.getTokenResponse().then((tr) {
         setState(() {
           authenticatedUserName = (tr.accessToken != null)
               ? Jwt.parseJwt(tr.accessToken!)["preferred_username"]
@@ -69,23 +61,32 @@ class _InoventoryHomeRouteState extends State<InoventoryHomeRoute> {
         dio, authService, whenAuthenticated, whenNotAuthenticated));
   }
 
-  void _setUpAutomaticAccessTokenRefreshing() {
-    Timer.periodic(Duration(seconds: accessTokenRefreshIntervalSeconds),
+  void _setUpAutomaticAccessTokenRefreshing({refreshIntervalSeconds = 60}) {
+    if (kIsWeb) {
+      developer.log(
+          "Automatic refreshing of tokens is currently not supported for the web."
+          "You simple need to reauthenticate once the token expires");
+      return;
+    }
+    Timer.periodic(Duration(seconds: refreshIntervalSeconds),
         (Timer timer) async {
-      final c = await authService.credential;
-      final tr = await c?.getTokenResponse(true);
+      final tr = await authService.getTokenResponse(
+          forceRefresh: kIsWeb ? false : true);
     });
   }
 
   Future<void> login() async {
-    await authService.authenticate();
+    await whenNotAuthenticated();
     if (Platform.isAndroid || Platform.isIOS) {
       closeInAppWebView();
     }
   }
 
   Future<void> logout() async {
-    throw UnimplementedError();
+    authService.logout();
+    setState(() {
+      authenticatedUserName = null;
+    });
   }
 
   @override
@@ -95,5 +96,18 @@ class _InoventoryHomeRouteState extends State<InoventoryHomeRoute> {
         ? InventoryListRoute(logout: logout)
         : Scaffold(appBar: InoventoryAppBar(), body: LoginRoute(login: login));
   }
-
 }
+
+// body: Center(
+// child: TextButton(
+// child: const Text("Refresh Token"),
+// onPressed: ()  {
+// // final tr =
+// //     await authService.getTokenResponse(forceRefresh: true);
+// authService.logout();
+// setState(() {
+// authenticatedUserName = null;
+// });
+// },
+// ),
+// ))

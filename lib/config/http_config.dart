@@ -10,7 +10,12 @@ class InoventoryHttpInterceptor extends InterceptorsWrapper {
   final void Function()? onAuthSuccess;
   final Future<void> Function()? onAuthFail;
 
-  InoventoryHttpInterceptor(this.dio, this.authService, this.onAuthSuccess, this.onAuthFail,) : super();
+  InoventoryHttpInterceptor(
+    this.dio,
+    this.authService,
+    this.onAuthSuccess,
+    this.onAuthFail,
+  ) : super();
 
   @override
   void onRequest(
@@ -18,8 +23,8 @@ class InoventoryHttpInterceptor extends InterceptorsWrapper {
     if (options.uri.toString().contains(Constants.inoventoryBackendUrl)) {
       TokenResponse? tr;
       try {
-      tr = await authService.getTokenResponse();
-    }  catch (e) {
+        tr = await authService.getTokenResponse();
+      } catch (e) {
         developer.log("Unable to retrieve access token", error: e);
         await onAuthFail?.call();
         return handler.resolve(await _retry(options));
@@ -54,25 +59,23 @@ class InoventoryHttpInterceptor extends InterceptorsWrapper {
 
   Future<Response<dynamic>> _retry(RequestOptions requestOptions) async {
     final options = Options(
-      method: requestOptions.method,
-      sendTimeout: requestOptions.sendTimeout,
-      receiveTimeout: requestOptions.receiveTimeout,
-      extra: requestOptions.extra,
-      headers: requestOptions.headers,
-      responseType: requestOptions.responseType,
-      contentType: requestOptions.contentType,
-      validateStatus: requestOptions.validateStatus,
-      receiveDataWhenStatusError: requestOptions.receiveDataWhenStatusError,
-      followRedirects: requestOptions.followRedirects,
-      maxRedirects: requestOptions.maxRedirects,
-      requestEncoder: requestOptions.requestEncoder,
-      responseDecoder: requestOptions.responseDecoder,
-      listFormat: requestOptions.listFormat
-    );
+        method: requestOptions.method,
+        sendTimeout: requestOptions.sendTimeout,
+        receiveTimeout: requestOptions.receiveTimeout,
+        extra: requestOptions.extra,
+        headers: requestOptions.headers,
+        responseType: requestOptions.responseType,
+        contentType: requestOptions.contentType,
+        validateStatus: requestOptions.validateStatus,
+        receiveDataWhenStatusError: requestOptions.receiveDataWhenStatusError,
+        followRedirects: requestOptions.followRedirects,
+        maxRedirects: requestOptions.maxRedirects,
+        requestEncoder: requestOptions.requestEncoder,
+        responseDecoder: requestOptions.responseDecoder,
+        listFormat: requestOptions.listFormat);
 
     return await dio.request(requestOptions.uri.toString(),
-        options: options,
-        queryParameters: requestOptions.queryParameters);
+        options: options, queryParameters: requestOptions.queryParameters);
   }
 
   bool _shouldRetry(DioError err) {

@@ -14,11 +14,11 @@ class KeycloakConf {
 }
 
 abstract class Constants {
-  // static const inoventoryBackendUrl = "http://10.100.255.76:8080";
-  static const inoventoryBackendUrl = "http://localhost:8080";
+  static const inoventoryBackendUrl = "http://10.100.255.76:8080";
+  // static const inoventoryBackendUrl = "http://localhost:8080";
   // static const inoventoryBackendUrl = "http://10.0.2.2:8080";
   // static const inoventoryBackendUrl = "http://ec2-18-157-81-199.eu-central-1.compute.amazonaws.com";
   static const darkMode = true;
   static final keycloakConf = KeycloakConf();
-  static const accessTokenRefreshIntervalSeconds = 60;
+  static const accessTokenRefreshIntervalSeconds = 5;
 }

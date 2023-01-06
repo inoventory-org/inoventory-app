@@ -25,9 +25,8 @@ class AuthServiceImpl extends AuthService {
     component.issuer = await Issuer.discover(uri);
     component.client = Client(component.issuer, clientId);
     component.authenticator = browser.Authenticator(component.client, scopes: scopes);
-
     // Should find credentials when initialized directly after a redirect
-    component._credential = await component.getRedirectResult();
+    await component.getRedirectResult();
 
     if (await component.credential == null) {
       await component.authenticate();
@@ -53,7 +52,10 @@ class AuthServiceImpl extends AuthService {
 
 
   @override
-  Future<TokenResponse?> getTokenResponse({List<String> scopes = const []}) async {
+  Future<TokenResponse?> getTokenResponse({forceRefresh = false, List<String> scopes = const []}) async {
+    if (forceRefresh) {
+      developer.log("Automatic token refreshing is currently not supported for the web");
+    }
     final c = await authenticator.credential;
     return c?.getTokenResponse();
   }
@@ -67,6 +69,12 @@ class AuthServiceImpl extends AuthService {
 
   Future<void> _updateCredentials() async {
     _credential = await authenticator.credential;
+  }
+
+  @override
+  void logout() {
+    authenticator.logout();
+    _credential = null;
   }
 
 
