@@ -1,10 +1,12 @@
-import 'package:flutter/material.dart';
-import 'inventory_item.dart';
 import 'dart:developer' as developer;
+
+import 'package:flutter/material.dart';
+
+import 'inventory_item_list_widget.dart';
 
 class InventoryItemWidget extends StatelessWidget {
   final InventoryListItemWrapper itemWrapper;
-  final Future<void> Function(int listId, int itemId) onDelete;
+  final Future<void> Function(int itemId) onDelete;
 
   const InventoryItemWidget(
     this.itemWrapper,
@@ -16,8 +18,13 @@ class InventoryItemWidget extends StatelessWidget {
       BuildContext context, DismissDirection direction) async {
     final scaffoldMessenger = ScaffoldMessenger.of(context);
 
+    final int? itemId = await getItemIdToDelete(context);
+    if (itemId == null) {
+      return;
+    }
+
     try {
-      await onDelete(itemWrapper.listId, itemWrapper.items.first.id);
+      await onDelete(itemId);
 
       scaffoldMessenger.showSnackBar(
           _getSnackBar("Successfully deleted item", Colors.green));
@@ -63,6 +70,29 @@ class InventoryItemWidget extends StatelessWidget {
               ? _QuantityWidget(itemWrapper.quantity)
               : null),
     );
+  }
+
+  Future<int?> getItemIdToDelete(BuildContext context) async {
+    if (itemWrapper.items.map((e) => e.expirationDate).toSet().length == 1) {
+      return itemWrapper.items.first.id;
+    }
+
+    return await showDialog<int>(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: const Text("Choose item"),
+            content: const Text("Which item do you want to remove?"),
+            actions: itemWrapper.items
+                .map((e) => Center(
+                  child: TextButton(
+                        onPressed: () => Navigator.pop(context, e.id),
+                        child: Text(e.expirationDate ?? "<no expiration date>"),
+                      ),
+                ))
+                .toList(),
+          );
+        });
   }
 }
 

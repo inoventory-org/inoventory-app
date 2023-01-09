@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:inoventory_ui/config/http_config.dart';
 import 'package:inoventory_ui/config/constants.dart';
 import 'package:inoventory_ui/config/dependencies.dart';
-import 'package:inoventory_ui/inventory/lists/inventory_list_route.dart';
+import 'package:inoventory_ui/inventory/lists/inventory_list_overview_route.dart';
 import 'package:inoventory_ui/auth/login_route.dart';
 import 'package:inoventory_ui/auth/services/auth_service.dart';
 import 'package:inoventory_ui/shared/widgets/inoventory_appbar.dart';

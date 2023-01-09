@@ -6,7 +6,7 @@ import 'package:inoventory_ui/shared/widgets/future_error_retry_widget.dart';
 import 'package:inoventory_ui/shared/widgets/inoventory_appbar.dart';
 import 'package:inoventory_ui/inventory/lists/widgets/create_list_widget.dart';
 import 'package:inoventory_ui/inventory/lists/widgets/edit_list_widget.dart';
-import 'package:inoventory_ui/inventory/lists/widgets/lists_widget.dart';
+import 'package:inoventory_ui/inventory/lists/widgets/list_overview_widget.dart';
 import 'dart:developer' as developer;
 
 class InventoryListRoute extends StatefulWidget {

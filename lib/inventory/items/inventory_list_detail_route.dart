@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:inoventory_ui/config/dependencies.dart';
 import 'package:inoventory_ui/inventory/lists/inventory_list.dart';
-import 'package:inoventory_ui/inventory/items/inventory_item.dart';
+import 'package:inoventory_ui/inventory/items/inventory_item_list_widget.dart';
 import 'package:inoventory_ui/inventory/items/item_service.dart';
 import 'package:inoventory_ui/products/product_service.dart';
 import 'package:inoventory_ui/products/routes/product_search_route.dart';
-import 'package:inoventory_ui/inventory/lists/widgets/inventory_list_widget.dart';
+import 'package:inoventory_ui/inventory/items/inventory_list_widget.dart';
 import 'package:inoventory_ui/ean/barcode_scanner.dart';
 import 'package:inoventory_ui/shared/widgets/expandable_floating_action_button.dart';
 import 'package:inoventory_ui/shared/widgets/future_error_retry_widget.dart';
@@ -47,8 +47,8 @@ class _InventoryListDetailRouteState extends State<InventoryListDetailRoute> {
     await _refreshList();
   }
 
-  Future<void> onDelete(listId, itemId) async {
-    await itemService.delete(listId, itemId);
+  Future<void> onDelete(itemId) async {
+    await itemService.delete(widget.list.id, itemId);
     await _refreshList();
   }
 

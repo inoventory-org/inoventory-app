@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:inoventory_ui/inventory/items/inventory_item.dart';
+import 'package:inoventory_ui/inventory/items/inventory_item_list_widget.dart';
 import 'package:inoventory_ui/inventory/items/inventory_item_widget.dart';
 
 
 class InventoryListWidget extends StatelessWidget {
   final List<InventoryListItemWrapper> itemWrappers;
-  final Future<void> Function(int listId, int itemId) onDelete;
+  final Future<void> Function(int itemId) onDelete;
   final Future<void> Function(InventoryListItemWrapper itemWrapper) onEdit;
 
   const InventoryListWidget({Key? key, required this.itemWrappers, required this.onDelete, required this.onEdit}) : super(key: key);
