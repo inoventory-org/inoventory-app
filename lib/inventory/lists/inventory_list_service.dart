@@ -1,10 +1,10 @@
 import 'dart:async';
 
 import 'package:dio/dio.dart';
+import 'package:inoventory_ui/inventory/items/inventory_item.dart';
 import 'package:inoventory_ui/inventory/lists/inventory_list.dart';
 import 'package:inoventory_ui/config/constants.dart';
 import 'dart:io';
-import 'package:inoventory_ui/inventory/items/inventory_item_list_widget.dart';
 
 abstract class InventoryListService {
   static const backendUrl = Constants.inoventoryBackendUrl;

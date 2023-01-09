@@ -1,8 +1,7 @@
 import 'dart:developer' as developer;
 
 import 'package:flutter/material.dart';
-
-import 'inventory_item_list_widget.dart';
+import 'package:inoventory_ui/inventory/items/inventory_item.dart';
 
 class InventoryItemWidget extends StatelessWidget {
   final InventoryListItemWrapper itemWrapper;
