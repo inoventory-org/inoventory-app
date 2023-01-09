@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'inventory_item.dart';
+import 'dart:developer' as developer;
 
 class InventoryItemWidget extends StatefulWidget {
   final InventoryListItemWrapper itemWrapper;
@@ -18,6 +19,32 @@ class InventoryItemWidget extends StatefulWidget {
 class _InventoryItemWidgetState extends State<InventoryItemWidget> {
   bool isDeleting = false;
 
+  Future<void> onDismissed(DismissDirection direction) async {
+    if (!isDeleting) {
+      print("Deleting item");
+
+      final scaffoldMessenger = ScaffoldMessenger.of(context);
+      try {
+        isDeleting = true;
+        await widget.onDelete(
+            widget.itemWrapper.listId, widget.itemWrapper.items.first.id);
+        scaffoldMessenger.showSnackBar(const SnackBar(
+            content: Text("Successfully deleted item!",
+                style: TextStyle(color: Colors.white)),
+            backgroundColor: Colors.green));
+      } catch (e) {
+        scaffoldMessenger.showSnackBar(SnackBar(
+            content: Text("Error deleting item: ${e.toString()}",
+                style: const TextStyle(color: Colors.white)),
+            backgroundColor: Colors.red));
+        
+        developer.log("Could not delete item", error: e);
+      } finally {
+        isDeleting = false;
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Dismissible(
@@ -29,24 +56,9 @@ class _InventoryItemWidgetState extends State<InventoryItemWidget> {
         child: const Icon(Icons.delete, color: Colors.white),
       ),
       onDismissed: (direction) async {
-        if (!isDeleting) {
-          print("Deleting item");
-          try {
-            isDeleting = true;
-            await widget.onDelete(
-                widget.itemWrapper.listId, widget.itemWrapper.items.first.id);
-            final scaffoldMessenger = ScaffoldMessenger.of(context);
-            scaffoldMessenger.showSnackBar(const SnackBar(
-                content: Text("Successfully deleted item!",
-                    style: TextStyle(color: Colors.white)),
-                backgroundColor: Colors.green));
-          } catch (e) {
-            print(e);
-          } finally {
-            isDeleting = false;
-          }
-        }
+        await onDismissed(direction);
       },
+      resizeDuration: null,
       child: ListTile(
         // leading: icon
         title: Text(
