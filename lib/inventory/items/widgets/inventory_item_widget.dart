@@ -55,8 +55,21 @@ class InventoryItemWidget extends StatelessWidget {
         await onDismissed(context, direction);
       },
       resizeDuration: null,
+
       child: ListTile(
-          // leading: icon
+          leading: Container(
+            height: 50,
+            width: 50,
+            decoration: BoxDecoration(
+              image: itemWrapper.thumbUrl != null
+                  ? DecorationImage(
+                image: NetworkImage(itemWrapper.thumbUrl!),
+                fit: BoxFit.cover,
+              )
+                  : null,
+            ),
+            child: itemWrapper.thumbUrl == null ? const Icon(Icons.image) : null,
+          ),
           title: Text(
             itemWrapper.displayName ?? itemWrapper.productEan,
             style: const TextStyle(fontSize: 18),

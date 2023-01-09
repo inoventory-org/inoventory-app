@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:inoventory_ui/inventory/lists/inventory_list.dart';
 import 'package:inoventory_ui/products/product_model.dart';
 import 'package:inoventory_ui/products/routes/product_detail_route.dart';
@@ -14,7 +15,10 @@ class ProductSearchRoute extends StatefulWidget {
   final InventoryList list;
 
   const ProductSearchRoute(
-      {Key? key, this.initialSearchValue, required this.productService, required this.list})
+      {Key? key,
+      this.initialSearchValue,
+      required this.productService,
+      required this.list})
       : super(key: key);
 
   @override
@@ -55,22 +59,36 @@ class _ProductSearchRouteState extends State<ProductSearchRoute> {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           } else if (snapshot.hasData) {
+            if (snapshot.data?.length == 1) {
+              SchedulerBinding.instance.addPostFrameCallback((_) {
+                Navigator.of(context).push(MaterialPageRoute(
+                  builder: (context) => ProductDetailRoute(
+                      product: snapshot.data!.first, list: widget.list),
+                ));
+              });
+            }
+
             return ProductListView(
               products: snapshot.data ?? [],
               onProductTap: (product) {
                 Navigator.of(context).push(
                   MaterialPageRoute(
-                    builder: (context) => ProductDetailRoute(product: product, list: widget.list),
+                    builder: (context) =>
+                        ProductDetailRoute(product: product, list: widget.list),
                   ),
                 );
               },
             );
           } else if (snapshot.hasError) {
-            developer.log("An error occurred while retrieving products.", error: snapshot.error);
-            return FutureErrorRetryWidget(onRetry: () {
-              setState(() {
-            });},
-                child: const Center(child: Text('An error occurred while retrieving products. Please try again.')));
+            developer.log("An error occurred while retrieving products.",
+                error: snapshot.error);
+            return FutureErrorRetryWidget(
+                onRetry: () {
+                  setState(() {});
+                },
+                child: const Center(
+                    child: Text(
+                        'An error occurred while retrieving products. Please try again.')));
           }
           return const Center(child: CircularProgressIndicator());
         },
