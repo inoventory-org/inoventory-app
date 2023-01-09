@@ -4,6 +4,14 @@ inoventory UI
 
 Running at: http://10.100.253.181/
 
+## Web Version
+
+If running the web version, the run configuration must be edited so that the app starts at port 50000. 
+
+This is done by editing the run configuration in Android Studio and adding the commandline argument next to ´additional run args´:
+´--web-port=50000´
+
+
 ## Getting Started
 
 This project is a starting point for a Flutter application.
