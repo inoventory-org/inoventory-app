@@ -1,16 +1,18 @@
+import 'dart:developer' as developer;
+
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:inoventory_ui/config/dependencies.dart';
+import 'package:inoventory_ui/ean/barcode_scanner.dart';
 import 'package:inoventory_ui/inventory/items/inventory_item.dart';
+import 'package:inoventory_ui/inventory/items/item_service.dart';
 import 'package:inoventory_ui/inventory/items/widgets/inventory_list_widget.dart';
 import 'package:inoventory_ui/inventory/lists/inventory_list.dart';
-import 'package:inoventory_ui/inventory/items/item_service.dart';
 import 'package:inoventory_ui/products/product_service.dart';
 import 'package:inoventory_ui/products/routes/product_search_route.dart';
-import 'package:inoventory_ui/ean/barcode_scanner.dart';
 import 'package:inoventory_ui/shared/widgets/expandable_floating_action_button.dart';
 import 'package:inoventory_ui/shared/widgets/future_error_retry_widget.dart';
 import 'package:inoventory_ui/shared/widgets/inoventory_appbar.dart';
-import 'dart:developer' as developer;
 
 class InventoryListDetailRoute extends StatefulWidget {
   final InventoryList list;
@@ -47,9 +49,49 @@ class _InventoryListDetailRouteState extends State<InventoryListDetailRoute> {
     await _refreshList();
   }
 
-  Future<void> onDelete(itemId) async {
+  Future<void> onDelete(InventoryListItemWrapper itemWrapper) async {
+    final int? itemId = await getItemIdToDelete(itemWrapper);
+    if (itemId == null) {
+      return;
+    }
+
     await itemService.delete(widget.list.id, itemId);
     await _refreshList();
+  }
+
+  Future<void> onEanDeleteScan(String ean) async {
+    futureItems.then((value) async {
+      InventoryListItemWrapper? result =
+          value.firstWhereOrNull((element) => element.productEan == ean);
+      if (result == null) {
+        return;
+      }
+
+      await onDelete(result);
+    });
+  }
+
+  Future<int?> getItemIdToDelete(InventoryListItemWrapper itemWrapper) async {
+    if (itemWrapper.items.map((e) => e.expirationDate).toSet().length == 1) {
+      return itemWrapper.items.first.id;
+    }
+
+    return await showDialog<int>(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: const Text("Choose item"),
+            content: const Text("Which item do you want to remove?"),
+            actions: itemWrapper.items
+                .map((e) => Center(
+                      child: TextButton(
+                        onPressed: () => Navigator.pop(context, e.id),
+                        child: Text(e.expirationDate ?? "<no expiration date>"),
+                      ),
+                    ))
+                .toList(),
+          );
+        });
   }
 
   Future<void> _refreshList() async {
@@ -58,15 +100,15 @@ class _InventoryListDetailRouteState extends State<InventoryListDetailRoute> {
     });
   }
 
-  void transitToProductSearchPage(BuildContext context, String? initialSearchValue) {
+  void transitToProductSearchPage(
+      BuildContext context, String? initialSearchValue) {
     Navigator.push(
         context,
         MaterialPageRoute(
             builder: (context) => ProductSearchRoute(
                 productService: productService,
                 initialSearchValue: initialSearchValue,
-                list: widget.list))
-    ).whenComplete(_refreshList);
+                list: widget.list))).whenComplete(_refreshList);
   }
 
   @override
@@ -83,23 +125,29 @@ class _InventoryListDetailRouteState extends State<InventoryListDetailRoute> {
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.done) {
               if (snapshot.hasError) {
-                developer.log("An error occurred while retrieving items.", error: snapshot.error);
+                developer.log("An error occurred while retrieving items.",
+                    error: snapshot.error);
                 return FutureErrorRetryWidget(
                     onRetry: _refreshList,
-                    child: const Center(child: Text('An error occurred while retrieving items. Please try again.')));
+                    child: const Center(
+                        child: Text(
+                            'An error occurred while retrieving items. Please try again.')));
               }
               if (snapshot.hasData) {
                 return InventoryListWidget(
-                    itemWrappers: snapshot.data!, onDelete: onDelete, onEdit: onEdit);
+                    itemWrappers: snapshot.data!,
+                    onDelete: onDelete,
+                    onEdit: onEdit);
               }
             }
             return const Center(child: CircularProgressIndicator());
           },
         ),
       ),
-      floatingActionButton: ExpandableFab(distance: 50, children: [
+      floatingActionButton:
+          ExpandableFab(iconData: Icons.camera_alt, distance: 50, children: [
         ActionButton(
-            icon: const Icon(Icons.camera_alt, color: Colors.black),
+            icon: const Icon(Icons.add_outlined, color: Colors.black),
             onPressed: () async {
               final navigator = Navigator.of(context);
               barcodeScanResult = await _barcodeScanner.scanBarcodeNormal();
@@ -112,11 +160,11 @@ class _InventoryListDetailRouteState extends State<InventoryListDetailRoute> {
                   .whenComplete((_refreshList));
             }),
         ActionButton(
-          icon: const Icon(Icons.edit, color: Colors.black),
-          onPressed: () {
-            transitToProductSearchPage(context, "3017620425035");
-          },
-        ),
+            icon: const Icon(Icons.delete, color: Colors.black),
+            onPressed: () async {
+              barcodeScanResult = await _barcodeScanner.scanBarcodeNormal();
+              await onEanDeleteScan(barcodeScanResult);
+            }),
       ]),
     );
   }

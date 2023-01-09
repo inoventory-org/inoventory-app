@@ -61,16 +61,19 @@ class ExampleExpandableFab extends StatelessWidget {
 
 @immutable
 class ExpandableFab extends StatefulWidget {
+  final IconData iconData;
+  final bool? initialOpen;
+  final double distance;
+  final List<Widget> children;
+
   const ExpandableFab({
     super.key,
     this.initialOpen,
     required this.distance,
     required this.children,
+    this.iconData = Icons.add_outlined
   });
 
-  final bool? initialOpen;
-  final double distance;
-  final List<Widget> children;
 
   @override
   State<ExpandableFab> createState() => _ExpandableFabState();
@@ -192,7 +195,7 @@ class _ExpandableFabState extends State<ExpandableFab>
           duration: const Duration(milliseconds: 250),
           child: FloatingActionButton(
             onPressed: _toggle,
-            child: const Icon(Icons.add_outlined),
+            child: Icon(widget.iconData),
           ),
         ),
       ),

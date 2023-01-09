@@ -5,7 +5,7 @@ import 'package:inoventory_ui/inventory/items/inventory_item.dart';
 
 class InventoryItemWidget extends StatelessWidget {
   final InventoryListItemWrapper itemWrapper;
-  final Future<void> Function(int itemId) onDelete;
+  final Future<void> Function(InventoryListItemWrapper itemWrapper) onDelete;
 
   const InventoryItemWidget(
     this.itemWrapper,
@@ -16,14 +16,8 @@ class InventoryItemWidget extends StatelessWidget {
   Future<void> onDismissed(
       BuildContext context, DismissDirection direction) async {
     final scaffoldMessenger = ScaffoldMessenger.of(context);
-
-    final int? itemId = await getItemIdToDelete(context);
-    if (itemId == null) {
-      return;
-    }
-
     try {
-      await onDelete(itemId);
+      await onDelete(itemWrapper);
 
       scaffoldMessenger.showSnackBar(
           _getSnackBar("Successfully deleted item", Colors.green));
