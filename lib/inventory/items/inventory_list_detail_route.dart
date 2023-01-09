@@ -48,7 +48,7 @@ class _InventoryListDetailRouteState extends State<InventoryListDetailRoute> {
   }
 
   Future<void> onDelete(listId, itemId) async {
-    itemService.delete(listId, itemId);
+    await itemService.delete(listId, itemId);
     await _refreshList();
   }
 

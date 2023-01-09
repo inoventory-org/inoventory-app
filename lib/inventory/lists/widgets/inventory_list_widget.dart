@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:inoventory_ui/inventory/items/inventory_item.dart';
+import 'package:inoventory_ui/inventory/items/inventory_item_widget.dart';
+
 
 class InventoryListWidget extends StatelessWidget {
   final List<InventoryListItemWrapper> itemWrappers;
@@ -14,30 +16,7 @@ class InventoryListWidget extends StatelessWidget {
         children: ListTile.divideTiles(
             context: context,
             tiles: itemWrappers.map((itemWrapper) {
-              return ListTile(
-                // leading: icon
-                title: Text(
-                  itemWrapper.displayName ?? itemWrapper.productEan,
-                  style: const TextStyle(fontSize: 18),
-                ),
-                subtitle: Text(
-                  itemWrapper.productEan,
-                  style: const TextStyle(fontSize: 14, color: Colors.grey),
-                ),
-                trailing: itemWrapper.quantity > 1 ? Container(
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.secondary,
-                    borderRadius: BorderRadius.circular(5),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-                    child: Text(
-                      "Quantity: ${itemWrapper.quantity.toString()}",
-                      style: const TextStyle(fontSize: 18),
-                    ),
-                  ),
-                ) : null,
-              );
+              return InventoryItemWidget(itemWrapper, onDelete);
             })).toList());
   }
 }
