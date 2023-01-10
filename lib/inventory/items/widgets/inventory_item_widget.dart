@@ -1,39 +1,15 @@
-import 'dart:developer' as developer;
-
 import 'package:flutter/material.dart';
 import 'package:inoventory_ui/inventory/items/inventory_item.dart';
 
 class InventoryItemWidget extends StatelessWidget {
   final InventoryListItemWrapper itemWrapper;
-  final Future<void> Function(InventoryListItemWrapper itemWrapper) onDelete;
+  final Future<bool> Function(InventoryListItemWrapper itemWrapper) onDelete;
 
   const InventoryItemWidget(
     this.itemWrapper,
     this.onDelete, {
     Key? key,
   }) : super(key: key);
-
-  Future<void> onDismissed(
-      BuildContext context, DismissDirection direction) async {
-    final scaffoldMessenger = ScaffoldMessenger.of(context);
-    try {
-      await onDelete(itemWrapper);
-
-      scaffoldMessenger.showSnackBar(
-          _getSnackBar("Successfully deleted item", Colors.green));
-    } catch (e) {
-      scaffoldMessenger
-          .showSnackBar(_getSnackBar("Error deleting item: ", Colors.red));
-
-      developer.log("Could not delete item", error: e);
-    }
-  }
-
-  SnackBar _getSnackBar(String text, Color color) {
-    TextStyle style = const TextStyle(color: Colors.white);
-
-    return SnackBar(content: Text(text, style: style), backgroundColor: color);
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -43,13 +19,11 @@ class InventoryItemWidget extends StatelessWidget {
       background: Container(
         color: Colors.red,
         alignment: Alignment.centerRight,
+        padding: const EdgeInsets.all(25),
         child: const Icon(Icons.delete, color: Colors.white),
       ),
-      onDismissed: (direction) async {
-        await onDismissed(context, direction);
-      },
+      confirmDismiss: (direction) => onDelete(itemWrapper),
       resizeDuration: null,
-
       child: ListTile(
           leading: Container(
             height: 50,
@@ -57,12 +31,13 @@ class InventoryItemWidget extends StatelessWidget {
             decoration: BoxDecoration(
               image: itemWrapper.thumbUrl != null
                   ? DecorationImage(
-                image: NetworkImage(itemWrapper.thumbUrl!),
-                fit: BoxFit.cover,
-              )
+                      image: NetworkImage(itemWrapper.thumbUrl!),
+                      fit: BoxFit.cover,
+                    )
                   : null,
             ),
-            child: itemWrapper.thumbUrl == null ? const Icon(Icons.image) : null,
+            child:
+                itemWrapper.thumbUrl == null ? const Icon(Icons.image) : null,
           ),
           title: Text(
             itemWrapper.displayName ?? itemWrapper.productEan,
@@ -76,29 +51,6 @@ class InventoryItemWidget extends StatelessWidget {
               ? _QuantityWidget(itemWrapper.quantity)
               : null),
     );
-  }
-
-  Future<int?> getItemIdToDelete(BuildContext context) async {
-    if (itemWrapper.items.map((e) => e.expirationDate).toSet().length == 1) {
-      return itemWrapper.items.first.id;
-    }
-
-    return await showDialog<int>(
-        context: context,
-        builder: (context) {
-          return AlertDialog(
-            title: const Text("Choose item"),
-            content: const Text("Which item do you want to remove?"),
-            actions: itemWrapper.items
-                .map((e) => Center(
-                  child: TextButton(
-                        onPressed: () => Navigator.pop(context, e.id),
-                        child: Text(e.expirationDate ?? "<no expiration date>"),
-                      ),
-                ))
-                .toList(),
-          );
-        });
   }
 }
 

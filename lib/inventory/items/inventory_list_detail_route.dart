@@ -39,24 +39,39 @@ class _InventoryListDetailRouteState extends State<InventoryListDetailRoute> {
     futureItems = itemService.all(widget.list.id);
   }
 
-  void barcodeScanned(String barcode) {
-    setState(() {
-      barcodeScanResult = barcode;
-    });
-  }
-
   Future<void> onEdit(InventoryListItemWrapper itemWrapper) async {
     await _refreshList();
   }
 
-  Future<void> onDelete(InventoryListItemWrapper itemWrapper) async {
+  Future<bool> onDelete(InventoryListItemWrapper itemWrapper) async {
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+
     final int? itemId = await getItemIdToDelete(itemWrapper);
     if (itemId == null) {
-      return;
+      return false;
     }
 
-    await itemService.delete(widget.list.id, itemId);
+    try {
+      await itemService.delete(widget.list.id, itemId);
+
+      scaffoldMessenger.showSnackBar(
+          _getSnackBar("Successfully deleted item", Colors.green));
+    } catch (e) {
+      scaffoldMessenger
+          .showSnackBar(_getSnackBar("Error deleting item: ", Colors.red));
+
+      developer.log("Could not delete item", error: e);
+
+      return false;
+    }
+
     await _refreshList();
+    return true;
+  }
+
+  SnackBar _getSnackBar(String text, Color color) {
+    TextStyle style = const TextStyle(color: Colors.white);
+    return SnackBar(content: Text(text, style: style), backgroundColor: color);
   }
 
   Future<void> onEanDeleteScan(String ean) async {
@@ -80,17 +95,26 @@ class _InventoryListDetailRouteState extends State<InventoryListDetailRoute> {
         context: context,
         builder: (context) {
           return AlertDialog(
-            title: const Text("Choose item"),
-            content: const Text("Which item do you want to remove?"),
-            actions: itemWrapper.items
-                .map((e) => Center(
-                      child: TextButton(
-                        onPressed: () => Navigator.pop(context, e.id),
-                        child: Text(e.expirationDate ?? "<no expiration date>"),
-                      ),
-                    ))
-                .toList(),
-          );
+              title: const Text("Choose item"),
+              scrollable: true,
+
+              content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                        const Text("Which item do you want to remove?"),
+                      ] +
+                      itemWrapper.items
+                          .map((e) => TextButton(
+                                onPressed: () => Navigator.pop(context, e.id),
+                                child: Text(
+                                    e.expirationDate ?? "<no expiration date>"),
+                              ))
+                          .toList() +
+                      <Widget>[
+                        OutlinedButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text("Cancel"))
+                      ]));
         });
   }
 
