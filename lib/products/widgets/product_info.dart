@@ -12,9 +12,11 @@ class ProductInfo extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          FittedBox(child: Text(product.name, style: const TextStyle(fontSize: 40))),
+          FittedBox(
+              child: Text(product.name, style: const TextStyle(fontSize: 40))),
           const SizedBox(width: 20), // give it width
-          FittedBox(child: Text(product.ean, style: const TextStyle(fontSize: 30))),
+          FittedBox(
+              child: Text(product.ean, style: const TextStyle(fontSize: 30))),
         ],
       ),
     );

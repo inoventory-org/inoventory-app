@@ -8,13 +8,13 @@ class ItemWrapper {
   final String? thumbUrl;
   final List<Item> items;
 
-  ItemWrapper(this.listId, this.productEan, this.displayName,
-      this.imageUrl, this.thumbUrl, this.items);
+  ItemWrapper(this.listId, this.productEan, this.displayName, this.imageUrl,
+      this.thumbUrl, this.items);
 
   factory ItemWrapper.fromItems(List<Item> items) {
     final item = items.first;
-    return ItemWrapper(item.listId, item.productEan,
-        item.displayName, item.imageUrl, item.thumbUrl, items);
+    return ItemWrapper(item.listId, item.productEan, item.displayName,
+        item.imageUrl, item.thumbUrl, items);
   }
 
   int get quantity => items.length;

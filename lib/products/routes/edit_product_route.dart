@@ -54,7 +54,6 @@ class _EditProductRouteState extends State<EditProductRoute> {
               ),
             ],
           ),
-        )
-    );
+        ));
   }
 }

@@ -5,11 +5,10 @@
 // gestures. You can also use WidgetTester to find child widgets in the widget
 // tree, read text, and verify that the values of widget properties are correct.
 
-import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:inoventory_ui/inventory/lists/models/inventory_list.dart';
 import 'package:inoventory_ui/products/product_model.dart';
-
 import 'package:inoventory_ui/products/product_service.dart';
 import 'package:inoventory_ui/products/routes/product_search_route.dart';
 
@@ -57,10 +56,12 @@ void main() {
 
     // Build the ProductSearchView widget
     await tester.pumpWidget(MaterialApp(
-      home: ProductSearchRoute(initialSearchValue: "3017620425035", productService: productService, list: list),
+      home: ProductSearchRoute(
+          initialSearchValue: "3017620425035",
+          productService: productService,
+          list: list),
     ));
     await tester.pump();
-
 
     // Verify that the products are displayed
     expect(find.text('Nutella'), findsOneWidget);

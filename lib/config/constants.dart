@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 
-
 class KeycloakConf {
   static const baseUrl = "http://10.100.255.76:8081";
   static const realm = "inoventory";
@@ -10,7 +9,8 @@ class KeycloakConf {
   final endSessionUrl = "$baseUrlWithRealm/protocol/openid-connect/logout";
   final clientId = "app";
   static final redirectSchema = "com.railabouni.inoventory";
-  final redirectUrl = kIsWeb ? "http://localhost:50000/auth" : "$redirectSchema://auth";
+  final redirectUrl =
+      kIsWeb ? "http://localhost:50000/auth" : "$redirectSchema://auth";
 }
 
 abstract class Constants {

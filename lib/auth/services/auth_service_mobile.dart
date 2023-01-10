@@ -1,13 +1,11 @@
+import 'dart:developer' as developer;
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:inoventory_ui/auth/services/auth_service.dart';
+import 'package:inoventory_ui/config/constants.dart';
 import 'package:openid_client/openid_client.dart';
 import 'package:openid_client/openid_client_io.dart' as io;
-import 'package:inoventory_ui/config/constants.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'dart:developer' as developer;
-
-
 
 class AuthServiceImpl extends AuthService {
   late final FlutterSecureStorage secureStorage;
@@ -18,13 +16,12 @@ class AuthServiceImpl extends AuthService {
   late Credential? _credential;
   Future<void> Function()? onLoginSuccess;
 
-
   AuthServiceImpl._create(this.scopes, this.onLoginSuccess);
 
   /// Public factory --- needed due to async initialization
-  static Future<AuthService> create({List<String> scopes = const [],
-  Future<void> Function()? onLoginSuccess})  async {
-
+  static Future<AuthService> create(
+      {List<String> scopes = const [],
+      Future<void> Function()? onLoginSuccess}) async {
     // Call the private constructor
     var component = AuthServiceImpl._create(scopes, onLoginSuccess);
     var uri = Uri.parse(KeycloakConf.baseUrlWithRealm);
@@ -33,10 +30,8 @@ class AuthServiceImpl extends AuthService {
     component.secureStorage = const FlutterSecureStorage();
     component.issuer = await Issuer.discover(uri);
     component.client = Client(component.issuer, clientId);
-    component.authenticator
-    = io.Authenticator(component.client,
-        scopes: scopes,
-        port: 4000, urlLancher: component._urlLauncher);
+    component.authenticator = io.Authenticator(component.client,
+        scopes: scopes, port: 4000, urlLancher: component._urlLauncher);
 
     // Should find credentials when initialized directly after a redirect
     await component.authenticate();
@@ -50,13 +45,10 @@ class AuthServiceImpl extends AuthService {
     return _credential;
   }
 
-
   @override
   Future<void> authenticate({List<String> scopes = const []}) async {
-    authenticator
-    = io.Authenticator(client,
-        scopes: scopes,
-        port: 4000, urlLancher: _urlLauncher);
+    authenticator = io.Authenticator(client,
+        scopes: scopes, port: 4000, urlLancher: _urlLauncher);
     try {
       _credential = await authenticator.authorize();
     } catch (e) {
@@ -67,7 +59,7 @@ class AuthServiceImpl extends AuthService {
     developer.log("finished auth flow");
   }
 
-    Future<void> _urlLauncher(String url) async {
+  Future<void> _urlLauncher(String url) async {
     try {
       await launchUrl(Uri.parse(url), mode: LaunchMode.inAppWebView);
     } catch (e) {
@@ -76,19 +68,15 @@ class AuthServiceImpl extends AuthService {
   }
 
   @override
-  Future<TokenResponse?> getTokenResponse({forceRefresh = false, List<String> scopes = const []}) async {
-     return await _credential?.getTokenResponse(forceRefresh);
+  Future<TokenResponse?> getTokenResponse(
+      {forceRefresh = false, List<String> scopes = const []}) async {
+    return await _credential?.getTokenResponse(forceRefresh);
   }
 
   @override
-  Future<Credential?> getRedirectResult({List<String> scopes = const []}) async {
+  Future<Credential?> getRedirectResult(
+      {List<String> scopes = const []}) async {
     return null;
-  }
-
-  Future<void> _storeToken(TokenResponse? tr) async {
-    await secureStorage.write(key: "access_token", value: tr?.accessToken);
-    await secureStorage.write(key: "refresh_token", value: tr?.refreshToken);
-    await secureStorage.write(key: "token_type", value: tr?.tokenType);
   }
 
   @override
@@ -99,5 +87,4 @@ class AuthServiceImpl extends AuthService {
     }
     _credential?.createHttpClient().get(logoutUrl);
   }
-
 }

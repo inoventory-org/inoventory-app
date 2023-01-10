@@ -5,7 +5,8 @@ class MyUserInfo {
   final String? familyName;
   final String? email;
 
-  MyUserInfo(this.name, this.preferredUserName, this.givenName, this.familyName, this.email);
+  MyUserInfo(this.name, this.preferredUserName, this.givenName, this.familyName,
+      this.email);
 
   String? get fullName {
     if (givenName == null && familyName == null) return null;

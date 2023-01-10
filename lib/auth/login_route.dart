@@ -16,22 +16,21 @@ class _LoginRouteState extends State<LoginRoute> {
     await widget.login();
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: <Widget>[
-              Center(
-                child: ElevatedButton(
-                  onPressed: () {
-                    loginAction();
-                  },
-                  child: const Text('Login'),
-                ),
-              ),
-            ],
-          );
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: <Widget>[
+        Center(
+          child: ElevatedButton(
+            onPressed: () {
+              loginAction();
+            },
+            child: const Text('Login'),
+          ),
+        ),
+      ],
+    );
   }
 }

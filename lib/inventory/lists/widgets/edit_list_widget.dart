@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:inoventory_ui/config/dependencies.dart';
+import 'package:inoventory_ui/config/injection.dart';
+import 'package:inoventory_ui/inventory/lists/inventory_list_service.dart';
 import 'package:inoventory_ui/inventory/lists/models/inventory_list.dart';
 
 class EditListWidget extends StatefulWidget {
@@ -12,7 +13,7 @@ class EditListWidget extends StatefulWidget {
 
 class EditeListWidgetState extends State<EditListWidget> {
   final _formKey = GlobalKey<FormState>();
-  final _listService = Dependencies.inoventoryListService;
+  final _listService = getIt<InventoryListService>();
   late TextEditingController _nameController;
 
   @override
@@ -68,8 +69,7 @@ class EditeListWidgetState extends State<EditListWidget> {
                         style: TextStyle(
                           fontSize: 24,
                           color: Colors.white,
-                        ))
-                ),
+                        ))),
               ],
             ),
           ),

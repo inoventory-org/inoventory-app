@@ -1,17 +1,20 @@
 import 'dart:async';
+import 'dart:developer' as developer;
+import 'dart:io';
+
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:inoventory_ui/config/http_config.dart';
-import 'package:inoventory_ui/config/constants.dart';
-import 'package:inoventory_ui/config/dependencies.dart';
-import 'package:inoventory_ui/inventory/lists/inventory_list_overview_route.dart';
 import 'package:inoventory_ui/auth/login_route.dart';
 import 'package:inoventory_ui/auth/services/auth_service.dart';
+import 'package:inoventory_ui/config/constants.dart';
+import 'package:inoventory_ui/config/http_config.dart';
+import 'package:inoventory_ui/inventory/lists/inventory_list_overview_route.dart';
 import 'package:inoventory_ui/shared/widgets/inoventory_appbar.dart';
-import 'dart:io';
-import 'dart:developer' as developer;
 import 'package:jwt_decode/jwt_decode.dart';
 import 'package:url_launcher/url_launcher.dart';
+
+import 'config/injection.dart';
 
 class InoventoryHomeRoute extends StatefulWidget {
   final AuthService authService;
@@ -24,7 +27,7 @@ class InoventoryHomeRoute extends StatefulWidget {
 
 class _InoventoryHomeRouteState extends State<InoventoryHomeRoute> {
   late final AuthService authService = widget.authService;
-  final dio = Dependencies.dio;
+  final dio = getIt<Dio>();
   String? authenticatedUserName;
   final accessTokenRefreshIntervalSeconds =
       Constants.accessTokenRefreshIntervalSeconds;
@@ -70,7 +73,7 @@ class _InoventoryHomeRouteState extends State<InoventoryHomeRoute> {
     }
     Timer.periodic(Duration(seconds: refreshIntervalSeconds),
         (Timer timer) async {
-      final tr = await authService.getTokenResponse(forceRefresh: true);
+      await authService.getTokenResponse(forceRefresh: true);
     });
   }
 

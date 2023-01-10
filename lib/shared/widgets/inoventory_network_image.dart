@@ -6,14 +6,13 @@ class InoventoryNetworkImage extends StatelessWidget {
   final double width;
   final BoxFit? boxFit;
 
-  const InoventoryNetworkImage({
-    Key? key,
-    required this.url,
-    this.height = 400,
-    this.width = double.infinity,
-    this.boxFit = BoxFit.scaleDown
-  }) : super(key: key);
-
+  const InoventoryNetworkImage(
+      {Key? key,
+      required this.url,
+      this.height = 400,
+      this.width = double.infinity,
+      this.boxFit = BoxFit.scaleDown})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {

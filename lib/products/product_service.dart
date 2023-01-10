@@ -1,20 +1,18 @@
 import 'package:dio/dio.dart';
-import 'package:inoventory_ui/products/product_model.dart';
+import 'package:injectable/injectable.dart';
 import 'package:inoventory_ui/config/constants.dart';
-
+import 'package:inoventory_ui/products/product_model.dart';
 
 abstract class ProductService {
-
   Future<List<Product>> search(String barcode);
   Future<List<Product>> all();
   Future<Product> add(Product product);
   Future<Product> update(String productId, Product product);
   Future<bool> delete(String productId);
-
 }
 
+@Injectable(as: ProductService)
 class ProductServiceImpl implements ProductService {
-
   final backendUrl = Constants.inoventoryBackendUrl;
   final timeout = const Duration(seconds: 5);
   final Dio dio;
@@ -29,8 +27,8 @@ class ProductServiceImpl implements ProductService {
 
   @override
   Future<List<Product>> all() async {
-    final response = await dio.get("$backendUrl/api/v1/products")
-        .timeout(timeout);
+    final response =
+        await dio.get("$backendUrl/api/v1/products").timeout(timeout);
     if (response.statusCode == 200) {
       // If the server did return a 200 OK response,
       // then parse the JSON.
@@ -52,15 +50,15 @@ class ProductServiceImpl implements ProductService {
 
   @override
   Future<List<Product>> search(String barcode) async {
-    final response = await dio.get("$backendUrl/api/v1/products?ean=$barcode")
+    final response = await dio
+        .get("$backendUrl/api/v1/products?ean=$barcode")
         .timeout(timeout);
     if (response.statusCode == 200) {
       Map<String, dynamic> json = response.data;
       Product product = Product.fromJson(json);
 
       return <Product>[product];
-    }
-    else {
+    } else {
       // 3017620425035
       // If the server did not return a 200 OK response,
       // then throw an exception.

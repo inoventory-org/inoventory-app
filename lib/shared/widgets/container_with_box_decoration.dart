@@ -7,12 +7,14 @@ class ContainerWithBoxDecoration extends StatelessWidget {
   final double externalPadding;
   final double internalPadding;
 
-  const ContainerWithBoxDecoration({Key? key,
-    required this.child,
-    this.boxColor,
-    this.borderRadius=15,
-    this.externalPadding=8.0,
-    this.internalPadding=8.0}) : super(key: key);
+  const ContainerWithBoxDecoration(
+      {Key? key,
+      required this.child,
+      this.boxColor,
+      this.borderRadius = 15,
+      this.externalPadding = 8.0,
+      this.internalPadding = 8.0})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -24,8 +26,6 @@ class ContainerWithBoxDecoration extends StatelessWidget {
               color: boxColor,
               borderRadius: BorderRadius.circular(borderRadius),
             ),
-            child: child
-        )
-    );
+            child: child));
   }
 }

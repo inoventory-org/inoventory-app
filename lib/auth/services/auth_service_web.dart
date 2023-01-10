@@ -1,8 +1,9 @@
+import 'dart:developer' as developer;
+
 import 'package:inoventory_ui/auth/services/auth_service.dart';
 import 'package:inoventory_ui/config/constants.dart';
 import 'package:openid_client/openid_client.dart';
 import 'package:openid_client/openid_client_browser.dart' as browser;
-import 'dart:developer' as developer;
 
 class AuthServiceImpl extends AuthService {
   late final Client client;
@@ -11,12 +12,10 @@ class AuthServiceImpl extends AuthService {
   late browser.Authenticator authenticator;
   late Credential? _credential;
 
-
   AuthServiceImpl._create(this.scopes);
 
   /// Public factory
   static Future<AuthService> create({List<String> scopes = const []}) async {
-
     // Call the private constructor
     var component = AuthServiceImpl._create(scopes);
 
@@ -24,7 +23,8 @@ class AuthServiceImpl extends AuthService {
     var clientId = Constants.keycloakConf.clientId;
     component.issuer = await Issuer.discover(uri);
     component.client = Client(component.issuer, clientId);
-    component.authenticator = browser.Authenticator(component.client, scopes: scopes);
+    component.authenticator =
+        browser.Authenticator(component.client, scopes: scopes);
     // Should find credentials when initialized directly after a redirect
     await component.getRedirectResult();
 
@@ -49,9 +49,9 @@ class AuthServiceImpl extends AuthService {
     authenticator.authorize();
   }
 
-
   @override
-  Future<TokenResponse?> getTokenResponse({forceRefresh = false, List<String> scopes = const []}) async {
+  Future<TokenResponse?> getTokenResponse(
+      {forceRefresh = false, List<String> scopes = const []}) async {
     Credential? c;
     if (forceRefresh) {
       try {
@@ -66,11 +66,11 @@ class AuthServiceImpl extends AuthService {
   }
 
   @override
-  Future<Credential?> getRedirectResult({List<String> scopes = const []}) async {
+  Future<Credential?> getRedirectResult(
+      {List<String> scopes = const []}) async {
     _credential = await authenticator.credential;
     return _credential;
   }
-
 
   Future<void> _updateCredentials() async {
     _credential = await authenticator.credential;
@@ -81,10 +81,7 @@ class AuthServiceImpl extends AuthService {
     authenticator.logout();
     _credential = null;
   }
-
-
 }
-
 
 // import 'dart:html';
 //

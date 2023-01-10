@@ -2,6 +2,7 @@ import 'dart:developer' as developer;
 import 'dart:io';
 
 import 'package:dio/dio.dart';
+import 'package:injectable/injectable.dart';
 import 'package:inoventory_ui/config/constants.dart';
 import 'package:inoventory_ui/inventory/items/models/item.dart';
 import 'package:inoventory_ui/inventory/items/models/item_wrapper.dart';
@@ -28,6 +29,7 @@ abstract class ItemService {
   }
 }
 
+@Injectable(as: ItemService)
 class ItemServiceImpl extends ItemService {
   final Dio dio;
 

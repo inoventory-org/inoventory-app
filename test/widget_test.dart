@@ -7,7 +7,6 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
 import 'package:inoventory_ui/inventory/lists/inventory_list_overview_route.dart';
 
 void main() {
@@ -15,14 +14,13 @@ void main() {
   testWidgets('MyWidget has a title and message', (tester) async {
     // Create the widget by telling the tester to build it.
     const String title = "inoventory";
-    await tester.pumpWidget(
-      MediaQuery(data: const MediaQueryData(),
-          child: MaterialApp(home: InventoryListRoute(logout: (){ throw UnimplementedError(); })
-          )
-      )
-    );
+    await tester.pumpWidget(MediaQuery(
+        data: const MediaQueryData(),
+        child: MaterialApp(home: InventoryListRoute(logout: () {
+          throw UnimplementedError();
+        }))));
     await tester.pump();
-    
+
     final titleFinder = find.text(title);
 
     expect(titleFinder, findsOneWidget);

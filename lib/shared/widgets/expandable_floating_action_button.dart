@@ -66,14 +66,12 @@ class ExpandableFab extends StatefulWidget {
   final double distance;
   final List<Widget> children;
 
-  const ExpandableFab({
-    super.key,
-    this.initialOpen,
-    required this.distance,
-    required this.children,
-    this.iconData = Icons.add_outlined
-  });
-
+  const ExpandableFab(
+      {super.key,
+      this.initialOpen,
+      required this.distance,
+      required this.children,
+      this.iconData = Icons.add_outlined});
 
   @override
   State<ExpandableFab> createState() => _ExpandableFabState();
@@ -163,8 +161,8 @@ class _ExpandableFabState extends State<ExpandableFab>
     final count = widget.children.length;
     final step = 90.0 / (count - 1);
     for (var i = 0, angleInDegrees = 0.0;
-    i < count;
-    i++, angleInDegrees += step) {
+        i < count;
+        i++, angleInDegrees += step) {
       children.add(
         _ExpandingActionButton(
           directionInDegrees: angleInDegrees,

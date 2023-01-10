@@ -2,7 +2,7 @@ import 'dart:developer' as developer;
 
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
-import 'package:inoventory_ui/config/dependencies.dart';
+import 'package:inoventory_ui/config/injection.dart';
 import 'package:inoventory_ui/ean/barcode_scanner.dart';
 import 'package:inoventory_ui/inventory/items/item_service.dart';
 import 'package:inoventory_ui/inventory/items/models/item_wrapper.dart';
@@ -20,23 +20,19 @@ class ItemListRoute extends StatefulWidget {
   const ItemListRoute({super.key, required this.list});
 
   @override
-  State<ItemListRoute> createState() =>
-      _ItemListRouteState();
+  State<ItemListRoute> createState() => _ItemListRouteState();
 }
 
 class _ItemListRouteState extends State<ItemListRoute> {
   final BarcodeScanner _barcodeScanner = BarcodeScanner();
-  final ProductService productService = Dependencies.productService;
-  final ItemService itemService = Dependencies.itemService;
-
-  String barcodeScanResult = "";
-
+  final ProductService _productService = getIt<ProductService>();
+  final ItemService _itemService = getIt<ItemService>();
   late Future<List<ItemWrapper>> futureItems;
 
   @override
   void initState() {
     super.initState();
-    futureItems = itemService.all(widget.list.id);
+    futureItems = _itemService.all(widget.list.id);
   }
 
   Future<void> onEdit(ItemWrapper itemWrapper) async {
@@ -52,7 +48,7 @@ class _ItemListRouteState extends State<ItemListRoute> {
     }
 
     try {
-      await itemService.delete(widget.list.id, itemId);
+      await _itemService.delete(widget.list.id, itemId);
 
       scaffoldMessenger.showSnackBar(
           _getSnackBar("Successfully deleted item", Colors.green));
@@ -115,7 +111,7 @@ class _ItemListRouteState extends State<ItemListRoute> {
 
   Future<void> _refreshList() async {
     setState(() {
-      futureItems = itemService.all(widget.list.id);
+      futureItems = _itemService.all(widget.list.id);
     });
   }
 
@@ -125,7 +121,7 @@ class _ItemListRouteState extends State<ItemListRoute> {
         context,
         MaterialPageRoute(
             builder: (context) => ProductSearchRoute(
-                productService: productService,
+                productService: _productService,
                 initialSearchValue: initialSearchValue,
                 list: widget.list))).whenComplete(_refreshList);
   }
@@ -169,19 +165,19 @@ class _ItemListRouteState extends State<ItemListRoute> {
             icon: const Icon(Icons.add_outlined, color: Colors.black),
             onPressed: () async {
               final navigator = Navigator.of(context);
-              barcodeScanResult = await _barcodeScanner.scanBarcodeNormal();
+              var barcodeScanResult = await _barcodeScanner.scanBarcodeNormal();
               navigator
                   .push(MaterialPageRoute(
                       builder: (context) => ProductSearchRoute(
                           initialSearchValue: barcodeScanResult,
-                          productService: productService,
+                          productService: _productService,
                           list: widget.list)))
                   .whenComplete((_refreshList));
             }),
         ActionButton(
             icon: const Icon(Icons.delete, color: Colors.black),
             onPressed: () async {
-              barcodeScanResult = await _barcodeScanner.scanBarcodeNormal();
+              var barcodeScanResult = await _barcodeScanner.scanBarcodeNormal();
               await onEanDeleteScan(barcodeScanResult);
             }),
       ]),

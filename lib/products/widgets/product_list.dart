@@ -18,7 +18,8 @@ class _ProductListViewState extends State<ProductListView> {
   @override
   Widget build(BuildContext context) {
     if (widget.products.isEmpty) {
-      return const CentralizedElementWithPlusButton(nextWidget: EditProductRoute());
+      return const CentralizedElementWithPlusButton(
+          nextWidget: EditProductRoute());
     }
     return ListView(
         children: ListTile.divideTiles(

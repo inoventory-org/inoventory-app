@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:inoventory_ui/config/dependencies.dart';
+import 'package:inoventory_ui/config/injection.dart';
+import 'package:inoventory_ui/inventory/items/item_service.dart';
 import 'package:inoventory_ui/inventory/items/models/item.dart';
 import 'package:inoventory_ui/inventory/lists/models/inventory_list.dart';
 import 'package:inoventory_ui/products/product_model.dart';
-import 'package:inoventory_ui/inventory/items/item_service.dart';
-import 'package:inoventory_ui/shared/widgets/inoventory_network_image.dart';
 import 'package:inoventory_ui/shared/widgets/amount_input.dart';
 import 'package:inoventory_ui/shared/widgets/expiry_date_input.dart';
+import 'package:inoventory_ui/shared/widgets/inoventory_network_image.dart';
 
 class AddProductView extends StatefulWidget {
   final Product product;
@@ -19,9 +19,9 @@ class AddProductView extends StatefulWidget {
 }
 
 class _AddProductViewState extends State<AddProductView> {
-  int _amount = 0;
-  final ItemService itemService = Dependencies.itemService;
+  final ItemService _itemService = getIt<ItemService>();
   final List<Item> _items = <Item>[];
+  int _amount = 0;
 
   @override
   void initState() {
@@ -73,7 +73,7 @@ class _AddProductViewState extends State<AddProductView> {
       floatingActionButton: FloatingActionButton(
           onPressed: () {
             for (var item in _items) {
-              itemService.add(item);
+              _itemService.add(item);
             }
             Navigator.of(context).pop();
             Navigator.of(context).pop();

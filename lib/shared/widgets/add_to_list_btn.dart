@@ -3,10 +3,7 @@ import 'package:flutter/material.dart';
 class AddToListButton extends StatelessWidget {
   final void Function() onPressed;
 
-  const AddToListButton({
-    Key? key,
-    required this.onPressed
-  }) : super(key: key);
+  const AddToListButton({Key? key, required this.onPressed}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -24,10 +21,10 @@ class AddToListButton extends StatelessWidget {
                 "Add to List",
                 style: TextStyle(
                     fontSize: 30,
-                    color:
-                    Theme.of(context).textTheme.bodyText1?.color),
+                    color: Theme.of(context).textTheme.bodyText1?.color),
               ),
-              Icon(Icons.add_circle, color: Theme.of(context).textTheme.bodyText1?.color)
+              Icon(Icons.add_circle,
+                  color: Theme.of(context).textTheme.bodyText1?.color)
             ],
           ),
         ));

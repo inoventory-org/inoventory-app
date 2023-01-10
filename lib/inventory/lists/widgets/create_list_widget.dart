@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:inoventory_ui/config/dependencies.dart';
+import 'package:inoventory_ui/config/injection.dart';
+import 'package:inoventory_ui/inventory/lists/inventory_list_service.dart';
 import 'package:inoventory_ui/inventory/lists/models/inventory_list.dart';
 
 class CreateListWidget extends StatefulWidget {
@@ -12,7 +13,7 @@ class CreateListWidget extends StatefulWidget {
 class CreateListWidgetState extends State<CreateListWidget> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
-  final _listService = Dependencies.inoventoryListService;
+  final _listService = getIt<InventoryListService>();
 
   void _createList() async {
     if (_formKey.currentState == null) {
@@ -47,9 +48,7 @@ class CreateListWidgetState extends State<CreateListWidget> {
                     if (value == null) {
                       return null;
                     }
-                    return value.isEmpty
-                        ? 'Enter a new name'
-                        : null;
+                    return value.isEmpty ? 'Enter a new name' : null;
                   },
                 ),
                 const SizedBox(height: 8),
@@ -59,8 +58,7 @@ class CreateListWidgetState extends State<CreateListWidget> {
                         style: TextStyle(
                           fontSize: 24,
                           color: Colors.white,
-                        ))
-                ),
+                        ))),
               ],
             ),
           ),

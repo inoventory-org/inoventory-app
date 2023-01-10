@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:inoventory_ui/inventory/lists/models/inventory_list.dart';
 import 'package:inoventory_ui/inventory/items/item_list_route.dart';
+import 'package:inoventory_ui/inventory/lists/models/inventory_list.dart';
 
 class MyInventoryListsWidget extends StatelessWidget {
   final List<InventoryList> lists;
@@ -8,7 +8,10 @@ class MyInventoryListsWidget extends StatelessWidget {
   final Future<void> Function(InventoryList list) onEdit;
 
   const MyInventoryListsWidget(
-      {Key? key, required this.lists, required this.onDelete, required this.onEdit})
+      {Key? key,
+      required this.lists,
+      required this.onDelete,
+      required this.onEdit})
       : super(key: key);
 
   @override
@@ -39,16 +42,13 @@ class MyInventoryListsWidget extends StatelessWidget {
                         default:
                           break;
                       }
-                      if (value == "delete") {
-
-                      }
+                      if (value == "delete") {}
                     }),
                 onTap: () {
                   Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (context) =>
-                              ItemListRoute(list: myList)));
+                          builder: (context) => ItemListRoute(list: myList)));
                 },
               );
             })).toList());

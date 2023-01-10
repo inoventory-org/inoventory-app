@@ -1,13 +1,15 @@
+import 'dart:developer' as developer;
+
 import 'package:flutter/material.dart';
-import 'package:inoventory_ui/config/dependencies.dart';
+import 'package:inoventory_ui/config/injection.dart';
+import 'package:inoventory_ui/inventory/lists/inventory_list_service.dart';
 import 'package:inoventory_ui/inventory/lists/models/inventory_list.dart';
-import 'package:inoventory_ui/shared/widgets/confirmation_modal.dart';
-import 'package:inoventory_ui/shared/widgets/future_error_retry_widget.dart';
-import 'package:inoventory_ui/shared/widgets/inoventory_appbar.dart';
 import 'package:inoventory_ui/inventory/lists/widgets/create_list_widget.dart';
 import 'package:inoventory_ui/inventory/lists/widgets/edit_list_widget.dart';
 import 'package:inoventory_ui/inventory/lists/widgets/list_overview_widget.dart';
-import 'dart:developer' as developer;
+import 'package:inoventory_ui/shared/widgets/confirmation_modal.dart';
+import 'package:inoventory_ui/shared/widgets/future_error_retry_widget.dart';
+import 'package:inoventory_ui/shared/widgets/inoventory_appbar.dart';
 
 class InventoryListRoute extends StatefulWidget {
   final Future<void> Function() logout;
@@ -18,7 +20,7 @@ class InventoryListRoute extends StatefulWidget {
 }
 
 class _InventoryListRouteState extends State<InventoryListRoute> {
-  final listService = Dependencies.inoventoryListService;
+  final listService = getIt<InventoryListService>();
   late Future<List<InventoryList>> futureLists;
 
   @override
@@ -90,9 +92,13 @@ class _InventoryListRouteState extends State<InventoryListRoute> {
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.done) {
               if (snapshot.hasError) {
-                developer.log("An error occurred while retrieving inventory lists.", error: snapshot.error);
-                return FutureErrorRetryWidget(onRetry: _refreshList,
-                    child: const Text("An error occurred while retrieving inventory lists. Try again"));
+                developer.log(
+                    "An error occurred while retrieving inventory lists.",
+                    error: snapshot.error);
+                return FutureErrorRetryWidget(
+                    onRetry: _refreshList,
+                    child: const Text(
+                        "An error occurred while retrieving inventory lists. Try again"));
               }
               if (snapshot.hasData) {
                 return MyInventoryListsWidget(

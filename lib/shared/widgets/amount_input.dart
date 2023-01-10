@@ -1,13 +1,15 @@
+import 'dart:developer' as developer;
+
 import 'package:flutter/material.dart';
 import 'package:inoventory_ui/shared/widgets/container_with_box_decoration.dart';
-import 'dart:developer' as developer;
 
 class AmountInput extends StatefulWidget {
   final int? initialAmount;
   final void Function()? onIncrease;
   final void Function()? onDecrease;
 
-  const AmountInput({super.key, this.initialAmount, this.onIncrease, this.onDecrease});
+  const AmountInput(
+      {super.key, this.initialAmount, this.onIncrease, this.onDecrease});
 
   @override
   AmountInputState createState() => AmountInputState();
@@ -23,7 +25,7 @@ class AmountInputState extends State<AmountInput> {
   }
 
   void _incrementAmount() {
-    if (widget.onIncrease != null){
+    if (widget.onIncrease != null) {
       widget.onIncrease!();
     }
     setState(() {
@@ -32,7 +34,7 @@ class AmountInputState extends State<AmountInput> {
   }
 
   void _decrementAmount() {
-    if (widget.onDecrease != null){
+    if (widget.onDecrease != null) {
       widget.onDecrease!();
     }
     setState(() {
@@ -44,34 +46,36 @@ class AmountInputState extends State<AmountInput> {
   @override
   Widget build(BuildContext context) {
     return ContainerWithBoxDecoration(
-        boxColor: Theme.of(context).colorScheme.primary,
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            const Text("Amount:", style: TextStyle(fontSize: 30)),
-            Expanded(
-              child: TextField(
-                controller: TextEditingController()..text = _amount.toString(),
-                keyboardType: TextInputType.number,
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 24, backgroundColor: Theme.of(context).colorScheme.secondary),
-                onChanged: (value) {
-                  setState(() {
-                    _amount = int.parse(value);
-                  });
-                },
-              ),
+      boxColor: Theme.of(context).colorScheme.primary,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          const Text("Amount:", style: TextStyle(fontSize: 30)),
+          Expanded(
+            child: TextField(
+              controller: TextEditingController()..text = _amount.toString(),
+              keyboardType: TextInputType.number,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                  fontSize: 24,
+                  backgroundColor: Theme.of(context).colorScheme.secondary),
+              onChanged: (value) {
+                setState(() {
+                  _amount = int.parse(value);
+                });
+              },
             ),
-            IconButton(
-              icon: const Icon(Icons.arrow_upward),
-              onPressed: _incrementAmount,
-            ),
-            IconButton(
-              icon: const Icon(Icons.arrow_downward),
-              onPressed: _decrementAmount,
-            ),
-          ],
-        ),
-      );
+          ),
+          IconButton(
+            icon: const Icon(Icons.arrow_upward),
+            onPressed: _incrementAmount,
+          ),
+          IconButton(
+            icon: const Icon(Icons.arrow_downward),
+            onPressed: _decrementAmount,
+          ),
+        ],
+      ),
+    );
   }
 }
