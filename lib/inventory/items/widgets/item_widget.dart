@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:inoventory_ui/inventory/items/inventory_item.dart';
+import 'package:inoventory_ui/inventory/items/models/item_wrapper.dart';
 
 class InventoryItemWidget extends StatelessWidget {
-  final InventoryListItemWrapper itemWrapper;
-  final Future<bool> Function(InventoryListItemWrapper itemWrapper) onDelete;
+  final ItemWrapper itemWrapper;
+  final Future<bool> Function(ItemWrapper itemWrapper) onDelete;
 
   const InventoryItemWidget(
     this.itemWrapper,

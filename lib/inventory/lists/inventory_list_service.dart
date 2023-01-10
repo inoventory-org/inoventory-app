@@ -1,8 +1,8 @@
 import 'dart:async';
 
 import 'package:dio/dio.dart';
-import 'package:inoventory_ui/inventory/items/inventory_item.dart';
-import 'package:inoventory_ui/inventory/lists/inventory_list.dart';
+import 'package:inoventory_ui/inventory/items/models/item.dart';
+import 'package:inoventory_ui/inventory/lists/models/inventory_list.dart';
 import 'package:inoventory_ui/config/constants.dart';
 import 'dart:io';
 
@@ -86,7 +86,7 @@ class InventoryListServiceMock {
     InventoryList(2, "garage"),
   ];
 
-  final Map<String, List<InventoryItem>> listToItems = {
+  final Map<String, List<Item>> listToItems = {
     "0": [],
     "1": [],
     "2": []
@@ -96,11 +96,11 @@ class InventoryListServiceMock {
     return _lists;
   }
 
-  List<InventoryItem> getListItems(InventoryList list) {
+  List<Item> getListItems(InventoryList list) {
     return listToItems[list.id] ?? [];
   }
 
-  void addItemToList(InventoryList list, InventoryItem item) {
+  void addItemToList(InventoryList list, Item item) {
     listToItems[list.id]?.add(item);
   }
 }

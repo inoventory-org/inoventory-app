@@ -4,34 +4,34 @@ import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:inoventory_ui/config/dependencies.dart';
 import 'package:inoventory_ui/ean/barcode_scanner.dart';
-import 'package:inoventory_ui/inventory/items/inventory_item.dart';
 import 'package:inoventory_ui/inventory/items/item_service.dart';
-import 'package:inoventory_ui/inventory/items/widgets/inventory_list_widget.dart';
-import 'package:inoventory_ui/inventory/lists/inventory_list.dart';
+import 'package:inoventory_ui/inventory/items/models/item_wrapper.dart';
+import 'package:inoventory_ui/inventory/items/widgets/list_widget.dart';
+import 'package:inoventory_ui/inventory/lists/models/inventory_list.dart';
 import 'package:inoventory_ui/products/product_service.dart';
 import 'package:inoventory_ui/products/routes/product_search_route.dart';
 import 'package:inoventory_ui/shared/widgets/expandable_floating_action_button.dart';
 import 'package:inoventory_ui/shared/widgets/future_error_retry_widget.dart';
 import 'package:inoventory_ui/shared/widgets/inoventory_appbar.dart';
 
-class InventoryListDetailRoute extends StatefulWidget {
+class ItemListRoute extends StatefulWidget {
   final InventoryList list;
 
-  const InventoryListDetailRoute({super.key, required this.list});
+  const ItemListRoute({super.key, required this.list});
 
   @override
-  State<InventoryListDetailRoute> createState() =>
-      _InventoryListDetailRouteState();
+  State<ItemListRoute> createState() =>
+      _ItemListRouteState();
 }
 
-class _InventoryListDetailRouteState extends State<InventoryListDetailRoute> {
+class _ItemListRouteState extends State<ItemListRoute> {
   final BarcodeScanner _barcodeScanner = BarcodeScanner();
   final ProductService productService = Dependencies.productService;
   final ItemService itemService = Dependencies.itemService;
 
   String barcodeScanResult = "";
 
-  late Future<List<InventoryListItemWrapper>> futureItems;
+  late Future<List<ItemWrapper>> futureItems;
 
   @override
   void initState() {
@@ -39,11 +39,11 @@ class _InventoryListDetailRouteState extends State<InventoryListDetailRoute> {
     futureItems = itemService.all(widget.list.id);
   }
 
-  Future<void> onEdit(InventoryListItemWrapper itemWrapper) async {
+  Future<void> onEdit(ItemWrapper itemWrapper) async {
     await _refreshList();
   }
 
-  Future<bool> onDelete(InventoryListItemWrapper itemWrapper) async {
+  Future<bool> onDelete(ItemWrapper itemWrapper) async {
     final scaffoldMessenger = ScaffoldMessenger.of(context);
 
     final int? itemId = await getItemIdToDelete(itemWrapper);
@@ -76,7 +76,7 @@ class _InventoryListDetailRouteState extends State<InventoryListDetailRoute> {
 
   Future<void> onEanDeleteScan(String ean) async {
     futureItems.then((value) async {
-      InventoryListItemWrapper? result =
+      ItemWrapper? result =
           value.firstWhereOrNull((element) => element.productEan == ean);
       if (result == null) {
         return;
@@ -86,7 +86,7 @@ class _InventoryListDetailRouteState extends State<InventoryListDetailRoute> {
     });
   }
 
-  Future<int?> getItemIdToDelete(InventoryListItemWrapper itemWrapper) async {
+  Future<int?> getItemIdToDelete(ItemWrapper itemWrapper) async {
     if (itemWrapper.items.map((e) => e.expirationDate).toSet().length == 1) {
       return itemWrapper.items.first.id;
     }
@@ -97,24 +97,19 @@ class _InventoryListDetailRouteState extends State<InventoryListDetailRoute> {
           return AlertDialog(
               title: const Text("Choose item"),
               scrollable: true,
-
-              content: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                        const Text("Which item do you want to remove?"),
-                      ] +
-                      itemWrapper.items
-                          .map((e) => TextButton(
-                                onPressed: () => Navigator.pop(context, e.id),
-                                child: Text(
-                                    e.expirationDate ?? "<no expiration date>"),
-                              ))
-                          .toList() +
-                      <Widget>[
-                        OutlinedButton(
-                            onPressed: () => Navigator.pop(context),
-                            child: const Text("Cancel"))
-                      ]));
+              content: Column(mainAxisSize: MainAxisSize.min, children: [
+                const Text("Which item do you want to remove?"),
+                ...itemWrapper.items
+                    .map((e) => TextButton(
+                          onPressed: () => Navigator.pop(context, e.id),
+                          child:
+                              Text(e.expirationDate ?? "<no expiration date>"),
+                        ))
+                    .toList(),
+                OutlinedButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text("Cancel"))
+              ]));
         });
   }
 
@@ -144,7 +139,7 @@ class _InventoryListDetailRouteState extends State<InventoryListDetailRoute> {
       body: RefreshIndicator(
         onRefresh: _refreshList,
         backgroundColor: Theme.of(context).colorScheme.secondary,
-        child: FutureBuilder<List<InventoryListItemWrapper>>(
+        child: FutureBuilder<List<ItemWrapper>>(
           future: futureItems,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.done) {
@@ -193,14 +188,3 @@ class _InventoryListDetailRouteState extends State<InventoryListDetailRoute> {
     );
   }
 }
-
-//
-//       MyFutureBuilder<List<InventoryListItemWrapper>>(
-//         future: futureItems,
-//         futureFetcher: () {
-//           return itemService.all(widget.list.id);
-//         },
-//         successBuilder: (context, snapshot) {
-//           return ItemListWidget(items: snapshot.data ?? [], onDelete: deleteItem);
-//         },
-//       ),

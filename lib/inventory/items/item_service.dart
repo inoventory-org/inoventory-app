@@ -1,18 +1,22 @@
+import 'dart:developer' as developer;
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:inoventory_ui/config/constants.dart';
-import 'dart:io';
-import 'dart:developer' as developer;
-
-import 'package:inoventory_ui/inventory/items/inventory_item.dart';
+import 'package:inoventory_ui/inventory/items/models/item.dart';
+import 'package:inoventory_ui/inventory/items/models/item_wrapper.dart';
 
 abstract class ItemService {
   static const backendUrl = Constants.inoventoryBackendUrl;
   static const listUrl = "$backendUrl/api/v1/inventory-lists";
   final timeout = const Duration(seconds: 5);
 
-  Future< List<InventoryListItemWrapper>> all(int listId);
-  Future<InventoryItem> add(InventoryItem item);
-  Future<InventoryItem> update(int itemId, InventoryItem updatedItem);
+  Future<List<ItemWrapper>> all(int listId);
+
+  Future<Item> add(Item item);
+
+  Future<Item> update(int itemId, Item updatedItem);
+
   Future<void> delete(int listId, int itemId);
 
   String getSpecificListUrl(int listId) {
@@ -30,9 +34,10 @@ class ItemServiceImpl extends ItemService {
   ItemServiceImpl(this.dio);
 
   @override
-  Future<InventoryItem> add(InventoryItem item) async {
+  Future<Item> add(Item item) async {
     final response = await dio.post(getSpecificListUrl(item.listId),
-        options: Options(headers: {HttpHeaders.contentTypeHeader: "application/json"}),
+        options: Options(
+            headers: {HttpHeaders.contentTypeHeader: "application/json"}),
         data: {
           "listId": item.listId.toString(),
           "productEan": item.productEan,
@@ -43,33 +48,33 @@ class ItemServiceImpl extends ItemService {
       throw Exception("Failed to create list");
     }
 
-    return InventoryItem.fromJson(response.data);
+    return Item.fromJson(response.data);
   }
 
   @override
-  Future< List<InventoryListItemWrapper>> all(int listId) async {
-    final response = await dio.get(getSpecificListUrl(listId))
-        .timeout(timeout);
+  Future<List<ItemWrapper>> all(int listId) async {
+    final response = await dio.get(getSpecificListUrl(listId)).timeout(timeout);
 
     if (response.statusCode != HttpStatus.ok) {
       throw Exception("Failed to fetch lists");
     }
 
-    // For some reason decoding to Map<String, List<InventoryListItemWrapper>> is not working
+    // For some reason decoding to Map<String, List<ItemWrapper>> is not working
     // hence the following complex code
     final Map<String, dynamic> itemsJson = response.data;
-    final Map<String, List<InventoryItem>> items = {};
+    final Map<String, List<Item>> items = {};
     itemsJson.forEach((productEan, value) {
-      items[productEan] = (value as List).map((i) => InventoryItem.fromJson(i)).toList();
+      items[productEan] = (value as List).map((i) => Item.fromJson(i)).toList();
     });
-    return items.entries.map((e) => InventoryListItemWrapper.fromItems(e.value)).toList();
+    return items.entries.map((e) => ItemWrapper.fromItems(e.value)).toList();
   }
 
   @override
-  Future<InventoryItem> update(
-      int itemId, InventoryItem updatedItem) async {
-    final response = await dio.put(getSpecificItemUrl(updatedItem.listId, updatedItem.id),
-        options: Options(headers: {HttpHeaders.contentTypeHeader: "application/json"}),
+  Future<Item> update(int itemId, Item updatedItem) async {
+    final response = await dio.put(
+        getSpecificItemUrl(updatedItem.listId, updatedItem.id),
+        options: Options(
+            headers: {HttpHeaders.contentTypeHeader: "application/json"}),
         data: {
           "listId": updatedItem.listId.toString(),
           "productEan": updatedItem.productEan,
@@ -80,14 +85,13 @@ class ItemServiceImpl extends ItemService {
       throw Exception("Failed to create list");
     }
 
-    return InventoryItem.fromJson(response.data);
+    return Item.fromJson(response.data);
   }
 
   @override
   Future<void> delete(int listId, int itemId) async {
     final response =
-        await dio.delete(getSpecificItemUrl(listId, itemId))
-            .timeout(timeout);
+        await dio.delete(getSpecificItemUrl(listId, itemId)).timeout(timeout);
 
     if (response.statusCode != HttpStatus.ok) {
       throw Exception("Failed to delete list");

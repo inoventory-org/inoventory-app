@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:inoventory_ui/inventory/lists/inventory_list.dart';
-import 'package:inoventory_ui/inventory/items/inventory_list_detail_route.dart';
+import 'package:inoventory_ui/inventory/lists/models/inventory_list.dart';
+import 'package:inoventory_ui/inventory/items/item_list_route.dart';
 
 class MyInventoryListsWidget extends StatelessWidget {
   final List<InventoryList> lists;
@@ -48,7 +48,7 @@ class MyInventoryListsWidget extends StatelessWidget {
                       context,
                       MaterialPageRoute(
                           builder: (context) =>
-                              InventoryListDetailRoute(list: myList)));
+                              ItemListRoute(list: myList)));
                 },
               );
             })).toList());

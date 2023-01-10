@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:inoventory_ui/config/dependencies.dart';
-import 'package:inoventory_ui/inventory/lists/inventory_list.dart';
+import 'package:inoventory_ui/inventory/lists/models/inventory_list.dart';
 
 class EditListWidget extends StatefulWidget {
   final InventoryList oldList;

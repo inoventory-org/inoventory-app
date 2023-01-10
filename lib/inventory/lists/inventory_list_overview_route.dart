@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:inoventory_ui/config/dependencies.dart';
-import 'package:inoventory_ui/inventory/lists/inventory_list.dart';
+import 'package:inoventory_ui/inventory/lists/models/inventory_list.dart';
 import 'package:inoventory_ui/shared/widgets/confirmation_modal.dart';
 import 'package:inoventory_ui/shared/widgets/future_error_retry_widget.dart';
 import 'package:inoventory_ui/shared/widgets/inoventory_appbar.dart';

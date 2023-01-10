@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:inoventory_ui/inventory/lists/inventory_list.dart';
+import 'package:inoventory_ui/inventory/lists/models/inventory_list.dart';
 import 'package:inoventory_ui/products/widgets/add_product.dart';
 import 'package:inoventory_ui/shared/widgets/add_to_list_btn.dart';
 import 'package:inoventory_ui/shared/widgets/inoventory_network_image.dart';

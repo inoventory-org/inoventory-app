@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:inoventory_ui/config/dependencies.dart';
-import 'package:inoventory_ui/inventory/items/inventory_item.dart';
-import 'package:inoventory_ui/inventory/lists/inventory_list.dart';
+import 'package:inoventory_ui/inventory/items/models/item.dart';
+import 'package:inoventory_ui/inventory/lists/models/inventory_list.dart';
 import 'package:inoventory_ui/products/product_model.dart';
 import 'package:inoventory_ui/inventory/items/item_service.dart';
 import 'package:inoventory_ui/shared/widgets/inoventory_network_image.dart';
@@ -21,12 +21,12 @@ class AddProductView extends StatefulWidget {
 class _AddProductViewState extends State<AddProductView> {
   int _amount = 0;
   final ItemService itemService = Dependencies.itemService;
-  final List<InventoryItem> _items = <InventoryItem>[];
+  final List<Item> _items = <Item>[];
 
   @override
   void initState() {
     super.initState();
-    _items.add(InventoryItem(_amount, widget.list.id, widget.product.ean));
+    _items.add(Item(_amount, widget.list.id, widget.product.ean));
     _amount++;
   }
 
@@ -35,7 +35,7 @@ class _AddProductViewState extends State<AddProductView> {
       String? lastExpiryDate;
       lastExpiryDate = _items[_amount - 1].expirationDate;
 
-      _items.add(InventoryItem(_amount, widget.list.id, widget.product.ean,
+      _items.add(Item(_amount, widget.list.id, widget.product.ean,
           expirationDate: lastExpiryDate));
       _amount++;
     });
