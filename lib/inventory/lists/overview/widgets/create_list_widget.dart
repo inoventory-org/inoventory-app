@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:inoventory_ui/config/injection.dart';
-import 'package:inoventory_ui/inventory/lists/inventory_list_service.dart';
 import 'package:inoventory_ui/inventory/lists/models/inventory_list.dart';
+import 'package:inoventory_ui/inventory/lists/overview/list_service.dart';
 
 class CreateListWidget extends StatefulWidget {
   const CreateListWidget({super.key});
@@ -13,7 +13,7 @@ class CreateListWidget extends StatefulWidget {
 class CreateListWidgetState extends State<CreateListWidget> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
-  final _listService = getIt<InventoryListService>();
+  final _listService = getIt<ListService>();
 
   void _createList() async {
     if (_formKey.currentState == null) {

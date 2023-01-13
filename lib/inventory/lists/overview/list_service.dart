@@ -4,10 +4,10 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
 import 'package:inoventory_ui/config/constants.dart';
-import 'package:inoventory_ui/inventory/items/models/item.dart';
 import 'package:inoventory_ui/inventory/lists/models/inventory_list.dart';
+import 'package:inoventory_ui/inventory/lists/models/item.dart';
 
-abstract class InventoryListService {
+abstract class ListService {
   static const backendUrl = Constants.inoventoryBackendUrl;
   static const listUrl = "$backendUrl/api/v1/inventory-lists";
 
@@ -21,8 +21,8 @@ abstract class InventoryListService {
   }
 }
 
-@Injectable(as: InventoryListService)
-class InventoryListServiceImpl extends InventoryListService {
+@Injectable(as: ListService)
+class InventoryListServiceImpl extends ListService {
   final timeoutDuration = const Duration(seconds: 10);
   final Dio dio;
 
@@ -30,7 +30,7 @@ class InventoryListServiceImpl extends InventoryListService {
 
   @override
   Future<InventoryList> add(InventoryList list) async {
-    final response = await dio.post(InventoryListService.listUrl,
+    final response = await dio.post(ListService.listUrl,
         options: Options(
             headers: {HttpHeaders.contentTypeHeader: "application/json"}),
         data: {"name": list.name}).timeout(timeoutDuration);
@@ -45,7 +45,7 @@ class InventoryListServiceImpl extends InventoryListService {
   @override
   Future<List<InventoryList>> all() async {
     final response =
-        await dio.get(InventoryListService.listUrl).timeout(timeoutDuration);
+        await dio.get(ListService.listUrl).timeout(timeoutDuration);
 
     if (response.statusCode != HttpStatus.ok) {
       throw Exception("Failed to fetch lists");

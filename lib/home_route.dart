@@ -9,7 +9,7 @@ import 'package:inoventory_ui/auth/login_route.dart';
 import 'package:inoventory_ui/auth/services/auth_service.dart';
 import 'package:inoventory_ui/config/constants.dart';
 import 'package:inoventory_ui/config/http_config.dart';
-import 'package:inoventory_ui/inventory/lists/inventory_list_overview_route.dart';
+import 'package:inoventory_ui/inventory/lists/overview/list_overview_route.dart';
 import 'package:inoventory_ui/shared/widgets/inoventory_appbar.dart';
 import 'package:jwt_decode/jwt_decode.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -95,7 +95,7 @@ class _InoventoryHomeRouteState extends State<InoventoryHomeRoute> {
   Widget build(BuildContext context) {
     developer.log("authenticatedUserName: $authenticatedUserName");
     return authenticatedUserName != null
-        ? InventoryListRoute(logout: logout)
+        ? ListOverviewRoute(logout: logout)
         : Scaffold(appBar: InoventoryAppBar(), body: LoginRoute(login: login));
   }
 }

@@ -1,4 +1,4 @@
-import 'package:inoventory_ui/inventory/items/models/item.dart';
+import 'item.dart';
 
 class ItemWrapper {
   final int listId;

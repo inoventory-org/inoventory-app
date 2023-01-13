@@ -1,18 +1,16 @@
 import 'dart:developer' as developer;
 
-import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:inoventory_ui/config/injection.dart';
 import 'package:inoventory_ui/ean/barcode_scanner.dart';
-import 'package:inoventory_ui/inventory/items/item_service.dart';
-import 'package:inoventory_ui/inventory/items/models/item_wrapper.dart';
-import 'package:inoventory_ui/inventory/items/widgets/list_widget.dart';
+import 'package:inoventory_ui/inventory/lists/items/item_list_controller.dart';
 import 'package:inoventory_ui/inventory/lists/models/inventory_list.dart';
-import 'package:inoventory_ui/products/product_service.dart';
+import 'package:inoventory_ui/inventory/lists/models/item_wrapper.dart';
 import 'package:inoventory_ui/products/routes/product_search_route.dart';
 import 'package:inoventory_ui/shared/widgets/expandable_floating_action_button.dart';
-import 'package:inoventory_ui/shared/widgets/future_error_retry_widget.dart';
 import 'package:inoventory_ui/shared/widgets/inoventory_appbar.dart';
+
+import 'widgets/list_widget.dart';
 
 class ItemListRoute extends StatefulWidget {
   final InventoryList list;
@@ -24,15 +22,14 @@ class ItemListRoute extends StatefulWidget {
 }
 
 class _ItemListRouteState extends State<ItemListRoute> {
-  final BarcodeScanner _barcodeScanner = BarcodeScanner();
-  final ProductService _productService = getIt<ProductService>();
-  final ItemService _itemService = getIt<ItemService>();
-  late Future<List<ItemWrapper>> futureItems;
+  final _barcodeScanner = getIt<BarcodeScanner>();
+  late final ItemListController _controller;
 
   @override
   void initState() {
     super.initState();
-    futureItems = _itemService.all(widget.list.id);
+    _controller = getIt<ItemListController>(param1: widget.list);
+    _controller.initialize();
   }
 
   Future<void> onEdit(ItemWrapper itemWrapper) async {
@@ -48,7 +45,7 @@ class _ItemListRouteState extends State<ItemListRoute> {
     }
 
     try {
-      await _itemService.delete(widget.list.id, itemId);
+      //await _itemService.delete(widget.list.id, itemId);
 
       scaffoldMessenger.showSnackBar(
           _getSnackBar("Successfully deleted item", Colors.green));
@@ -71,15 +68,15 @@ class _ItemListRouteState extends State<ItemListRoute> {
   }
 
   Future<void> onEanDeleteScan(String ean) async {
-    futureItems.then((value) async {
-      ItemWrapper? result =
-          value.firstWhereOrNull((element) => element.productEan == ean);
-      if (result == null) {
-        return;
-      }
-
-      await onDelete(result);
-    });
+    // futureItems.then((value) async {
+    //   ItemWrapper? result =
+    //       value.firstWhereOrNull((element) => element.productEan == ean);
+    //   if (result == null) {
+    //     return;
+    //   }
+    //
+    //   await onDelete(result);
+    // });
   }
 
   Future<int?> getItemIdToDelete(ItemWrapper itemWrapper) async {
@@ -110,20 +107,20 @@ class _ItemListRouteState extends State<ItemListRoute> {
   }
 
   Future<void> _refreshList() async {
-    setState(() {
-      futureItems = _itemService.all(widget.list.id);
-    });
+    // setState(() {
+    //   futureItems = _itemService.all(widget.list.id);
+    // });
   }
 
   void transitToProductSearchPage(
       BuildContext context, String? initialSearchValue) {
-    Navigator.push(
-        context,
-        MaterialPageRoute(
-            builder: (context) => ProductSearchRoute(
-                productService: _productService,
-                initialSearchValue: initialSearchValue,
-                list: widget.list))).whenComplete(_refreshList);
+    // Navigator.push(
+    //     context,
+    //     MaterialPageRoute(
+    //         builder: (context) => ProductSearchRoute(
+    //             productService: _productService,
+    //             initialSearchValue: initialSearchValue,
+    //             list: widget.list))).whenComplete(_refreshList);
   }
 
   @override
@@ -135,27 +132,28 @@ class _ItemListRouteState extends State<ItemListRoute> {
       body: RefreshIndicator(
         onRefresh: _refreshList,
         backgroundColor: Theme.of(context).colorScheme.secondary,
-        child: FutureBuilder<List<ItemWrapper>>(
-          future: futureItems,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.done) {
-              if (snapshot.hasError) {
-                developer.log("An error occurred while retrieving items.",
-                    error: snapshot.error);
-                return FutureErrorRetryWidget(
-                    onRetry: _refreshList,
-                    child: const Center(
-                        child: Text(
-                            'An error occurred while retrieving items. Please try again.')));
-              }
-              if (snapshot.hasData) {
-                return InventoryListWidget(
-                    itemWrappers: snapshot.data!,
-                    onDelete: onDelete,
-                    onEdit: onEdit);
-              }
-            }
-            return const Center(child: CircularProgressIndicator());
+        child: ValueListenableBuilder<InventoryList>(
+          valueListenable: _controller.listNotifier,
+          builder: (context, list, _) {
+            return InventoryListWidget(itemWrappers: list.items);
+            // if (snapshot.connectionState == ConnectionState.done) {
+            //   if (snapshot.hasError) {
+            //     developer.log("An error occurred while retrieving items.",
+            //         error: snapshot.error);
+            //     return FutureErrorRetryWidget(
+            //         onRetry: _refreshList,
+            //         child: const Center(
+            //             child: Text(
+            //                 'An error occurred while retrieving items. Please try again.')));
+            //   }
+            //   if (snapshot.hasData) {
+            //     return InventoryListWidget(
+            //         itemWrappers: snapshot.data!,
+            //         onDelete: onDelete,
+            //         onEdit: onEdit);
+            //   }
+            // }
+            // return const Center(child: CircularProgressIndicator());
           },
         ),
       ),
@@ -166,13 +164,10 @@ class _ItemListRouteState extends State<ItemListRoute> {
             onPressed: () async {
               final navigator = Navigator.of(context);
               var barcodeScanResult = await _barcodeScanner.scanBarcodeNormal();
-              navigator
-                  .push(MaterialPageRoute(
-                      builder: (context) => ProductSearchRoute(
-                          initialSearchValue: barcodeScanResult,
-                          productService: _productService,
-                          list: widget.list)))
-                  .whenComplete((_refreshList));
+              navigator.push(MaterialPageRoute(
+                  builder: (context) => ProductSearchRoute(
+                      initialSearchValue: barcodeScanResult,
+                      list: widget.list)));
             }),
         ActionButton(
             icon: const Icon(Icons.delete, color: Colors.black),

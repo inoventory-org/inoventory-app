@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:inoventory_ui/inventory/items/models/item_wrapper.dart';
+import 'package:inoventory_ui/inventory/lists/models/item_wrapper.dart';
 
 class InventoryItemWidget extends StatelessWidget {
   final ItemWrapper itemWrapper;
-  final Future<bool> Function(ItemWrapper itemWrapper) onDelete;
 
   const InventoryItemWidget(
-    this.itemWrapper,
-    this.onDelete, {
+    this.itemWrapper, {
     Key? key,
   }) : super(key: key);
 
@@ -22,7 +20,7 @@ class InventoryItemWidget extends StatelessWidget {
         padding: const EdgeInsets.all(25),
         child: const Icon(Icons.delete, color: Colors.white),
       ),
-      confirmDismiss: (direction) => onDelete(itemWrapper),
+      //confirmDismiss: (direction) => onDelete(itemWrapper),
       resizeDuration: null,
       child: ListTile(
           leading: Container(

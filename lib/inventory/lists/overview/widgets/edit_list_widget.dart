@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:inoventory_ui/config/injection.dart';
-import 'package:inoventory_ui/inventory/lists/inventory_list_service.dart';
 import 'package:inoventory_ui/inventory/lists/models/inventory_list.dart';
+import 'package:inoventory_ui/inventory/lists/overview/list_service.dart';
 
 class EditListWidget extends StatefulWidget {
   final InventoryList oldList;
@@ -13,7 +13,7 @@ class EditListWidget extends StatefulWidget {
 
 class EditeListWidgetState extends State<EditListWidget> {
   final _formKey = GlobalKey<FormState>();
-  final _listService = getIt<InventoryListService>();
+  final _listService = getIt<ListService>();
   late TextEditingController _nameController;
 
   @override

@@ -4,8 +4,8 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
 import 'package:inoventory_ui/config/constants.dart';
-import 'package:inoventory_ui/inventory/items/models/item.dart';
-import 'package:inoventory_ui/inventory/items/models/item_wrapper.dart';
+import 'package:inoventory_ui/inventory/lists/models/item.dart';
+import 'package:inoventory_ui/inventory/lists/models/item_wrapper.dart';
 
 abstract class ItemService {
   static const backendUrl = Constants.inoventoryBackendUrl;

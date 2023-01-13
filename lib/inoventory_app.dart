@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:inoventory_ui/auth/services/auth_service.dart';
 import 'package:inoventory_ui/config/constants.dart';
 import 'package:inoventory_ui/config/themes.dart';
-
 import 'home_route.dart';
 
 class InoventoryApp extends StatelessWidget {

@@ -2,25 +2,26 @@ import 'dart:developer' as developer;
 
 import 'package:flutter/material.dart';
 import 'package:inoventory_ui/config/injection.dart';
-import 'package:inoventory_ui/inventory/lists/inventory_list_service.dart';
 import 'package:inoventory_ui/inventory/lists/models/inventory_list.dart';
-import 'package:inoventory_ui/inventory/lists/widgets/create_list_widget.dart';
-import 'package:inoventory_ui/inventory/lists/widgets/edit_list_widget.dart';
-import 'package:inoventory_ui/inventory/lists/widgets/list_overview_widget.dart';
 import 'package:inoventory_ui/shared/widgets/confirmation_modal.dart';
 import 'package:inoventory_ui/shared/widgets/future_error_retry_widget.dart';
 import 'package:inoventory_ui/shared/widgets/inoventory_appbar.dart';
 
-class InventoryListRoute extends StatefulWidget {
+import 'list_service.dart';
+import 'widgets/create_list_widget.dart';
+import 'widgets/edit_list_widget.dart';
+import 'widgets/list_overview_widget.dart';
+
+class ListOverviewRoute extends StatefulWidget {
   final Future<void> Function() logout;
-  const InventoryListRoute({Key? key, required this.logout}) : super(key: key);
+  const ListOverviewRoute({Key? key, required this.logout}) : super(key: key);
 
   @override
-  State<InventoryListRoute> createState() => _InventoryListRouteState();
+  State<ListOverviewRoute> createState() => _ListOverviewRouteState();
 }
 
-class _InventoryListRouteState extends State<InventoryListRoute> {
-  final listService = getIt<InventoryListService>();
+class _ListOverviewRouteState extends State<ListOverviewRoute> {
+  final listService = getIt<ListService>();
   late Future<List<InventoryList>> futureLists;
 
   @override
@@ -101,7 +102,7 @@ class _InventoryListRouteState extends State<InventoryListRoute> {
                         "An error occurred while retrieving inventory lists. Try again"));
               }
               if (snapshot.hasData) {
-                return MyInventoryListsWidget(
+                return ListOverviewWidget(
                     lists: snapshot.data!, onDelete: onDelete, onEdit: onEdit);
               }
             }

@@ -1,6 +1,6 @@
+import 'package:flutter/material.dart';
 import 'dart:developer' as developer;
 
-import 'package:flutter/material.dart';
 import 'package:inoventory_ui/shared/widgets/future_error_retry_widget.dart';
 
 class MyFutureBuilder<T> extends StatefulWidget {

@@ -1,24 +1,21 @@
+import 'dart:developer' as developer;
+
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
+import 'package:inoventory_ui/config/injection.dart';
 import 'package:inoventory_ui/inventory/lists/models/inventory_list.dart';
 import 'package:inoventory_ui/products/product_model.dart';
-import 'package:inoventory_ui/products/routes/product_detail_route.dart';
 import 'package:inoventory_ui/products/product_service.dart';
+import 'package:inoventory_ui/products/routes/product_detail_route.dart';
+import 'package:inoventory_ui/products/widgets/product_list.dart';
 import 'package:inoventory_ui/shared/widgets/future_error_retry_widget.dart';
 import 'package:inoventory_ui/shared/widgets/inoventory_search_bar.dart';
-import 'package:inoventory_ui/products/widgets/product_list.dart';
-import 'dart:developer' as developer;
 
 class ProductSearchRoute extends StatefulWidget {
   final String? initialSearchValue;
-  final ProductService productService;
   final InventoryList list;
+  final productService = getIt<ProductService>();
 
-  const ProductSearchRoute(
-      {Key? key,
-      this.initialSearchValue,
-      required this.productService,
-      required this.list})
+  ProductSearchRoute({Key? key, this.initialSearchValue, required this.list})
       : super(key: key);
 
   @override
@@ -60,25 +57,21 @@ class _ProductSearchRouteState extends State<ProductSearchRoute> {
             return const Center(child: CircularProgressIndicator());
           } else if (snapshot.hasData) {
             if (snapshot.data?.length == 1) {
-              SchedulerBinding.instance.addPostFrameCallback((_) {
-                Navigator.of(context).push(MaterialPageRoute(
-                  builder: (context) => ProductDetailRoute(
-                      product: snapshot.data!.first, list: widget.list),
-                ));
-              });
+              return ProductDetailRoute(
+                  product: snapshot.data!.first, list: widget.list);
+            } else {
+              return ProductListView(
+                products: snapshot.data ?? [],
+                onProductTap: (product) {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => ProductDetailRoute(
+                          product: product, list: widget.list),
+                    ),
+                  );
+                },
+              );
             }
-
-            return ProductListView(
-              products: snapshot.data ?? [],
-              onProductTap: (product) {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) =>
-                        ProductDetailRoute(product: product, list: widget.list),
-                  ),
-                );
-              },
-            );
           } else if (snapshot.hasError) {
             developer.log("An error occurred while retrieving products.",
                 error: snapshot.error);

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:inoventory_ui/config/injection.dart';
-import 'package:inoventory_ui/inventory/items/item_service.dart';
-import 'package:inoventory_ui/inventory/items/models/item.dart';
+import 'package:inoventory_ui/inventory/lists/items/item_service.dart';
 import 'package:inoventory_ui/inventory/lists/models/inventory_list.dart';
+import 'package:inoventory_ui/inventory/lists/models/item.dart';
 import 'package:inoventory_ui/products/product_model.dart';
 import 'package:inoventory_ui/shared/widgets/amount_input.dart';
 import 'package:inoventory_ui/shared/widgets/expiry_date_input.dart';
@@ -75,9 +75,8 @@ class _AddProductViewState extends State<AddProductView> {
             for (var item in _items) {
               _itemService.add(item);
             }
-            Navigator.of(context).pop();
-            Navigator.of(context).pop();
-            Navigator.of(context).pop();
+            Navigator.popUntil(
+                context, (route) => route.settings.name == "/list-view");
           },
           child: const Icon(Icons.bookmark)),
     );

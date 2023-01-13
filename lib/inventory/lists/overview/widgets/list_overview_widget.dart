@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:inoventory_ui/inventory/items/item_list_route.dart';
+import 'package:inoventory_ui/inventory/lists/items/item_list_route.dart';
 import 'package:inoventory_ui/inventory/lists/models/inventory_list.dart';
 
-class MyInventoryListsWidget extends StatelessWidget {
+class ListOverviewWidget extends StatelessWidget {
   final List<InventoryList> lists;
   final Future<void> Function(int listId, BuildContext context) onDelete;
   final Future<void> Function(InventoryList list) onEdit;
 
-  const MyInventoryListsWidget(
+  const ListOverviewWidget(
       {Key? key,
       required this.lists,
       required this.onDelete,
@@ -48,6 +48,7 @@ class MyInventoryListsWidget extends StatelessWidget {
                   Navigator.push(
                       context,
                       MaterialPageRoute(
+                          settings: const RouteSettings(name: "/list-view"),
                           builder: (context) => ItemListRoute(list: myList)));
                 },
               );

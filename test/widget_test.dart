@@ -7,7 +7,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:inoventory_ui/inventory/lists/inventory_list_overview_route.dart';
+import 'package:inoventory_ui/inventory/lists/overview/list_overview_route.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -16,7 +16,7 @@ void main() {
     const String title = "inoventory";
     await tester.pumpWidget(MediaQuery(
         data: const MediaQueryData(),
-        child: MaterialApp(home: InventoryListRoute(logout: () {
+        child: MaterialApp(home: ListOverviewRoute(logout: () {
           throw UnimplementedError();
         }))));
     await tester.pump();
