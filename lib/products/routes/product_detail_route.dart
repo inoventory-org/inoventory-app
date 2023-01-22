@@ -34,7 +34,15 @@ class _ProductDetailRouteState extends State<ProductDetailRoute> {
               AddToListButton(onPressed: () {
                 Navigator.of(context)
                     .push(MaterialPageRoute(builder: (context) {
-                  return AddProductView(widget.product, widget.list);
+                  return AddProductView(
+                    widget.product,
+                    widget.list,
+                    postAddCallback: () {
+                      Navigator.of(context).pop();
+                      Navigator.of(context).pop();
+                      Navigator.of(context).pop();
+                    },
+                  );
                 }));
                 // Navigator.of(context).pop();
               })

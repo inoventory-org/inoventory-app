@@ -17,6 +17,7 @@ class ExpiryDateEntry extends StatefulWidget {
 
 class _ExpiryDateEntryState extends State<ExpiryDateEntry> {
   TextEditingController dateInput = TextEditingController();
+
   //text editing controller for text field
 
   @override
@@ -28,45 +29,63 @@ class _ExpiryDateEntryState extends State<ExpiryDateEntry> {
 
   @override
   Widget build(BuildContext context) {
-    return ContainerWithBoxDecoration(
-        boxColor: Theme.of(context).colorScheme.background,
-        externalPadding: 5,
-        internalPadding: 0,
-        child: Container(
-            padding: const EdgeInsets.all(12),
-            height: 80,
-            child: Center(
-                child: TextField(
-              controller: dateInput, //editing controller of this TextField
-              decoration: const InputDecoration(
-                icon: Icon(Icons.calendar_today),
-                labelText: "Expiry Date (Optional)",
-              ),
-              readOnly:
-                  true, //set it true, so that user will not able to edit text
-              onTap: () async {
-                DateTime? pickedDate = await showDatePicker(
-                    context: context,
-                    initialDate: DateTime.now(),
-                    firstDate: DateTime(
-                        2000), //DateTime.now() - not to allow to choose before today.
-                    lastDate: DateTime(2101));
-
-                if (pickedDate != null) {
-                  String formattedDate =
-                      DateFormat('yyyy-MM-dd').format(pickedDate);
-                  //you can implement different kind of Date Format here according to your requirement
-                  if (widget.onDateSet != null) {
-                    widget.onDateSet!(formattedDate);
-                  }
+    return Row(
+      children: [
+        dateInput.text != ""
+            ? IconButton(
+                onPressed: () {
                   setState(() {
-                    dateInput.text =
-                        formattedDate; //set output date to TextField value.
+                    dateInput.text = "";
+                    widget.onDateSet?.call("");
                   });
-                } else {
-                  developer.log("Date is not selected");
-                }
-              },
-            ))));
+                },
+                icon: const Icon(Icons.clear_outlined))
+            : const SizedBox.shrink(),
+        Expanded(
+          child: ContainerWithBoxDecoration(
+              boxColor: Theme.of(context).colorScheme.background,
+              externalPadding: 5,
+              internalPadding: 0,
+              child: Container(
+                  padding: const EdgeInsets.all(12),
+                  height: 80,
+                  child: Center(
+                      child: TextField(
+                    controller: dateInput,
+                    //editing controller of this TextField
+                    decoration: const InputDecoration(
+                      icon: Icon(Icons.calendar_today),
+                      labelText: "Expiry Date (Optional)",
+                    ),
+                    readOnly: true,
+                    //set it true, so that user will not able to edit text
+                    onTap: () async {
+                      DateTime? pickedDate = await showDatePicker(
+                        context: context,
+                        initialDate: DateTime.now(),
+                        firstDate: DateTime(2000),
+                        //DateTime.now() - not to allow to choose before today.
+                        lastDate: DateTime(2101),
+                      );
+
+                      if (pickedDate != null) {
+                        String formattedDate =
+                            DateFormat('yyyy-MM-dd').format(pickedDate);
+                        //you can implement different kind of Date Format here according to your requirement
+                        if (widget.onDateSet != null) {
+                          widget.onDateSet!(formattedDate);
+                        }
+                        setState(() {
+                          dateInput.text =
+                              formattedDate; //set output date to TextField value.
+                        });
+                      } else {
+                        developer.log("Date is not selected");
+                      }
+                    },
+                  )))),
+        )
+      ],
+    );
   }
 }

@@ -9,6 +9,7 @@ import 'package:inoventory_ui/inventory/items/models/item_wrapper.dart';
 import 'package:inoventory_ui/inventory/items/widgets/list_widget.dart';
 import 'package:inoventory_ui/inventory/lists/models/inventory_list.dart';
 import 'package:inoventory_ui/products/product_service.dart';
+import 'package:inoventory_ui/products/routes/product_scan_route.dart';
 import 'package:inoventory_ui/products/routes/product_search_route.dart';
 import 'package:inoventory_ui/shared/widgets/expandable_floating_action_button.dart';
 import 'package:inoventory_ui/shared/widgets/future_error_retry_widget.dart';
@@ -110,8 +111,10 @@ class _ItemListRouteState extends State<ItemListRoute> {
   }
 
   Future<void> _refreshList() async {
-    setState(() {
-      futureItems = _itemService.all(widget.list.id);
+    Future.delayed(const Duration(milliseconds: 200), () {
+      setState(() {
+        futureItems = _itemService.all(widget.list.id);
+      });
     });
   }
 
@@ -161,25 +164,23 @@ class _ItemListRouteState extends State<ItemListRoute> {
       ),
       floatingActionButton:
           ExpandableFab(iconData: Icons.camera_alt, distance: 50, children: [
-        ActionButton(
-            icon: const Icon(Icons.add_outlined, color: Colors.black),
-            onPressed: () async {
-              final navigator = Navigator.of(context);
-              var barcodeScanResult = await _barcodeScanner.scanBarcodeNormal();
-              navigator
-                  .push(MaterialPageRoute(
-                      builder: (context) => ProductSearchRoute(
-                          initialSearchValue: barcodeScanResult,
-                          productService: _productService,
-                          list: widget.list)))
-                  .whenComplete((_refreshList));
-            }),
+            ActionButton(
+                icon: const Icon(Icons.add_outlined, color: Colors.black),
+                onPressed: () async {
+                  final navigator = Navigator.of(context);
+                  navigator
+                      .push(MaterialPageRoute(
+                      builder: (context) => ProductScanRoute(inventoryList: widget.list)))
+                      .whenComplete((_refreshList));
+                }),
+        // delete scan button
         ActionButton(
             icon: const Icon(Icons.delete, color: Colors.black),
             onPressed: () async {
               var barcodeScanResult = await _barcodeScanner.scanBarcodeNormal();
               await onEanDeleteScan(barcodeScanResult);
             }),
+
       ]),
     );
   }

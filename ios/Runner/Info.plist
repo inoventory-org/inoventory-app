@@ -17,6 +17,10 @@
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
 	<string>Inoventory Ui</string>
+    <key>NSCameraUsageDescription</key>
+	<string>We use the camera to scan barcodes</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>We need access in order to open photos of barcodes</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>

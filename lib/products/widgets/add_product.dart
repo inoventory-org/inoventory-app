@@ -4,15 +4,27 @@ import 'package:inoventory_ui/inventory/items/item_service.dart';
 import 'package:inoventory_ui/inventory/items/models/item.dart';
 import 'package:inoventory_ui/inventory/lists/models/inventory_list.dart';
 import 'package:inoventory_ui/products/product_model.dart';
+import 'package:inoventory_ui/products/widgets/product_info.dart';
 import 'package:inoventory_ui/shared/widgets/amount_input.dart';
 import 'package:inoventory_ui/shared/widgets/expiry_date_input.dart';
 import 'package:inoventory_ui/shared/widgets/inoventory_network_image.dart';
+import 'dart:developer' as developer;
+
 
 class AddProductView extends StatefulWidget {
   final Product product;
   final InventoryList list;
 
-  const AddProductView(this.product, this.list, {Key? key}) : super(key: key);
+  // called upon successfully adding item
+  void Function(Item item)? onSuccess;
+
+  // called upon error when trying to add item
+  void Function(Item item)? onError;
+
+  // A function that is called after adding items to the list. Can be used for example to pop elements from the navigator to return to the caller
+  void Function()? postAddCallback;
+
+  AddProductView(this.product, this.list, {Key? key, this.postAddCallback, this.onSuccess, this.onError}) : super(key: key);
 
   @override
   State<AddProductView> createState() => _AddProductViewState();
@@ -50,6 +62,20 @@ class _AddProductViewState extends State<AddProductView> {
     });
   }
 
+  void onAddToListPressed() {
+    for (var item in _items) {
+      try {
+        _itemService.add(item);
+        widget.onSuccess?.call(item);
+      } catch (e) {
+        developer.log("An error occurred while adding item.", error: e);
+        widget.onError?.call(item);
+      }
+    }
+
+    widget.postAddCallback?.call();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -57,8 +83,10 @@ class _AddProductViewState extends State<AddProductView> {
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(12.0),
-          child: Column(children: [
+          child: Column(
+              children: [
             InoventoryNetworkImage(url: widget.product.imageUrl!),
+            ProductInfo(product: widget.product),
             AmountInput(
                 onIncrease: _increaseAmount, onDecrease: _decreaseAmount),
             for (var item in _items)
@@ -66,19 +94,12 @@ class _AddProductViewState extends State<AddProductView> {
                   initialDate: item.expirationDate,
                   onDateSet: (date) {
                     item.expirationDate = date;
-                  })
+                  }),
           ]),
         ),
       ),
       floatingActionButton: FloatingActionButton(
-          onPressed: () {
-            for (var item in _items) {
-              _itemService.add(item);
-            }
-            Navigator.of(context).pop();
-            Navigator.of(context).pop();
-            Navigator.of(context).pop();
-          },
+          onPressed: onAddToListPressed,
           child: const Icon(Icons.bookmark)),
     );
   }
