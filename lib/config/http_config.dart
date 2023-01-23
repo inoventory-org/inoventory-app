@@ -39,6 +39,7 @@ class InoventoryHttpInterceptor extends InterceptorsWrapper {
       // print(accessToken);
       options.headers.addAll({"Authorization": "Bearer $accessToken"});
     }
+    developer.log("Request URL: ${options.uri.toString()}");
     return handler.next(options);
   }
 

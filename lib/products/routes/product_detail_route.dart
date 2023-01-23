@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:inoventory_ui/inventory/lists/models/inventory_list.dart';
 import 'package:inoventory_ui/products/product_model.dart';
-import 'package:inoventory_ui/products/widgets/add_product.dart';
+import 'package:inoventory_ui/inventory/items/widgets/add_item.dart';
 import 'package:inoventory_ui/products/widgets/product_info.dart';
 import 'package:inoventory_ui/shared/widgets/add_to_list_btn.dart';
 import 'package:inoventory_ui/shared/widgets/inoventory_appbar.dart';
@@ -34,7 +34,7 @@ class _ProductDetailRouteState extends State<ProductDetailRoute> {
               AddToListButton(onPressed: () {
                 Navigator.of(context)
                     .push(MaterialPageRoute(builder: (context) {
-                  return AddProductView(
+                  return AddItemView(
                     widget.product,
                     widget.list,
                     postAddCallback: () {

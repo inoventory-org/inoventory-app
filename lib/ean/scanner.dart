@@ -49,7 +49,7 @@ class BarcodeScannerWidget extends StatelessWidget {
           ],
         ),
         body: MobileScanner(
-            allowDuplicates: true,
+            allowDuplicates: false,
             controller: cameraController,
             onDetect: onDetect));
   }

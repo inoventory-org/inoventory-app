@@ -1,106 +1,148 @@
-import 'package:flutter/material.dart';
-import 'package:inoventory_ui/config/injection.dart';
-import 'package:inoventory_ui/inventory/items/item_service.dart';
-import 'package:inoventory_ui/inventory/items/models/item.dart';
-import 'package:inoventory_ui/inventory/lists/models/inventory_list.dart';
-import 'package:inoventory_ui/products/product_model.dart';
-import 'package:inoventory_ui/products/widgets/product_info.dart';
-import 'package:inoventory_ui/shared/widgets/amount_input.dart';
-import 'package:inoventory_ui/shared/widgets/expiry_date_input.dart';
-import 'package:inoventory_ui/shared/widgets/inoventory_network_image.dart';
-import 'dart:developer' as developer;
+import 'dart:io';
 
+import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
 class AddProductView extends StatefulWidget {
-  final Product product;
-  final InventoryList list;
-
-  // called upon successfully adding item
-  void Function(Item item)? onSuccess;
-
-  // called upon error when trying to add item
-  void Function(Item item)? onError;
-
-  // A function that is called after adding items to the list. Can be used for example to pop elements from the navigator to return to the caller
-  void Function()? postAddCallback;
-
-  AddProductView(this.product, this.list, {Key? key, this.postAddCallback, this.onSuccess, this.onError}) : super(key: key);
-
+  String barcode;
+  AddProductView({Key? key, this.barcode = ""}) : super(key: key);
   @override
-  State<AddProductView> createState() => _AddProductViewState();
+  _AddProductViewState createState() => _AddProductViewState();
 }
 
 class _AddProductViewState extends State<AddProductView> {
-  final ItemService _itemService = getIt<ItemService>();
-  final List<Item> _items = <Item>[];
-  int _amount = 0;
+  final _formKey = GlobalKey<FormState>();
+  final _barcodeController = TextEditingController();
+  final _productNameController = TextEditingController();
+  final _brandController = TextEditingController();
+  final _labelController = TextEditingController();
+  late ImagePicker imagePicker;
+  XFile? _frontImage;
+  XFile? _backImage;
+  XFile? _nutritionImage;
 
   @override
   void initState() {
     super.initState();
-    _items.add(Item(_amount, widget.list.id, widget.product.ean));
-    _amount++;
+    imagePicker = ImagePicker();
   }
 
-  void _increaseAmount() {
-    setState(() {
-      String? lastExpiryDate;
-      lastExpiryDate = _items[_amount - 1].expirationDate;
-
-      _items.add(Item(_amount, widget.list.id, widget.product.ean,
-          expirationDate: lastExpiryDate));
-      _amount++;
-    });
-  }
-
-  void _decreaseAmount() {
-    setState(() {
-      if (_amount > 1) {
-        _items.removeLast();
-        _amount--;
-      }
-    });
-  }
-
-  void onAddToListPressed() {
-    for (var item in _items) {
-      try {
-        _itemService.add(item);
-        widget.onSuccess?.call(item);
-      } catch (e) {
-        developer.log("An error occurred while adding item.", error: e);
-        widget.onError?.call(item);
-      }
+  Future<void> _pickImage(String imageType) async {
+    final image = await imagePicker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
+      setState(() {
+        if (imageType == "front") {
+          _frontImage = image;
+        } else if (imageType == "back") {
+          _backImage = image;
+        } else {
+          _nutritionImage = image;
+        }
+      });
     }
+  }
 
-    widget.postAddCallback?.call();
+  Future<void> _addProduct() async {
+    // if (_formKey.currentState.validate()) {
+    // Perform validation on the input fields
+    //...
+    // Add the product to a remote server or save it locally
+    //...
+    print("Product added successfully");
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text("Adding ${widget.product.name} to List")),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(12.0),
-          child: Column(
-              children: [
-            InoventoryNetworkImage(url: widget.product.imageUrl!),
-            ProductInfo(product: widget.product),
-            AmountInput(
-                onIncrease: _increaseAmount, onDecrease: _decreaseAmount),
-            for (var item in _items)
-              ExpiryDateEntry(
-                  initialDate: item.expirationDate,
-                  onDateSet: (date) {
-                    item.expirationDate = date;
-                  }),
-          ]),
+    return Form(
+      key: _formKey,
+      child: Column(
+        children: [
+          TextFormField(
+            controller: _barcodeController,
+            decoration: const InputDecoration(
+              labelText: "Barcode",
+              border: OutlineInputBorder(),
+            ),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter a barcode';
+              }
+              return null;
+            },
+          ),
+          TextFormField(
+            controller: _productNameController,
+            decoration: const InputDecoration(
+              labelText: "Product Name",
+              border: OutlineInputBorder(),
+            ),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter a product name';
+              }
+              return null;
+            },
+          ),
+          TextFormField(
+            controller: _brandController,
+            decoration: const InputDecoration(
+              labelText: "Brand",
+              border: OutlineInputBorder(),
+            ),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter a brand';
+              }
+              return null;
+            },
+          ),
+          TextFormField(
+            controller: _labelController,
+            decoration: const InputDecoration(
+              labelText: "Label",
+              border: OutlineInputBorder(),
+            ),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter a label';
+              }
+
+              return null;
+            },
+          ),
+          const SizedBox(height: 16),
+          _buildImageCard("Front Image", _frontImage, "front"),
+          _buildImageCard("Back Image", _backImage, "back"),
+          _buildImageCard("Nutrition Image", _nutritionImage, "nutrition"),
+          ElevatedButton(
+            onPressed: _addProduct,
+            child: const Text("Add Product"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildImageCard(String imageType, XFile? image, String tag) {
+    return GestureDetector(
+      onTap: () => _pickImage(tag),
+      child: Card(
+        child: Column(
+          children: [
+            if (image != null)
+              Image.file(
+                File(image.path),
+                height: 100,
+                width: double.infinity,
+                fit: BoxFit.cover,
+              ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text(imageType),
+            ),
+          ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-          onPressed: onAddToListPressed,
-          child: const Icon(Icons.bookmark)),
     );
   }
 }
