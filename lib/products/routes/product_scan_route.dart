@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:inoventory_ui/config/injection.dart';
-import 'package:inoventory_ui/ean/mobile_scanner.dart';
+import 'package:inoventory_ui/ean/scanner.dart';
 import 'package:inoventory_ui/inventory/lists/models/inventory_list.dart';
 import 'package:inoventory_ui/products/product_model.dart';
 import 'package:inoventory_ui/products/product_service.dart';
@@ -34,7 +34,7 @@ class _ProductScanRouteState extends State<ProductScanRoute> {
       debugPrint('Barcode found! $code');
       List<Product> products = await _productService.search(code);
       setState(() {
-        _barcode = barcode.rawValue!;
+        _barcode = code;
         if (products.isNotEmpty) {
           _product = products.last;
         }
