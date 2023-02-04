@@ -9,6 +9,7 @@ abstract class Constants {
   static const darkMode = true;
   static final keycloakConf = KeycloakConf();
   static const accessTokenRefreshIntervalSeconds = 60;
+  static const openFoodFactsUserName = "inoventory";
 }
 
 

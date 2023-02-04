@@ -1,3 +1,3 @@
 abstract class Secrets {
-  static const OpenFoodFactsToken = "";
+  static const openFoodFactsToken = "";
 }
