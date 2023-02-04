@@ -26,8 +26,8 @@ class OpenFoodFactsServiceImpl implements OpenFoodFactsService {
 
   OpenFoodFactsServiceImpl() : super() {
     OpenFoodAPIConfiguration.userAgent = const UserAgent(name: Constants.appName);
-    // OpenFoodAPIConfiguration.globalUser = myUser;
-    OpenFoodAPIConfiguration.globalQueryType = QueryType.TEST;
+    OpenFoodAPIConfiguration.globalUser = myUser;
+    OpenFoodAPIConfiguration.globalQueryType = QueryType.PROD;
   }
 
   @override
