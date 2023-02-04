@@ -7,7 +7,8 @@ Running at: https://www.inoventory.railabouni.fra.ics.inovex.io/
 ## Secret Keys
 In order to be able to add products to open food facts, a password is needed. 
 It must be manually supplemented to the file `lib/config/secrets.dart`
-For now, the password needs to be manually retrieved from the repository's CI/CD variables (provided you have access).
+For now, the password needs to be manually retrieved from the [repository's CI/CD variables](https://gitlab.inovex.de/railabouni/inoventory-ui/-/settings/ci_cd) (provided you have access).
+The variable is called `OPEN_FOOD_FACTS_PASSWORD`
 
 ## Web Version
 
