@@ -99,17 +99,3 @@ class _InoventoryHomeRouteState extends State<InoventoryHomeRoute> {
         : Scaffold(appBar: InoventoryAppBar(), body: LoginRoute(login: login));
   }
 }
-
-// body: Center(
-// child: TextButton(
-// child: const Text("Refresh Token"),
-// onPressed: ()  {
-// // final tr =
-// //     await authService.getTokenResponse(forceRefresh: true);
-// authService.logout();
-// setState(() {
-// authenticatedUserName = null;
-// });
-// },
-// ),
-// ))
