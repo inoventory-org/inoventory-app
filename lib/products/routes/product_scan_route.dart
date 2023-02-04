@@ -1,18 +1,20 @@
+import 'dart:developer' as developer;
+
 import 'package:flutter/material.dart';
 import 'package:inoventory_ui/config/injection.dart';
 import 'package:inoventory_ui/ean/scanner.dart';
+import 'package:inoventory_ui/inventory/items/widgets/add_item.dart';
 import 'package:inoventory_ui/inventory/lists/models/inventory_list.dart';
 import 'package:inoventory_ui/products/product_model.dart';
 import 'package:inoventory_ui/products/product_service.dart';
-import 'package:inoventory_ui/inventory/items/widgets/add_item.dart';
 import 'package:inoventory_ui/products/widgets/add_product.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
-import 'dart:developer' as developer;
 
 class ProductScanRoute extends StatefulWidget {
   final InventoryList inventoryList;
 
-  const ProductScanRoute({Key? key, required this.inventoryList}) : super(key: key);
+  const ProductScanRoute({Key? key, required this.inventoryList})
+      : super(key: key);
 
   @override
   State<ProductScanRoute> createState() => _ProductScanRouteState();
@@ -36,6 +38,32 @@ class _ProductScanRouteState extends State<ProductScanRoute> {
         _getSnackBar("Failed to lookup barcode $barcode", Colors.red));
   }
 
+  void onSuccessfulProductAddition(String barcode) {
+    setState(() {
+      _barcode = barcode;
+    });
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    scaffoldMessenger.clearSnackBars();
+    scaffoldMessenger.showSnackBar(
+        _getSnackBar("Successfully added new product", Colors.green));
+  }
+
+  void onErrorProductAddition(Object e) {
+    setState(() {
+      _barcode = "";
+    });
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    scaffoldMessenger.clearSnackBars();
+    scaffoldMessenger.showSnackBar(_getSnackBar(
+        "Failed to add new product item: ${e.toString()}", Colors.red));
+  }
+
+  void onCancelProductAddition() {
+    setState(() {
+      _barcode = "";
+    });
+  }
+
   dynamic onDetect(Barcode barcode, MobileScannerArguments? args) async {
     if (barcode.rawValue == null) {
       debugPrint('Failed to scan Barcode');
@@ -51,7 +79,8 @@ class _ProductScanRouteState extends State<ProductScanRoute> {
         products = await _productService.search(code);
       } catch (e) {
         onFailedToLookupBarcode(code);
-        developer.log("An error occurred while looking up barcode $code", error: e);
+        developer.log("An error occurred while looking up barcode $code",
+            error: e);
       }
       setState(() {
         _barcode = code;
@@ -72,31 +101,38 @@ class _ProductScanRouteState extends State<ProductScanRoute> {
     return Scaffold(
         body: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
       Expanded(flex: 3, child: BarcodeScannerWidget(onDetect: onDetect)),
-          _barcode != ""
-              ? Expanded(
+      _barcode != ""
+          ? Expanded(
               flex: 7,
-              child: _productFound ? AddItemView(
-                _product!,
-                widget.inventoryList,
-                postAddCallback: () {
-                  setState(() {
-                    _product = null;
-                    _barcode = "";
-                    _productFound = false;
-                  });
-                },
-                onSuccess: (item) {
-                  final scaffoldMessenger = ScaffoldMessenger.of(context);
-                  scaffoldMessenger.clearSnackBars();
-                  scaffoldMessenger.showSnackBar(
-                      _getSnackBar("Successfully added item", Colors.green));
-                },
-                onError: (item) {
-                  final scaffoldMessenger = ScaffoldMessenger.of(context);
-                  scaffoldMessenger.showSnackBar(
-                      _getSnackBar("Failed to add item", Colors.red));
-                },
-              ) : AddProductView(barcode: _barcode),
+              child: _productFound
+                  ? AddItemView(
+                      _product!,
+                      widget.inventoryList,
+                      postAddCallback: () {
+                        setState(() {
+                          _product = null;
+                          _barcode = "";
+                          _productFound = false;
+                        });
+                      },
+                      onSuccess: (item) {
+                        final scaffoldMessenger = ScaffoldMessenger.of(context);
+                        scaffoldMessenger.clearSnackBars();
+                        scaffoldMessenger.showSnackBar(_getSnackBar(
+                            "Successfully added item", Colors.green));
+                      },
+                      onError: (item) {
+                        final scaffoldMessenger = ScaffoldMessenger.of(context);
+                        scaffoldMessenger.showSnackBar(
+                            _getSnackBar("Failed to add item", Colors.red));
+                      },
+                    )
+                  : AddProductView(
+                      barcode: _barcode,
+                      onCancelProductAddition: onCancelProductAddition,
+                      onSuccessfulProductAddition: onSuccessfulProductAddition,
+                      onErrorProductAddition: onErrorProductAddition,
+                    ),
             )
           : const SizedBox.shrink() // empty widget
     ]));

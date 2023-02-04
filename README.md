@@ -28,5 +28,5 @@ This projects uses [*GetIt*](https://pub.dev/packages/get_it) and [*Injectable*]
 For the code generation to run on file changes run
 `flutter packages pub run build_runner watch`
 or use
-`flutter packages pub run build_runner build `
+`flutter packages pub run build_runner build`
 for manual code generation.
