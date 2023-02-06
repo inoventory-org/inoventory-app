@@ -29,7 +29,7 @@ class _ProductDetailRouteState extends State<ProductDetailRoute> {
           padding: const EdgeInsets.all(12.0),
           child: Column(
             children: [
-              InoventoryNetworkImage(url: widget.product.imageUrl!),
+              if (widget.product.imageUrl != null) InoventoryNetworkImage(url: widget.product.imageUrl!),
               ProductInfo(product: widget.product),
               AddToListButton(onPressed: () {
                 Navigator.of(context)
