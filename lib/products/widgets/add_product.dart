@@ -39,6 +39,7 @@ class _AddProductViewState extends State<AddProductView> {
   XFile? _frontImage;
   XFile? ingredientsImage;
   XFile? _nutritionImage;
+  bool isWorking = false;
 
   @override
   void initState() {
@@ -76,13 +77,9 @@ class _AddProductViewState extends State<AddProductView> {
   }
 
   Future<void> _addProduct() async {
-    if (_formKey.currentState == null ||
-        _formKey.currentState!.validate() == false) {
-      return;
-    }
     Product product = Product(
         _barcodeController.text, _productNameController.text,
-        ean: _barcodeController.text, weight: _weightController.text);
+        ean: _barcodeController.text, brands: _brandController.text, weight: _weightController.text);
 
     Map<off.ImageField, File> images = {
       if (_frontImage != null) off.ImageField.FRONT: File(_frontImage!.path),
@@ -94,8 +91,11 @@ class _AddProductViewState extends State<AddProductView> {
 
 
     try {
-      off.Product? newProduct = await _oFFService.addProduct(product, images);
-      developer.log("newProduct: $newProduct");
+      setState(() {
+        isWorking = true;
+      });
+      await _oFFService.addProduct(product, images);
+      // developer.log("newProduct: $newProduct");
       _showSnackbar("Product added successfully", Colors.green);
       widget.onSuccessfulProductAddition?.call(product.ean);
     } catch (e) {
@@ -104,6 +104,9 @@ class _AddProductViewState extends State<AddProductView> {
       _showSnackbar("An error occurred while adding a new product", Colors.red);
       widget.onErrorProductAddition?.call(e);
     }
+    setState(() {
+      isWorking = false;
+    });
   }
 
   void _showSnackbar(String text, Color color) {
@@ -188,6 +191,7 @@ class _AddProductViewState extends State<AddProductView> {
                   ],
                 ),
               ),
+              if (isWorking) const Center(child: CircularProgressIndicator()),
               ElevatedButton(
                 onPressed: _addProduct,
                 child: const Text("Add Product"),
