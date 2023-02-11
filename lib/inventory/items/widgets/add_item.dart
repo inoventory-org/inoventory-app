@@ -85,7 +85,7 @@ class _AddItemViewState extends State<AddItemView> {
           padding: const EdgeInsets.all(12.0),
           child: Column(
               children: [
-            InoventoryNetworkImage(url: widget.product.imageUrl!),
+            if (widget.product.imageUrl != null) InoventoryNetworkImage(url: widget.product.imageUrl!),
             ProductInfo(product: widget.product),
             AmountInput(
                 onIncrease: _increaseAmount, onDecrease: _decreaseAmount),
