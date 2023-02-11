@@ -1,6 +1,7 @@
 import 'dart:developer' as developer;
 
 import 'package:flutter/material.dart';
+import 'package:inoventory_ui/config/constants.dart';
 import 'package:inoventory_ui/config/injection.dart';
 import 'package:inoventory_ui/ean/scanner.dart';
 import 'package:inoventory_ui/inventory/items/widgets/add_item.dart';
@@ -40,7 +41,7 @@ class _ProductScanRouteState extends State<ProductScanRoute> {
 
   void onSuccessfulProductAddition(String barcode) {
     setState(() {
-      _barcode = barcode;
+      _barcode = "";
     });
     final scaffoldMessenger = ScaffoldMessenger.of(context);
     scaffoldMessenger.clearSnackBars();
@@ -76,7 +77,7 @@ class _ProductScanRouteState extends State<ProductScanRoute> {
 
       List<Product> products = [];
       try {
-        products = await _productService.search(code);
+        products = await _productService.search(code, fresh: Globals.forceFetchProducts);
       } catch (e) {
         onFailedToLookupBarcode(code);
         developer.log("An error occurred while looking up barcode $code",
