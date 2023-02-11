@@ -14,6 +14,8 @@ abstract class ItemService {
 
   Future<List<ItemWrapper>> all(int listId);
 
+  Future<Map<String, List<ItemWrapper>>> allGroupedBy(int listId, String groupBy);
+
   Future<Item> add(Item item);
 
   Future<Item> update(int itemId, Item updatedItem);
@@ -72,6 +74,26 @@ class ItemServiceImpl extends ItemService {
   }
 
   @override
+  Future<Map<String, List<ItemWrapper>>> allGroupedBy(int listId, String groupBy) async {
+    final url = "${getSpecificListUrl(listId)}/group?groupby=$groupBy";
+    final response = await dio.get(url).timeout(timeout);
+
+    if (response.statusCode != HttpStatus.ok) {
+      throw Exception("Failed to fetch lists");
+    }
+
+
+    final Map<String, dynamic> groupsJson = response.data;
+    final Map<String, List<ItemWrapper>> groupWrappers = {};
+    groupsJson.forEach((groupName, itemWrappers) {
+      groupWrappers[groupName] = (itemWrappers as List).map((itemWrapper) =>
+          ItemWrapper.fromJson(itemWrapper)).toList();
+    });
+
+    return groupWrappers;
+  }
+
+  @override
   Future<Item> update(int itemId, Item updatedItem) async {
     final response = await dio.put(
         getSpecificItemUrl(updatedItem.listId, updatedItem.id),
@@ -101,3 +123,4 @@ class ItemServiceImpl extends ItemService {
     developer.log("Successfully deleted!");
   }
 }
+

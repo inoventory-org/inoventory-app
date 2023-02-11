@@ -17,5 +17,17 @@ class ItemWrapper {
         item.imageUrl, item.thumbUrl, items);
   }
 
+  factory ItemWrapper.fromJson(Map<String, dynamic> json) {
+    var items = (json['items'] as List).map((item) => Item.fromJson(item)).toList();
+    return ItemWrapper(
+        json['listId'],
+        json['productEan'],
+        items.first.displayName ?? json['displayName'],
+        items.first.imageUrl ?? json['imageUrl'],
+        items.first.thumbUrl ?? json['thumbUrl'],
+        items
+    );
+  }
+
   int get quantity => items.length;
 }

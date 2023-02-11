@@ -6,9 +6,10 @@ class Item {
   String? expirationDate;
   final String? imageUrl;
   final String? thumbUrl;
+  final Set<String>? tags;
 
   Item(this.id, this.listId, this.productEan,
-      {this.expirationDate, this.displayName, this.imageUrl, this.thumbUrl});
+      {this.expirationDate, this.displayName, this.imageUrl, this.thumbUrl, this.tags});
 
   factory Item.fromJson(Map<String, dynamic> json) {
     return Item(
@@ -19,6 +20,7 @@ class Item {
       displayName: json['displayName'],
       imageUrl: json['imageUrl'],
       thumbUrl: json['thumbUrl'],
+      tags: json['tags']
     );
   }
 }
