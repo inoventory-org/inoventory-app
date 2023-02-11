@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:inoventory_ui/inventory/items/models/item_wrapper.dart';
 import 'package:inoventory_ui/inventory/items/widgets/item_widget.dart';
 
-class GroupedInventoryListWidget extends StatefulWidget {
+class GroupedInventoryListWidget extends StatelessWidget {
   final Map<String, List<ItemWrapper>> groupedItemWrappers;
   final Future<bool> Function(ItemWrapper itemWrapper) onDelete;
   final Future<void> Function(ItemWrapper itemWrapper) onEdit;
@@ -14,25 +14,31 @@ class GroupedInventoryListWidget extends StatefulWidget {
     Key? key,
   }) : super(key: key);
 
-  @override
-  State<GroupedInventoryListWidget> createState() => _GroupedInventoryListWidgetState();
-}
+  TextStyle _getCategoryHeaderStyle(BuildContext context) {
+    return TextStyle(
+      color: Colors.white,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      fontSize: 28,
+    );
+  }
 
-class _GroupedInventoryListWidgetState extends State<GroupedInventoryListWidget> {
   @override
   Widget build(BuildContext context) {
     return ListView(
         children: ListTile.divideTiles(
             context: context,
-            tiles: widget.groupedItemWrappers.entries.map((element) {
+            tiles: groupedItemWrappers.entries.map((element) {
               final categoryName = element.key;
               final itemWrappers = element.value;
               return ExpansionTile(
-                  title: Text(categoryName),
-                  children: itemWrappers.map((itemWrapper) {
-                    return InventoryItemWidget(itemWrapper, widget.onDelete);
-                  }).toList()
-              );
+                  initiallyExpanded: true,
+                  title: categoryName == "null" ? Text("Uncategorized", style: _getCategoryHeaderStyle(context)) : Text(categoryName, style: _getCategoryHeaderStyle(context)),
+                  children: ListTile.divideTiles(
+                          context: context,
+                          tiles: itemWrappers.map((itemWrapper) {
+                            return InventoryItemWidget(itemWrapper, onDelete);
+                          }).toList())
+                      .toList());
             })).toList());
   }
 }
