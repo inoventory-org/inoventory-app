@@ -14,6 +14,9 @@ abstract class Constants {
   static const openFoodFactsUserName = "inoventory";
 }
 
+abstract class Globals {
+  static bool forceFetchProducts = true;
+}
 
 
 class KeycloakConf {

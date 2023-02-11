@@ -1,12 +1,14 @@
 import 'dart:developer' as developer;
 
 import 'package:flutter/material.dart';
+import 'package:inoventory_ui/config/constants.dart';
 import 'package:inoventory_ui/config/injection.dart';
 import 'package:inoventory_ui/inventory/lists/inventory_list_service.dart';
 import 'package:inoventory_ui/inventory/lists/models/inventory_list.dart';
 import 'package:inoventory_ui/inventory/lists/widgets/create_list_widget.dart';
 import 'package:inoventory_ui/inventory/lists/widgets/edit_list_widget.dart';
 import 'package:inoventory_ui/inventory/lists/widgets/list_overview_widget.dart';
+import 'package:inoventory_ui/products/widgets/inoventory_drawer.dart';
 import 'package:inoventory_ui/shared/widgets/confirmation_modal.dart';
 import 'package:inoventory_ui/shared/widgets/future_error_retry_widget.dart';
 import 'package:inoventory_ui/shared/widgets/inoventory_appbar.dart';
@@ -62,28 +64,7 @@ class _InventoryListRouteState extends State<InventoryListRoute> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: InoventoryAppBar(), //AppBar(title: const Text("My Lists")),
-      drawer: Drawer(
-          child: ListView(padding: EdgeInsets.zero, children: [
-        DrawerHeader(
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.primary,
-          ),
-          child: const Spacer(),
-        ),
-        ListTile(
-          title: const Text('Logout'),
-          onTap: () async {
-            final navigator = Navigator.of(context);
-            final scaffoldMessenger = ScaffoldMessenger.of(context);
-            await widget.logout();
-            scaffoldMessenger.showSnackBar(const SnackBar(
-                content: Text("Successfully logged out",
-                    style: TextStyle(color: Colors.white)),
-                backgroundColor: Colors.green));
-            navigator.pop();
-          },
-        )
-      ])),
+      drawer: InoDrawer(logout: widget.logout),
       body: RefreshIndicator(
         onRefresh: _refreshList,
         backgroundColor: Theme.of(context).colorScheme.secondary,

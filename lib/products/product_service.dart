@@ -4,7 +4,7 @@ import 'package:inoventory_ui/config/constants.dart';
 import 'package:inoventory_ui/products/product_model.dart';
 
 abstract class ProductService {
-  Future<List<Product>> search(String barcode);
+  Future<List<Product>> search(String barcode, { bool fresh = false });
   Future<List<Product>> all();
   Future<Product> add(Product product);
   Future<Product> update(String productId, Product product);
@@ -49,14 +49,16 @@ class ProductServiceImpl implements ProductService {
   }
 
   @override
-  Future<List<Product>> search(String barcode) async {
-    final response = await dio
-        .get("$backendUrl/api/v1/products?ean=$barcode")
-        .timeout(timeout);
+  Future<List<Product>> search(String barcode, { bool fresh = false }) async {
+    final freshStr = fresh ? "&fresh=true" : "";
+    final url = "$backendUrl/api/v1/products?ean=$barcode$freshStr";
+    print("Fetching: $url");
+    final response = await dio.get(url).timeout(timeout);
     if (response.statusCode == 200) {
       Map<String, dynamic> json = response.data;
+      print("Product: $json");
       Product product = Product.fromJson(json);
-
+      print("Product: $product");
       return <Product>[product];
     } else {
       // 3017620425035
@@ -72,4 +74,5 @@ class ProductServiceImpl implements ProductService {
     // TODO: implement update
     throw UnimplementedError();
   }
+
 }

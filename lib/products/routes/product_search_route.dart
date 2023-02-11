@@ -9,6 +9,8 @@ import 'package:inoventory_ui/shared/widgets/inoventory_search_bar.dart';
 import 'package:inoventory_ui/products/widgets/product_list.dart';
 import 'dart:developer' as developer;
 
+import '../../config/constants.dart';
+
 class ProductSearchRoute extends StatefulWidget {
   final String? initialSearchValue;
   final ProductService productService;
@@ -34,7 +36,7 @@ class _ProductSearchRouteState extends State<ProductSearchRoute> {
     super.initState();
     productService = widget.productService;
     if (widget.initialSearchValue != null) {
-      futureProducts = productService.search(widget.initialSearchValue ?? "");
+      futureProducts = productService.search(widget.initialSearchValue ?? "", fresh: Globals.forceFetchProducts);
     } else {
       futureProducts = productService.all();
     }
@@ -42,7 +44,7 @@ class _ProductSearchRouteState extends State<ProductSearchRoute> {
 
   void onSearchBarChanged(String value) {
     setState(() {
-      futureProducts = productService.search(value);
+      futureProducts = productService.search(value, fresh: Globals.forceFetchProducts);
     });
   }
 
