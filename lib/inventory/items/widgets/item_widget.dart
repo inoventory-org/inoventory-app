@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:inoventory_ui/inventory/items/models/item_wrapper.dart';
 
@@ -11,6 +12,13 @@ class InventoryItemWidget extends StatelessWidget {
     Key? key,
   }) : super(key: key);
 
+  String? _getNextExpiring() {
+    List<String?> expirationDates = itemWrapper.items
+        .where((element) => element.expirationDate != null)
+        .map((e) => e.expirationDate)
+        .toList()..sort();
+    return expirationDates.firstOrNull;
+  }
   @override
   Widget build(BuildContext context) {
     return Dismissible(
@@ -43,9 +51,18 @@ class InventoryItemWidget extends StatelessWidget {
             itemWrapper.displayName ?? itemWrapper.productEan,
             style: const TextStyle(fontSize: 18),
           ),
-          subtitle: Text(
-            itemWrapper.productEan,
-            style: const TextStyle(fontSize: 14, color: Colors.grey),
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                itemWrapper.productEan,
+                style: const TextStyle(fontSize: 14, color: Colors.grey),
+              ),
+              if (_getNextExpiring() != null) Text(
+                "Next items expires on: ${_getNextExpiring()}",
+                style: const TextStyle(fontSize: 14, color: Colors.grey),
+              ),
+            ],
           ),
           trailing: itemWrapper.quantity > 1
               ? _QuantityWidget(itemWrapper.quantity)
