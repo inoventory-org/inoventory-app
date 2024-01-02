@@ -28,7 +28,6 @@ class AddProductView extends StatefulWidget {
 }
 
 class _AddProductViewState extends State<AddProductView> {
-  final ProductService _productService = getIt<ProductService>();
   final OpenFoodFactsService _oFFService = getIt<OpenFoodFactsService>();
   final _formKey = GlobalKey<FormState>();
   final _barcodeController = TextEditingController();
@@ -66,9 +65,9 @@ class _AddProductViewState extends State<AddProductView> {
 
   Future<void> _clearImage(String imageType) async {
     setState(() {
-      if (imageType == "front") {
+      if (imageType == off.ImageField.FRONT.toString()) {
         _frontImage = null;
-      } else if (imageType == "back") {
+      } else if (imageType == off.ImageField.INGREDIENTS.toString()) {
         ingredientsImage = null;
       } else {
         _nutritionImage = null;
