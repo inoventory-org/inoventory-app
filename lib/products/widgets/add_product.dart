@@ -6,7 +6,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:inoventory_ui/config/injection.dart';
 import 'package:inoventory_ui/products/open_food_facts_service.dart';
 import 'package:inoventory_ui/products/product_model.dart';
-import 'package:inoventory_ui/products/product_service.dart';
 import 'package:openfoodfacts/openfoodfacts.dart' as off;
 
 class AddProductView extends StatefulWidget {
@@ -15,13 +14,7 @@ class AddProductView extends StatefulWidget {
   void Function(String barcode)? onSuccessfulProductAddition;
   void Function(Object e)? onErrorProductAddition;
 
-  AddProductView(
-      {Key? key,
-      this.barcode = "",
-      required this.onCancelProductAddition,
-      this.onSuccessfulProductAddition,
-      this.onErrorProductAddition})
-      : super(key: key);
+  AddProductView({super.key, this.barcode = "", required this.onCancelProductAddition, this.onSuccessfulProductAddition, this.onErrorProductAddition});
 
   @override
   _AddProductViewState createState() => _AddProductViewState();
@@ -48,18 +41,22 @@ class _AddProductViewState extends State<AddProductView> {
   }
 
   Future<void> _pickImage(String imageType) async {
-    final image = await imagePicker.pickImage(source: ImageSource.camera);
-    if (image != null) {
-      setState(() {
-        if (imageType == off.ImageField.NUTRITION.toString()) {
-          _nutritionImage = image;
-        } else if (imageType == off.ImageField.INGREDIENTS.toString()) {
-          ingredientsImage = image;
-        } else {
-          _frontImage = image;
-        }
-      });
-      _showSnackbar("Long press on the added image to clear it", Colors.green);
+    try {
+      final image = await imagePicker.pickImage(source: ImageSource.camera);
+      if (image != null) {
+        setState(() {
+          if (imageType == off.ImageField.NUTRITION.toString()) {
+            _nutritionImage = image;
+          } else if (imageType == off.ImageField.INGREDIENTS.toString()) {
+            ingredientsImage = image;
+          } else {
+            _frontImage = image;
+          }
+        });
+        _showSnackbar("Long press on the added image to clear it", Colors.green);
+      }
+    } catch (error) {
+      developer.log("error: $error");
     }
   }
 
@@ -76,18 +73,13 @@ class _AddProductViewState extends State<AddProductView> {
   }
 
   Future<void> _addProduct() async {
-    Product product = Product(
-        _barcodeController.text, _productNameController.text,
-        ean: _barcodeController.text, brands: _brandController.text, weight: _weightController.text);
+    Product product = Product(_barcodeController.text, _productNameController.text, ean: _barcodeController.text, brands: _brandController.text, weight: _weightController.text);
 
     Map<off.ImageField, File> images = {
       if (_frontImage != null) off.ImageField.FRONT: File(_frontImage!.path),
-      if (ingredientsImage != null)
-        off.ImageField.INGREDIENTS: File(ingredientsImage!.path),
-      if (_nutritionImage != null)
-        off.ImageField.NUTRITION: File(_nutritionImage!.path),
+      if (ingredientsImage != null) off.ImageField.INGREDIENTS: File(ingredientsImage!.path),
+      if (_nutritionImage != null) off.ImageField.NUTRITION: File(_nutritionImage!.path),
     };
-
 
     try {
       setState(() {
@@ -98,8 +90,7 @@ class _AddProductViewState extends State<AddProductView> {
       _showSnackbar("Product added successfully", Colors.green);
       widget.onSuccessfulProductAddition?.call(product.ean);
     } catch (e) {
-      developer.log("An error occurred while adding a new product...",
-          error: e);
+      developer.log("An error occurred while adding a new product...", error: e);
       _showSnackbar("An error occurred while adding a new product", Colors.red);
       widget.onErrorProductAddition?.call(e);
     }
@@ -181,12 +172,9 @@ class _AddProductViewState extends State<AddProductView> {
               SingleChildScrollView(
                 child: Row(
                   children: [
-                    _buildImageCard("Front Image", _frontImage,
-                        off.ImageField.FRONT.toString()),
-                    _buildImageCard("Ingredients Image", ingredientsImage,
-                        off.ImageField.INGREDIENTS.toString()),
-                    _buildImageCard("Nutrition Image", _nutritionImage,
-                        off.ImageField.NUTRITION.toString()),
+                    _buildImageCard("Front Image", _frontImage, off.ImageField.FRONT.toString()),
+                    _buildImageCard("Ingredients Image", ingredientsImage, off.ImageField.INGREDIENTS.toString()),
+                    _buildImageCard("Nutrition Image", _nutritionImage, off.ImageField.NUTRITION.toString()),
                   ],
                 ),
               ),

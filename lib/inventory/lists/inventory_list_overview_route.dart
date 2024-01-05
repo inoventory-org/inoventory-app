@@ -1,7 +1,6 @@
 import 'dart:developer' as developer;
 
 import 'package:flutter/material.dart';
-import 'package:inoventory_ui/config/constants.dart';
 import 'package:inoventory_ui/config/injection.dart';
 import 'package:inoventory_ui/inventory/lists/inventory_list_service.dart';
 import 'package:inoventory_ui/inventory/lists/models/inventory_list.dart';
@@ -65,7 +64,8 @@ class _InventoryListRouteState extends State<InventoryListRoute> {
     return Scaffold(
       appBar: InoventoryAppBar(), //AppBar(title: const Text("My Lists")),
       drawer: InoDrawer(logout: widget.logout),
-      body: RefreshIndicator(
+      body:
+      RefreshIndicator(
         onRefresh: _refreshList,
         backgroundColor: Theme.of(context).colorScheme.secondary,
         child: FutureBuilder<List<InventoryList>>(
@@ -73,17 +73,11 @@ class _InventoryListRouteState extends State<InventoryListRoute> {
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.done) {
               if (snapshot.hasError) {
-                developer.log(
-                    "An error occurred while retrieving inventory lists.",
-                    error: snapshot.error);
-                return FutureErrorRetryWidget(
-                    onRetry: _refreshList,
-                    child: const Text(
-                        "An error occurred while retrieving inventory lists. Try again"));
+                developer.log("An error occurred while retrieving inventory lists.", error: snapshot.error);
+                return FutureErrorRetryWidget(onRetry: _refreshList, child: const Text("An error occurred while retrieving inventory lists. Try again"));
               }
               if (snapshot.hasData) {
-                return MyInventoryListsWidget(
-                    lists: snapshot.data!, onDelete: onDelete, onEdit: onEdit);
+                return MyInventoryListsWidget(lists: snapshot.data!, onDelete: onDelete, onEdit: onEdit);
               }
             }
             return const Center(child: CircularProgressIndicator());

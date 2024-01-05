@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
 class BarcodeScannerWidget extends StatelessWidget {
-  dynamic Function(Barcode barcode, MobileScannerArguments? args) onDetect;
+  dynamic Function(BarcodeCapture barcodeCapture) onDetect;
 
   BarcodeScannerWidget({Key? key, required this.onDetect}) : super(key: key);
 
-  MobileScannerController cameraController = MobileScannerController();
+  MobileScannerController cameraController = MobileScannerController(detectionSpeed: DetectionSpeed.noDuplicates);
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +19,7 @@ class BarcodeScannerWidget extends StatelessWidget {
               icon: ValueListenableBuilder(
                 valueListenable: cameraController.torchState,
                 builder: (context, state, child) {
-                  switch (state as TorchState) {
+                  switch (state) {
                     case TorchState.off:
                       return const Icon(Icons.flash_off, color: Colors.grey);
                     case TorchState.on:
@@ -35,7 +35,7 @@ class BarcodeScannerWidget extends StatelessWidget {
               icon: ValueListenableBuilder(
                 valueListenable: cameraController.cameraFacingState,
                 builder: (context, state, child) {
-                  switch (state as CameraFacing) {
+                  switch (state) {
                     case CameraFacing.front:
                       return const Icon(Icons.camera_front);
                     case CameraFacing.back:
@@ -49,8 +49,9 @@ class BarcodeScannerWidget extends StatelessWidget {
           ],
         ),
         body: MobileScanner(
-            allowDuplicates: false,
             controller: cameraController,
-            onDetect: onDetect));
+            onDetect: onDetect,
+
+        ));
   }
 }

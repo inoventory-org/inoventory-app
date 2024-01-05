@@ -65,11 +65,16 @@ class _ProductScanRouteState extends State<ProductScanRoute> {
     });
   }
 
-  dynamic onDetect(Barcode barcode, MobileScannerArguments? args) async {
-    if (barcode.rawValue == null) {
+  dynamic onDetect(BarcodeCapture barcodeCapture) async {
+    final List<Barcode> barcodes = barcodeCapture.barcodes;
+    if (barcodes.isEmpty) {
       debugPrint('Failed to scan Barcode');
     } else {
-      final String code = barcode.rawValue!;
+      final String code = barcodes.first.rawValue ?? "";
+      if (code == "") {
+        debugPrint('Failed to parse barcode from scanner: ${barcodes.first}');
+        return;
+      }
       debugPrint('Barcode found! $code');
       if (code == _barcode) {
         return;

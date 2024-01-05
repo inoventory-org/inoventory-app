@@ -1,40 +1,38 @@
 import 'dart:async';
+import 'dart:developer' as developer;
 import 'dart:io';
+
 import 'package:injectable/injectable.dart';
-import 'package:inoventory_ui/products/product_model.dart' as inoventory;
-import 'package:openfoodfacts/model/ProductResultV3.dart';
-import 'package:openfoodfacts/model/UserAgent.dart';
-import 'package:openfoodfacts/openfoodfacts.dart';
 import 'package:inoventory_ui/config/constants.dart';
 import 'package:inoventory_ui/config/secrets.dart';
-import 'dart:developer' as developer;
-import 'package:openfoodfacts/utils/OpenFoodAPIConfiguration.dart';
-import 'package:openfoodfacts/utils/QueryType.dart';
+import 'package:inoventory_ui/products/product_model.dart' as inoventory;
+import 'package:openfoodfacts/openfoodfacts.dart';
 
 abstract class OpenFoodFactsService {
-  Future<Product?> addProduct(
-      inoventory.Product inoProduct, Map<ImageField, File>? images);
+  Future<void> addProduct(inoventory.Product inoProduct, Map<ImageField, File>? images);
   Future<Product?> getProduct(String barcode);
 }
 
-
 @Injectable(as: OpenFoodFactsService)
 class OpenFoodFactsServiceImpl implements OpenFoodFactsService {
-  final User myUser = const User(
-      userId: Constants.openFoodFactsUserName,
-      password: Secrets.openFoodFactsToken);
+  final User myUser = const User(userId: Constants.openFoodFactsUserName, password: Secrets.openFoodFactsToken);
 
   OpenFoodFactsServiceImpl() : super() {
-    OpenFoodAPIConfiguration.userAgent = const UserAgent(name: Constants.appName);
+    OpenFoodAPIConfiguration.userAgent = UserAgent(name: Constants.appName, version: Constants.version, comment: "(eilabouni.rudy@gmail.com)");
     OpenFoodAPIConfiguration.globalUser = myUser;
-    OpenFoodAPIConfiguration.globalQueryType = QueryType.PROD;
+    OpenFoodAPIConfiguration.globalCountry = OpenFoodFactsCountry.GERMANY;
+    OpenFoodAPIConfiguration.globalLanguages = [OpenFoodFactsLanguage.GERMAN, OpenFoodFactsLanguage.ENGLISH];
   }
 
   @override
-  Future<Product?> addProduct(inoventory.Product inoProduct, Map<ImageField, File>? images) async {
-
+  Future<void> addProduct(inoventory.Product inoProduct, Map<ImageField, File>? images) async {
     Product product = convertLocalProductToOffProduct(inoProduct);
-    Status result = await OpenFoodAPIClient.saveProduct(myUser, product);
+    Status result = await OpenFoodAPIClient.saveProduct(
+      myUser,
+      product,
+      uriHelper: uriHelperFoodTest,
+    );
+
     if (result.status != 1) {
       throw Exception('product could not be added: ${result.status}:${result.error}');
     }
@@ -53,21 +51,21 @@ class OpenFoodFactsServiceImpl implements OpenFoodFactsService {
 
       // query the OpenFoodFacts API
       Status result = await OpenFoodAPIClient.addProductImage(myUser, image);
-
+      developer.log("Result: $result");
       if (result.status != 'status ok') {
-        throw Exception(
-            '$imageField image could not be uploaded: ${result.error} ${result.imageId.toString()}');
+        throw Exception('$imageField image could not be uploaded: ${result.error} ${result.imageId.toString()}');
       }
     });
 
-    // retrieve newly created product
-    try {
-      Product? newProduct = await getProduct(inoProduct.ean);
-      return newProduct;
-    } catch (e) {
-      developer.log("Newly created product could not be retrieved", error: e);
-      rethrow;
-    }
+    //
+    // // retrieve newly created product
+    // try {
+    //   Product? newProduct = await getProduct(inoProduct.ean);
+    //   return newProduct;
+    // } catch (e) {
+    //   developer.log("Newly created product could not be retrieved", error: e);
+    //   rethrow;
+    // }
   }
 
   @override
@@ -78,8 +76,7 @@ class OpenFoodFactsServiceImpl implements OpenFoodFactsService {
       fields: [ProductField.ALL],
       version: ProductQueryVersion.v3,
     );
-    final ProductResultV3 result =
-    await OpenFoodAPIClient.getProductV3(configuration);
+    final ProductResultV3 result = await OpenFoodAPIClient.getProductV3(configuration);
 
     if (result.status == ProductResultV3.statusSuccess) {
       return result.product;
@@ -89,15 +86,10 @@ class OpenFoodFactsServiceImpl implements OpenFoodFactsService {
   }
 
   Product convertLocalProductToOffProduct(inoventory.Product inoProduct) {
-    return Product(
-        barcode: inoProduct.ean,
-        productName: inoProduct.name,
-        quantity: inoProduct.weight);
+    return Product(barcode: inoProduct.ean, productName: inoProduct.name, brands: inoProduct.brands, quantity: inoProduct.weight);
   }
 
   inoventory.Product convertOffProductToInoventoryProduct(Product offProduct) {
-    return inoventory.Product(offProduct.barcode!, offProduct.productName!,
-        ean: offProduct.barcode!, weight: offProduct.quantity);
+    return inoventory.Product(offProduct.barcode!, offProduct.productName!, ean: offProduct.barcode!, brands: offProduct.brands, weight: offProduct.quantity);
   }
-
 }

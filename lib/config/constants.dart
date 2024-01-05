@@ -10,7 +10,7 @@ abstract class Constants {
   static const inoventoryBackendUrl = "https://www.inoventory.railabouni.fra.ics.inovex.io";
   static const darkMode = true;
   static final keycloakConf = KeycloakConf();
-  static const accessTokenRefreshIntervalSeconds = 60;
+  static const accessTokenRefreshIntervalSeconds = 60 * 20; // 20 minutes
   static const openFoodFactsUserName = "inoventory";
 }
 

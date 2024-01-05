@@ -19,7 +19,7 @@ class FakeProductService implements ProductService {
   ];
 
   @override
-  Future<List<Product>> search(String query) async {
+  Future<List<Product>> search(String query,  { bool fresh = false }) async {
     return _products.where((p) => p.ean == query).toList();
   }
 
