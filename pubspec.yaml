@@ -26,6 +26,7 @@ dependencies:
   mobile_scanner: ^3.5.5
   image_picker: ^1.0.6
   openfoodfacts: ^3.3.0
+  uuid: ^4.3.3
 
 dev_dependencies:
   flutter_test:

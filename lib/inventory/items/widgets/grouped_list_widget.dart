@@ -25,6 +25,7 @@ class GroupedInventoryListWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
+        padding: const EdgeInsets.only(bottom: 60.0),
         children: ListTile.divideTiles(
             context: context,
             tiles: groupedItemWrappers.entries.map((element) {

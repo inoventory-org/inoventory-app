@@ -33,12 +33,11 @@ class _ItemListRouteState extends State<ItemListRoute> {
   late Future<Map<String, List<ItemWrapper>>> futureGroupedItems;
   bool groupByCategory = false;
 
-
   @override
   void initState() {
     super.initState();
-      futureGroupedItems = _itemService.allGroupedBy(widget.list.id, "category");
-      futureItems = _itemService.all(widget.list.id);
+    futureGroupedItems = _itemService.allGroupedBy(widget.list.id, "category");
+    futureItems = _itemService.all(widget.list.id);
   }
 
   Future<void> onEdit(ItemWrapper itemWrapper) async {
@@ -56,7 +55,7 @@ class _ItemListRouteState extends State<ItemListRoute> {
     try {
       await _itemService.delete(widget.list.id, itemId);
 
-      scaffoldMessenger.showSnackBar(_getSnackBar("Successfully deleted item", Colors.green));
+      scaffoldMessenger.showSnackBar(_getSnackBar("Successfully deleted item", Colors.green, withUndo: true));
     } catch (e) {
       scaffoldMessenger.showSnackBar(_getSnackBar("Error deleting item: ", Colors.red));
 
@@ -69,9 +68,22 @@ class _ItemListRouteState extends State<ItemListRoute> {
     return true;
   }
 
-  SnackBar _getSnackBar(String text, Color color) {
+  SnackBar _getSnackBar(String text, Color color, {bool withUndo = false}) {
     TextStyle style = const TextStyle(color: Colors.white);
-    return SnackBar(content: Text(text, style: style), backgroundColor: color);
+    return SnackBar(
+        content: Text(text, style: style),
+        backgroundColor: color,
+        showCloseIcon: true,
+        duration: Duration(seconds: withUndo ? 6 : 4),
+        action: withUndo
+            ? SnackBarAction(
+                label: 'Undo',
+                onPressed: () async {
+                  await _itemService.undoDeletion();
+                  await _refreshList();
+                },
+              )
+            : null);
   }
 
   Future<void> onEanDeleteScan(String ean) async {
@@ -144,7 +156,7 @@ class _ItemListRouteState extends State<ItemListRoute> {
               ? ItemsFutureBuilder<Map<String, List<ItemWrapper>>>(futureGroupedItems, _refreshList, (context, snapshot) {
                   return GroupedInventoryListWidget(snapshot.data!, onDelete, onEdit);
                 })
-              : ItemsFutureBuilder<List<ItemWrapper>>(futureItems, _refreshList, (context, snapshot)  {
+              : ItemsFutureBuilder<List<ItemWrapper>>(futureItems, _refreshList, (context, snapshot) {
                   return InventoryListWidget(itemWrappers: snapshot.data!, onDelete: onDelete, onEdit: onEdit);
                 })),
       floatingActionButton: ExpandableFab(iconData: Icons.camera_alt, distance: 50, children: [

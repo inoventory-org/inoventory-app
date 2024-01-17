@@ -22,6 +22,8 @@ abstract class ItemService {
 
   Future<void> delete(int listId, int itemId);
 
+  Future<void> undoDeletion();
+
   String getSpecificListUrl(int listId) {
     return "$listUrl/$listId/items";
   }
@@ -34,22 +36,18 @@ abstract class ItemService {
 @Injectable(as: ItemService)
 class ItemServiceImpl extends ItemService {
   final Dio dio;
+  Item? lastDeletedItem;
 
   ItemServiceImpl(this.dio);
 
   @override
   Future<Item> add(Item item) async {
     final response = await dio.post(getSpecificListUrl(item.listId),
-        options: Options(
-            headers: {HttpHeaders.contentTypeHeader: "application/json"}),
-        data: {
-          "listId": item.listId.toString(),
-          "productEan": item.productEan,
-          "expirationDate": item.expirationDate
-        }).timeout(timeout);
+        options: Options(headers: {HttpHeaders.contentTypeHeader: "application/json"}),
+        data: {"listId": item.listId.toString(), "productEan": item.productEan, "expirationDate": item.expirationDate}).timeout(timeout);
 
     if (response.statusCode != HttpStatus.created) {
-      throw Exception("Failed to create list");
+      throw Exception("Failed to add item with barcode ${item.productEan} to list ${item.listId}");
     }
 
     return Item.fromJson(response.data);
@@ -60,11 +58,11 @@ class ItemServiceImpl extends ItemService {
     final response = await dio.get(getSpecificListUrl(listId)).timeout(timeout);
 
     if (response.statusCode != HttpStatus.ok) {
-      throw Exception("Failed to fetch lists");
+      throw Exception("Failed to fetch items for list $listId");
     }
 
-    // For some reason decoding to Map<String, List<ItemWrapper>> is not working
-    // hence the following complex code
+    // For some reason decoding to Map<String, List<ItemWrapper>> directly is not working
+    // hence the following rather complicated code with some manual decoding
     final Map<String, dynamic> itemsJson = response.data;
     final Map<String, List<Item>> items = {};
     itemsJson.forEach((productEan, value) {
@@ -79,15 +77,13 @@ class ItemServiceImpl extends ItemService {
     final response = await dio.get(url).timeout(timeout);
 
     if (response.statusCode != HttpStatus.ok) {
-      throw Exception("Failed to fetch lists");
+      throw Exception("Failed to fetch items from list $listId grouped by $groupBy");
     }
-
 
     final Map<String, dynamic> groupsJson = response.data;
     final Map<String, List<ItemWrapper>> groupWrappers = {};
     groupsJson.forEach((groupName, itemWrappers) {
-      groupWrappers[groupName] = (itemWrappers as List).map((itemWrapper) =>
-          ItemWrapper.fromJson(itemWrapper)).toList();
+      groupWrappers[groupName] = (itemWrappers as List).map((itemWrapper) => ItemWrapper.fromJson(itemWrapper)).toList();
     });
 
     return groupWrappers;
@@ -95,18 +91,12 @@ class ItemServiceImpl extends ItemService {
 
   @override
   Future<Item> update(int itemId, Item updatedItem) async {
-    final response = await dio.put(
-        getSpecificItemUrl(updatedItem.listId, updatedItem.id),
-        options: Options(
-            headers: {HttpHeaders.contentTypeHeader: "application/json"}),
-        data: {
-          "listId": updatedItem.listId.toString(),
-          "productEan": updatedItem.productEan,
-          "expirationDate": updatedItem.expirationDate
-        }).timeout(timeout);
+    final response = await dio.put(getSpecificItemUrl(updatedItem.listId, updatedItem.id),
+        options: Options(headers: {HttpHeaders.contentTypeHeader: "application/json"}),
+        data: {"listId": updatedItem.listId.toString(), "productEan": updatedItem.productEan, "expirationDate": updatedItem.expirationDate}).timeout(timeout);
 
     if (response.statusCode != HttpStatus.ok) {
-      throw Exception("Failed to create list");
+      throw Exception("Failed to update item $itemId");
     }
 
     return Item.fromJson(response.data);
@@ -114,13 +104,28 @@ class ItemServiceImpl extends ItemService {
 
   @override
   Future<void> delete(int listId, int itemId) async {
-    final response =
-        await dio.delete(getSpecificItemUrl(listId, itemId)).timeout(timeout);
+    final response = await dio.delete(getSpecificItemUrl(listId, itemId)).timeout(timeout);
 
     if (response.statusCode != HttpStatus.ok) {
-      throw Exception("Failed to delete list");
+      throw Exception("Failed to remove item $itemId from list $listId");
     }
-    developer.log("Successfully deleted!");
+
+    if (response.data == null) {
+      developer.log("No item to delete with id $itemId was found in list $listId. Silently ignored");
+      return;
+    }
+
+    Item deletedItem = Item.fromJson(response.data);
+    lastDeletedItem = deletedItem;
+    developer.log("Successfully deleted item $itemId!");
+  }
+
+  @override
+  Future<void> undoDeletion() async {
+    if (lastDeletedItem == null) {
+      return;
+    }
+    add(lastDeletedItem!);
+    lastDeletedItem = null;
   }
 }
-

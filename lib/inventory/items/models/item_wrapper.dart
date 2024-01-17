@@ -1,5 +1,9 @@
 import 'package:inoventory_ui/inventory/items/models/item.dart';
 
+/**
+ * An itemWrapper is the object that is actually shown inside an inventory list.
+ * It contains the product information as well as the concrete individual instances of the item which have their own expiry date and unique informatio
+ */
 class ItemWrapper {
   final int listId;
   final String productEan;
