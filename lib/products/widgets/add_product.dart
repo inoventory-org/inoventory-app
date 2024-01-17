@@ -42,7 +42,7 @@ class _AddProductViewState extends State<AddProductView> {
 
   Future<void> _pickImage(String imageType) async {
     try {
-      final image = await imagePicker.pickImage(source: ImageSource.camera);
+      final image = await imagePicker.pickImage(source: ImageSource.camera, imageQuality: 50);
       if (image != null) {
         setState(() {
           if (imageType == off.ImageField.NUTRITION.toString()) {
@@ -77,6 +77,7 @@ class _AddProductViewState extends State<AddProductView> {
 
     Map<off.ImageField, File> images = {
       if (_frontImage != null) off.ImageField.FRONT: File(_frontImage!.path),
+      if (_frontImage != null) off.ImageField.PACKAGING: File(_frontImage!.path), // use the front image for now
       if (ingredientsImage != null) off.ImageField.INGREDIENTS: File(ingredientsImage!.path),
       if (_nutritionImage != null) off.ImageField.NUTRITION: File(_nutritionImage!.path),
     };

@@ -41,18 +41,21 @@ class OpenFoodFactsServiceImpl implements OpenFoodFactsService {
     images?.entries.forEach((entry) async {
       ImageField imageField = entry.key;
       File imageFile = entry.value;
-
       SendImage image = SendImage(
-        lang: OpenFoodFactsLanguage.ENGLISH,
+        lang: OpenFoodFactsLanguage.GERMAN,
         barcode: product.barcode!,
         imageField: imageField,
         imageUri: Uri.parse(imageFile.path),
       );
 
       // query the OpenFoodFacts API
-      Status result = await OpenFoodAPIClient.addProductImage(myUser, image);
-      developer.log("Result: $result");
-      if (result.status != 'status ok') {
+      Status result = await OpenFoodAPIClient.addProductImage(myUser, image, uriHelper: uriHelperFoodTest);
+      developer.log("result.status: ${result.status}");
+      developer.log("result.statusVerbose: ${result.statusVerbose}");
+      developer.log("result.body: ${result.body}");
+      developer.log("result.error: ${result.error}");
+      developer.log("result.imageId: ${result.imageId}");
+      if (result.status  != "status ok") {
         throw Exception('$imageField image could not be uploaded: ${result.error} ${result.imageId.toString()}');
       }
     });
