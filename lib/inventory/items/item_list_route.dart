@@ -13,8 +13,11 @@ import 'package:inoventory_ui/inventory/lists/models/inventory_list.dart';
 import 'package:inoventory_ui/products/product_service.dart';
 import 'package:inoventory_ui/products/routes/product_scan_route.dart';
 import 'package:inoventory_ui/products/routes/product_search_route.dart';
+import 'package:inoventory_ui/shared/models/sorting_options.dart';
 import 'package:inoventory_ui/shared/widgets/expandable_floating_action_button.dart';
 import 'package:inoventory_ui/shared/widgets/inoventory_appbar.dart';
+
+enum SORTING { dateAdded, name, expirationDate, quantity }
 
 class ItemListRoute extends StatefulWidget {
   final InventoryList list;
@@ -32,6 +35,8 @@ class _ItemListRouteState extends State<ItemListRoute> {
   late Future<List<ItemWrapper>> futureItems;
   late Future<Map<String, List<ItemWrapper>>> futureGroupedItems;
   bool groupByCategory = false;
+  SORTING _sortByKey = SORTING.dateAdded;
+  bool _isAsc = false;
 
   @override
   void initState() {
@@ -110,12 +115,10 @@ class _ItemListRouteState extends State<ItemListRoute> {
               scrollable: true,
               content: Column(mainAxisSize: MainAxisSize.min, children: [
                 const Text("Which item do you want to remove?"),
-                ...itemWrapper.items
-                    .map((e) => TextButton(
-                          onPressed: () => Navigator.pop(context, e.id),
-                          child: Text(e.expirationDate ?? "<no expiration date>"),
-                        ))
-                    .toList(),
+                ...itemWrapper.items.map((e) => TextButton(
+                      onPressed: () => Navigator.pop(context, e.id),
+                      child: Text(e.expirationDate ?? "<no expiration date>"),
+                    )),
                 OutlinedButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel"))
               ]));
         });
@@ -148,6 +151,18 @@ class _ItemListRouteState extends State<ItemListRoute> {
             groupByCategory = !groupByCategory;
           });
         },
+        sortingOptions: SortingOptions(
+            sortOptions: SORTING.values,
+            onSortingDirectionChange: () {
+              setState(() {
+                _isAsc = !_isAsc;
+              });
+            },
+            onSortingKeySelected: (key) => {
+                  setState(() {
+                    _sortByKey = key;
+                  })
+                }),
       ),
       body: RefreshIndicator(
           onRefresh: _refreshList,
@@ -157,6 +172,7 @@ class _ItemListRouteState extends State<ItemListRoute> {
                   return GroupedInventoryListWidget(snapshot.data!, onDelete, onEdit);
                 })
               : ItemsFutureBuilder<List<ItemWrapper>>(futureItems, _refreshList, (context, snapshot) {
+                  sortItemsByKey(snapshot, _sortByKey, _isAsc);
                   return InventoryListWidget(itemWrappers: snapshot.data!, onDelete: onDelete, onEdit: onEdit);
                 })),
       floatingActionButton: ExpandableFab(iconData: Icons.camera_alt, distance: 50, children: [
@@ -176,28 +192,43 @@ class _ItemListRouteState extends State<ItemListRoute> {
       ]),
     );
   }
-}
 
-// child: FutureBuilder<List<ItemWrapper>>(
-// future: futureItems,
-// builder: (context, snapshot) {
-// if (snapshot.connectionState == ConnectionState.done) {
-// if (snapshot.hasError) {
-// developer.log("An error occurred while retrieving items.",
-// error: snapshot.error);
-// return FutureErrorRetryWidget(
-// onRetry: _refreshList,
-// child: const Center(
-// child: Text(
-// 'An error occurred while retrieving items. Please try again.')));
-// }
-// if (snapshot.hasData) {
-// return InventoryListWidget(
-// itemWrappers: snapshot.data!,
-// onDelete: onDelete,
-// onEdit: onEdit);
-// }
-// }
-// return const Center(child: CircularProgressIndicator());
-// },
-// ),
+  void sortItemsByKey(AsyncSnapshot<List<ItemWrapper>> snapshot, SORTING sortByKey, bool isAsc) {
+    developer.log(sortByKey.name);
+    int direction = isAsc ? 1 : -1;
+    snapshot.data?.sort((wrapper1, wrapper2) {
+      switch (sortByKey) {
+        case SORTING.name:
+          return direction * wrapper1.displayName.compareTo(wrapper2.displayName);
+        case SORTING.expirationDate:
+          return compareByExpirationDates(wrapper1, wrapper2, isAsc);
+        case SORTING.quantity:
+          return direction * wrapper1.items.length.compareTo(wrapper2.items.length);
+        default:
+          return 0; // Default return value
+      }
+    });
+  }
+
+  int compareByExpirationDates(ItemWrapper wrapper1, ItemWrapper wrapper2, bool isAsc) {
+    int direction = isAsc ? 1 : -1;
+    DateTime defaultDate = isAsc ? DateTime.parse("9999-01-01") : DateTime.parse("1970-01-01");
+    List<DateTime> firstDates = wrapper1.items //
+        .where((item) => item.expirationDate != null) //
+        .map((item) => DateTime.parse(item.expirationDate!)) //
+        .sorted();
+    List<DateTime> secondDates = wrapper2.items //
+        .where((item) => item.expirationDate != null) //
+        .map((item) => DateTime.parse(item.expirationDate!)) //
+        .sorted();
+
+    if (!isAsc) {
+      firstDates = firstDates.reversed.toList();
+      secondDates = secondDates.reversed.toList();
+    }
+
+    DateTime firstCandidate = firstDates.firstOrNull ?? defaultDate;
+    DateTime secondCandidate = secondDates.firstOrNull ?? defaultDate;
+    return direction * firstCandidate.compareTo(secondCandidate);
+  }
+}
