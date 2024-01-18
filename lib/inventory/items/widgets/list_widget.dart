@@ -7,10 +7,10 @@ final PageStorageBucket pageBucket = PageStorageBucket();
 
 class InventoryListWidget extends StatefulWidget {
   final List<ItemWrapper> itemWrappers;
-  final Future<bool> Function(ItemWrapper itemWrapper) onDelete;
-  final Future<void> Function(ItemWrapper itemWrapper) onEdit;
+  final Future<bool> Function(ItemWrapper itemWrapper)? onDelete;
+  final Future<void> Function(ItemWrapper itemWrapper)? onEdit;
 
-  const InventoryListWidget({Key? key, required this.itemWrappers, required this.onDelete, required this.onEdit}) : super(key: key);
+  const InventoryListWidget({super.key, required this.itemWrappers, this.onDelete, this.onEdit});
 
   @override
   State<InventoryListWidget> createState() => _InventoryListWidgetState();

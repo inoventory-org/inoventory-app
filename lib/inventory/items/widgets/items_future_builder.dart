@@ -8,7 +8,7 @@ class ItemsFutureBuilder<T> extends StatelessWidget {
   final void Function() onRetry;
   final Widget Function(BuildContext context, AsyncSnapshot<T> snapshot) successBuilder;
 
-  const ItemsFutureBuilder(this.future, this.onRetry, this.successBuilder, {Key? key}) : super(key: key);
+  const ItemsFutureBuilder(this.future, this.onRetry, this.successBuilder, {super.key});
 
   @override
   Widget build(BuildContext context) {

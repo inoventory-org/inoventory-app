@@ -4,6 +4,7 @@ import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:inoventory_ui/config/injection.dart';
 import 'package:inoventory_ui/ean/barcode_scanner.dart';
+import 'package:inoventory_ui/inventory/items/item_search_route.dart';
 import 'package:inoventory_ui/inventory/items/item_service.dart';
 import 'package:inoventory_ui/inventory/items/models/item_wrapper.dart';
 import 'package:inoventory_ui/inventory/items/widgets/grouped_list_widget.dart';
@@ -33,6 +34,7 @@ class _ItemListRouteState extends State<ItemListRoute> {
   final ProductService _productService = getIt<ProductService>();
   final ItemService _itemService = getIt<ItemService>();
   late Future<List<ItemWrapper>> futureItems;
+  late List<ItemWrapper> itemWrappers;
   late Future<Map<String, List<ItemWrapper>>> futureGroupedItems;
   bool groupByCategory = false;
   SORTING _sortByKey = SORTING.dateAdded;
@@ -141,29 +143,14 @@ class _ItemListRouteState extends State<ItemListRoute> {
         .whenComplete(_refreshList);
   }
 
+  void transitToItemSearchPage(BuildContext context, String? initialSearchValue) {
+    Navigator.push(context, MaterialPageRoute(builder: (context) => ItemSearchRoute(itemWrappers: itemWrappers, onDelete: onDelete, onEdit: onEdit)));
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: InoventoryAppBar(
-        title: widget.list.name,
-        onPressedCallback: () {
-          setState(() {
-            groupByCategory = !groupByCategory;
-          });
-        },
-        sortingOptions: SortingOptions(
-            sortOptions: SORTING.values,
-            onSortingDirectionChange: () {
-              setState(() {
-                _isAsc = !_isAsc;
-              });
-            },
-            onSortingKeySelected: (key) => {
-                  setState(() {
-                    _sortByKey = key;
-                  })
-                }),
-      ),
+      appBar: buildInoventoryAppBar(),
       body: RefreshIndicator(
           onRefresh: _refreshList,
           backgroundColor: Theme.of(context).colorScheme.secondary,
@@ -173,24 +160,55 @@ class _ItemListRouteState extends State<ItemListRoute> {
                 })
               : ItemsFutureBuilder<List<ItemWrapper>>(futureItems, _refreshList, (context, snapshot) {
                   sortItemsByKey(snapshot, _sortByKey, _isAsc);
+                  itemWrappers = snapshot.data!;
                   return InventoryListWidget(itemWrappers: snapshot.data!, onDelete: onDelete, onEdit: onEdit);
                 })),
-      floatingActionButton: ExpandableFab(iconData: Icons.camera_alt, distance: 50, children: [
-        ActionButton(
-            icon: const Icon(Icons.add_outlined, color: Colors.black),
-            onPressed: () async {
-              final navigator = Navigator.of(context);
-              navigator.push(MaterialPageRoute(builder: (context) => ProductScanRoute(inventoryList: widget.list))).whenComplete((_refreshList));
-            }),
-        // delete scan button
-        ActionButton(
-            icon: const Icon(Icons.delete, color: Colors.black),
-            onPressed: () async {
-              var barcodeScanResult = await _barcodeScanner.scanBarcodeNormal();
-              await onEanDeleteScan(barcodeScanResult);
-            }),
-      ]),
+      floatingActionButton: buildFloatingActionButton(context),
     );
+  }
+
+  InoventoryAppBar buildInoventoryAppBar() {
+    return InoventoryAppBar(
+      title: widget.list.name,
+      onSearchButtonPressed: () {
+        transitToItemSearchPage(context, "");
+      },
+      onGroupButtonPressed: () {
+        setState(() {
+          groupByCategory = !groupByCategory;
+        });
+      },
+      sortingOptions: SortingOptions(
+          sortOptions: SORTING.values,
+          onSortingDirectionChange: () {
+            setState(() {
+              _isAsc = !_isAsc;
+            });
+          },
+          onSortingKeySelected: (key) => {
+                setState(() {
+                  _sortByKey = key;
+                })
+              }),
+    );
+  }
+
+  ExpandableFab buildFloatingActionButton(BuildContext context) {
+    return ExpandableFab(iconData: Icons.camera_alt, distance: 50, children: [
+      ActionButton(
+          icon: const Icon(Icons.add_outlined, color: Colors.black),
+          onPressed: () async {
+            final navigator = Navigator.of(context);
+            navigator.push(MaterialPageRoute(builder: (context) => ProductScanRoute(inventoryList: widget.list))).whenComplete((_refreshList));
+          }),
+      // delete scan button
+      ActionButton(
+          icon: const Icon(Icons.delete, color: Colors.black),
+          onPressed: () async {
+            var barcodeScanResult = await _barcodeScanner.scanBarcodeNormal();
+            await onEanDeleteScan(barcodeScanResult);
+          }),
+    ]);
   }
 
   void sortItemsByKey(AsyncSnapshot<List<ItemWrapper>> snapshot, SORTING sortByKey, bool isAsc) {

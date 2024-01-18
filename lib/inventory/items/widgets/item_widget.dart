@@ -1,22 +1,21 @@
+import 'dart:async';
+
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:inoventory_ui/inventory/items/models/item_wrapper.dart';
 
 class InventoryItemWidget extends StatelessWidget {
   final ItemWrapper itemWrapper;
-  final Future<bool> Function(ItemWrapper itemWrapper) onDelete;
+  final Future<bool> Function(ItemWrapper itemWrapper)? onDelete;
 
   const InventoryItemWidget(
     this.itemWrapper,
     this.onDelete, {
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   String? _getNextExpiring() {
-    List<String?> expirationDates = itemWrapper.items
-        .where((element) => element.expirationDate != null)
-        .map((e) => e.expirationDate)
-        .toList()..sort();
+    List<String?> expirationDates = itemWrapper.items.where((element) => element.expirationDate != null).map((e) => e.expirationDate).toList()..sort();
     return expirationDates.firstOrNull;
   }
   @override
@@ -30,7 +29,7 @@ class InventoryItemWidget extends StatelessWidget {
         padding: const EdgeInsets.all(25),
         child: const Icon(Icons.delete, color: Colors.white),
       ),
-      confirmDismiss: (direction) => onDelete(itemWrapper),
+      confirmDismiss: (direction) => onDelete != null ? onDelete!(itemWrapper) : doNothing(),
       resizeDuration: null,
       child: ListTile(
           leading: Container(
@@ -44,11 +43,10 @@ class InventoryItemWidget extends StatelessWidget {
                     )
                   : null,
             ),
-            child:
-                itemWrapper.thumbUrl == null ? const Icon(Icons.image) : null,
+            child: itemWrapper.thumbUrl == null ? const Icon(Icons.image) : null,
           ),
           title: Text(
-            itemWrapper.displayName ?? itemWrapper.productEan,
+            itemWrapper.displayName,
             style: const TextStyle(fontSize: 18),
           ),
           subtitle: Column(
@@ -58,21 +56,24 @@ class InventoryItemWidget extends StatelessWidget {
                 itemWrapper.productEan,
                 style: const TextStyle(fontSize: 14, color: Colors.grey),
               ),
-              if (_getNextExpiring() != null) Text(
-                "Next items expires on: ${_getNextExpiring()}",
-                style: const TextStyle(fontSize: 14, color: Colors.grey),
-              ),
+              if (_getNextExpiring() != null)
+                Text(
+                  "Next items expires on: ${_getNextExpiring()}",
+                  style: const TextStyle(fontSize: 14, color: Colors.grey),
+                ),
             ],
           ),
-          trailing: itemWrapper.quantity > 1
-              ? _QuantityWidget(itemWrapper.quantity)
-              : null),
+          trailing: itemWrapper.quantity > 1 ? _QuantityWidget(itemWrapper.quantity) : null),
     );
+  }
+
+  Future<bool?> doNothing() async {
+    return false;
   }
 }
 
 class _QuantityWidget extends StatelessWidget {
-  const _QuantityWidget(this._quantity, {Key? key}) : super(key: key);
+  const _QuantityWidget(this._quantity);
 
   final int _quantity;
 
