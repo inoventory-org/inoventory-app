@@ -15,7 +15,7 @@ abstract class Constants {
 }
 
 abstract class Globals {
-  static bool forceFetchProducts = true;
+  static bool forceFetchProducts = false;
 }
 
 
