@@ -17,6 +17,7 @@ class ItemsFutureBuilder<T> extends StatelessWidget {
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.done) {
           if (snapshot.hasError) {
+            developer.log(snapshot.toString());
             developer.log("An error occurred while retrieving items.", error: snapshot.error);
             return FutureErrorRetryWidget(onRetry: onRetry, child: const Center(child: Text('An error occurred while retrieving items. Please try again.')));
           }

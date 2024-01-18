@@ -2,13 +2,22 @@ import 'dart:async';
 
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
+import 'package:inoventory_ui/config/injection.dart';
 import 'package:inoventory_ui/inventory/items/models/item_wrapper.dart';
+import 'package:inoventory_ui/inventory/lists/inventory_list_service.dart';
+import 'package:inoventory_ui/inventory/lists/models/inventory_list.dart';
+import 'package:inoventory_ui/products/product_model.dart';
+import 'package:inoventory_ui/products/product_service.dart';
+import 'package:inoventory_ui/products/routes/product_detail_route.dart';
 
 class InventoryItemWidget extends StatelessWidget {
   final ItemWrapper itemWrapper;
   final Future<bool> Function(ItemWrapper itemWrapper)? onDelete;
 
-  const InventoryItemWidget(
+  final ProductService _productService = getIt<ProductService>();
+  final InventoryListService _inventoryListService = getIt<InventoryListService>();
+
+  InventoryItemWidget(
     this.itemWrapper,
     this.onDelete, {
     super.key,
@@ -18,6 +27,7 @@ class InventoryItemWidget extends StatelessWidget {
     List<String?> expirationDates = itemWrapper.items.where((element) => element.expirationDate != null).map((e) => e.expirationDate).toList()..sort();
     return expirationDates.firstOrNull;
   }
+
   @override
   Widget build(BuildContext context) {
     return Dismissible(
@@ -32,6 +42,12 @@ class InventoryItemWidget extends StatelessWidget {
       confirmDismiss: (direction) => onDelete != null ? onDelete!(itemWrapper) : doNothing(),
       resizeDuration: null,
       child: ListTile(
+          onTap: () async {
+            final navigator = Navigator.of(context);
+            InventoryList inventoryList = await _inventoryListService.get(itemWrapper.listId);
+            Product product = (await _productService.search(itemWrapper.productEan)).first;
+            navigator.push(MaterialPageRoute(builder: (context) => ProductDetailRoute(product: product, list: inventoryList)));
+          },
           leading: Container(
             height: 50,
             width: 50,

@@ -11,23 +11,17 @@ class Product {
   final String? imageUrl;
   final String? thumbUrl;
 
-  Product(this.id, this.name,
-      {required this.ean,
-      this.brands,
-      this.weight,
-      this.tags,
-      this.source,
-      this.imageUrl,
-      this.thumbUrl});
+  Product(this.id, this.name, {required this.ean, this.brands, this.weight, this.tags, this.source, this.imageUrl, this.thumbUrl});
 
   factory Product.fromJson(Map<String, dynamic> json) {
+    List<String> tags = json['tags'].map((e) => e['name'] as String).cast<String>().toList();
     return Product(
       json['id'] == null ? "some-id" : json['id'].toString(),
       json['name'],
       ean: json['ean'],
       brands: json['brands'],
       weight: json['weight'],
-      tags: <String>[], // TODO: change
+      tags: tags,
       source: json['source'],
       imageUrl: json['imageUrl'],
       thumbUrl: json['thumbUrl'],

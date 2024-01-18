@@ -5,8 +5,7 @@ class FutureErrorRetryWidget extends StatelessWidget {
   final Widget? child;
   final String? buttonText;
   const FutureErrorRetryWidget(
-      {Key? key, required this.onRetry, this.child, this.buttonText})
-      : super(key: key);
+      {super.key, required this.onRetry, this.child, this.buttonText});
 
   @override
   Widget build(BuildContext context) {

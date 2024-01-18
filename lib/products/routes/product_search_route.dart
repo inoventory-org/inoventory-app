@@ -14,6 +14,7 @@ import '../../config/constants.dart';
 class ProductSearchRoute extends StatefulWidget {
   final String? initialSearchValue;
   final ProductService productService;
+
   final InventoryList list;
 
   const ProductSearchRoute(

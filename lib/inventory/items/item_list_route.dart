@@ -194,12 +194,18 @@ class _ItemListRouteState extends State<ItemListRoute> {
   }
 
   ExpandableFab buildFloatingActionButton(BuildContext context) {
-    return ExpandableFab(iconData: Icons.camera_alt, distance: 50, children: [
+    return ExpandableFab(iconData: Icons.camera_alt, distance: 70, children: [
       ActionButton(
-          icon: const Icon(Icons.add_outlined, color: Colors.black),
+          icon: const Icon(Icons.camera_alt, color: Colors.black),
           onPressed: () async {
             final navigator = Navigator.of(context);
             navigator.push(MaterialPageRoute(builder: (context) => ProductScanRoute(inventoryList: widget.list))).whenComplete((_refreshList));
+          }),
+      ActionButton(
+          icon: const Icon(Icons.search_off_outlined, color: Colors.black),
+          onPressed: () async {
+            final navigator = Navigator.of(context);
+            navigator.push(MaterialPageRoute(builder: (context) => ProductSearchRoute(productService: _productService, list: widget.list))).whenComplete((_refreshList));
           }),
       // delete scan button
       ActionButton(
@@ -212,7 +218,6 @@ class _ItemListRouteState extends State<ItemListRoute> {
   }
 
   void sortItemsByKey(AsyncSnapshot<List<ItemWrapper>> snapshot, SORTING sortByKey, bool isAsc) {
-    developer.log(sortByKey.name);
     int direction = isAsc ? 1 : -1;
     snapshot.data?.sort((wrapper1, wrapper2) {
       switch (sortByKey) {

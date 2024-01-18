@@ -12,6 +12,7 @@ abstract class InventoryListService {
   static const listUrl = "$backendUrl/api/v1/inventory-lists";
 
   Future<List<InventoryList>> all();
+  Future<InventoryList> get(int listId);
   Future<InventoryList> add(InventoryList list);
   Future<InventoryList> update(int listId, InventoryList updatedList);
   Future<void> delete(int listId);
@@ -53,6 +54,21 @@ class InventoryListServiceImpl extends InventoryListService {
 
     Iterable listsJson = response.data;
     return listsJson.map((json) => InventoryList.fromJson(json)).toList();
+  }
+
+  @override
+  Future<InventoryList> get(int listId) async {
+    final response =
+    await dio.get("${InventoryListService.listUrl}/$listId").timeout(timeoutDuration);
+
+    if (response.statusCode != HttpStatus.ok) {
+      throw Exception("Failed to fetch list with id $listId");
+    }
+
+    print("Debug: ");
+    print(response.data);
+    InventoryList inventoryList = InventoryList.fromJson(response.data);
+    return inventoryList;
   }
 
   @override

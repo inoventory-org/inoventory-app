@@ -36,7 +36,7 @@ class InoventoryHttpInterceptor extends InterceptorsWrapper {
         return;
       }
       // developer.log("Adding access token to request:");
-      // print(accessToken);
+      // developer.log(accessToken);
       options.headers.addAll({"Authorization": "Bearer $accessToken"});
     }
     developer.log("Request URL: ${options.uri.toString()}");
@@ -49,7 +49,7 @@ class InoventoryHttpInterceptor extends InterceptorsWrapper {
   }
 
   @override
-  void onError(DioError err, ErrorInterceptorHandler handler) async {
+  void onError(DioException err, ErrorInterceptorHandler handler) async {
     if (_shouldRetry(err)) {
       // must retrigger login
       await authService.authenticate();
@@ -79,7 +79,7 @@ class InoventoryHttpInterceptor extends InterceptorsWrapper {
         options: options, queryParameters: requestOptions.queryParameters);
   }
 
-  bool _shouldRetry(DioError err) {
+  bool _shouldRetry(DioException err) {
     final isInoventoryRequest = err.requestOptions.uri
         .toString()
         .contains(Constants.inoventoryBackendUrl);

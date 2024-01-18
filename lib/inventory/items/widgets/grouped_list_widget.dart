@@ -11,8 +11,8 @@ class GroupedInventoryListWidget extends StatelessWidget {
     this.groupedItemWrappers,
     this.onDelete,
     this.onEdit, {
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   TextStyle _getCategoryHeaderStyle(BuildContext context) {
     return TextStyle(
