@@ -10,8 +10,7 @@ class InoventoryApp extends StatelessWidget {
   final String title;
   final AuthService? authService;
 
-  const InoventoryApp(
-      {super.key, this.title = "inoventory", required this.authService});
+  const InoventoryApp({super.key, this.title = "inoventory", required this.authService});
 
   // This widget is the root of your application.
   @override
@@ -22,14 +21,14 @@ class InoventoryApp extends StatelessWidget {
         home: authService != null
             ? InoventoryHomeRoute(authService: authService!) // typical home page
             // In case of connection issues the following is shown
-            : Scaffold(
+            : const Scaffold(
                 appBar: InoventoryAppBar(),
-                body: const Center(
+                body: Center(
                   child: Padding(
                     padding: EdgeInsets.all(8.0),
                     child: Text("Either you have connection issues or there are problems with the backend."
-                          "This app requires a connection to the backend to work."
-                          "Please restart the app or try again later."),
+                        "This app requires a connection to the backend to work."
+                        "Please restart the app or try again later."),
                   ),
                 )));
   }

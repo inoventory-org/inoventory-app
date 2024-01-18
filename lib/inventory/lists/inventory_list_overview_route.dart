@@ -62,7 +62,7 @@ class _InventoryListRouteState extends State<InventoryListRoute> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: InoventoryAppBar(), //AppBar(title: const Text("My Lists")),
+      appBar: const InoventoryAppBar(), //AppBar(title: const Text("My Lists")),
       drawer: InoDrawer(logout: widget.logout),
       body:
       RefreshIndicator(

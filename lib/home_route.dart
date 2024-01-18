@@ -87,6 +87,6 @@ class _InoventoryHomeRouteState extends State<InoventoryHomeRoute> {
   @override
   Widget build(BuildContext context) {
     developer.log("authenticatedUserName: $authenticatedUserName");
-    return authenticatedUserName != null ? InventoryListRoute(logout: logout) : Scaffold(appBar: InoventoryAppBar(), body: LoginRoute(login: login));
+    return authenticatedUserName != null ? InventoryListRoute(logout: logout) : Scaffold(appBar: const InoventoryAppBar(), body: LoginRoute(login: login));
   }
 }
