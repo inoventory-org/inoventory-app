@@ -7,7 +7,7 @@ import 'package:inoventory_ui/inventory/items/models/item.dart';
 class ItemWrapper {
   final int listId;
   final String productEan;
-  final String? displayName;
+  final String displayName;
   final String? imageUrl;
   final String? thumbUrl;
   final List<Item> items;
@@ -26,7 +26,7 @@ class ItemWrapper {
     return ItemWrapper(
         json['listId'],
         json['productEan'],
-        items.first.displayName ?? json['displayName'],
+        json['displayName'],
         items.first.imageUrl ?? json['imageUrl'],
         items.first.thumbUrl ?? json['thumbUrl'],
         items
