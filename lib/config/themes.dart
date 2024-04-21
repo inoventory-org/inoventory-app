@@ -5,46 +5,28 @@ final ThemeData lightTheme = ThemeData(
   primaryColor: Colors.cyan,
   primaryColorLight: const Color(0xffb2ebf2),
   primaryColorDark: const Color(0xff0097a7),
-  colorScheme: const ColorScheme(
-    primary: Color(0xff00bcd4),
-    secondary: Colors.amber,
-    surface: Color(0xffffffff),
-    background: Color(0xff80deea),
-    error: Color(0xffd32f2f),
-    onPrimary: Color(0xff000000),
-    onSecondary: Color(0xff000000),
-    onSurface: Color(0xff000000),
-    onBackground: Color(0xff000000),
-    onError: Color(0xffffffff),
-    brightness: Brightness.light,
-  ),
   canvasColor: const Color(0xfffafafa),
   scaffoldBackgroundColor: const Color(0xfffafafa),
-  bottomAppBarColor: const Color(0xffffffff),
   cardColor: const Color(0xffffffff),
   dividerColor: const Color(0x1f000000),
   highlightColor: const Color(0x66bcbcbc),
   splashColor: const Color(0x66c8c8c8),
-  selectedRowColor: const Color(0xfff5f5f5),
   unselectedWidgetColor: const Color(0x8a000000),
   disabledColor: const Color(0x61000000),
-  toggleableActiveColor: const Color(0xff00acc1),
   secondaryHeaderColor: const Color(0xffe0f7fa),
-  backgroundColor: const Color(0xff80deea),
   dialogBackgroundColor: const Color(0xffffffff),
   indicatorColor: const Color(0xff00bcd4),
   hintColor: const Color(0x8a000000),
-  errorColor: const Color(0xffd32f2f),
   textTheme: const TextTheme(
-    headline1: TextStyle(color: Colors.black),
-    headline2: TextStyle(color: Colors.black),
-    headline3: TextStyle(color: Colors.black),
-    headline4: TextStyle(color: Colors.black),
-    headline5: TextStyle(color: Colors.black),
-    subtitle1: TextStyle(color: Colors.black),
-    subtitle2: TextStyle(color: Colors.black),
-    bodyText1: TextStyle(color: Colors.black),
-    bodyText2: TextStyle(color: Colors.black),
+    displayMedium: TextStyle(color: Colors.black),
+    displaySmall: TextStyle(color: Colors.black),
+    headlineMedium: TextStyle(color: Colors.black),
+    headlineSmall: TextStyle(color: Colors.black),
+    titleLarge: TextStyle(color: Colors.black),
+    titleSmall: TextStyle(color: Colors.black),
+    bodyLarge: TextStyle(color: Colors.black),
+    bodyMedium: TextStyle(color: Colors.black),
+    bodySmall: TextStyle(color: Colors.black),
   ),
   textButtonTheme: TextButtonThemeData(
       style: ButtonStyle(
@@ -78,7 +60,42 @@ final ThemeData lightTheme = ThemeData(
     splashColor: Color(0x1f000000),
     focusColor: Color(0x1f000000),
     hoverColor: Color(0x0a000000),
-  ),
+  ), checkboxTheme: CheckboxThemeData(
+ fillColor: MaterialStateProperty.resolveWith<Color?>((Set<MaterialState> states) {
+ if (states.contains(MaterialState.disabled)) { return null; }
+ if (states.contains(MaterialState.selected)) { return const Color(0xff00acc1); }
+ return null;
+ }),
+ ), radioTheme: RadioThemeData(
+ fillColor: MaterialStateProperty.resolveWith<Color?>((Set<MaterialState> states) {
+ if (states.contains(MaterialState.disabled)) { return null; }
+ if (states.contains(MaterialState.selected)) { return const Color(0xff00acc1); }
+ return null;
+ }),
+ ), switchTheme: SwitchThemeData(
+ thumbColor: MaterialStateProperty.resolveWith<Color?>((Set<MaterialState> states) {
+ if (states.contains(MaterialState.disabled)) { return null; }
+ if (states.contains(MaterialState.selected)) { return const Color(0xff00acc1); }
+ return null;
+ }),
+ trackColor: MaterialStateProperty.resolveWith<Color?>((Set<MaterialState> states) {
+ if (states.contains(MaterialState.disabled)) { return null; }
+ if (states.contains(MaterialState.selected)) { return const Color(0xff00acc1); }
+ return null;
+ }),
+ ), bottomAppBarTheme: BottomAppBarTheme(color: const Color(0xffffffff)), colorScheme: const ColorScheme(
+    primary: Color(0xff00bcd4),
+    secondary: Colors.amber,
+    surface: Color(0xffffffff),
+    background: Color(0xff80deea),
+    error: Color(0xffd32f2f),
+    onPrimary: Color(0xff000000),
+    onSecondary: Color(0xff000000),
+    onSurface: Color(0xff000000),
+    onBackground: Color(0xff000000),
+    onError: Color(0xffffffff),
+    brightness: Brightness.light,
+  ).copyWith(background: const Color(0xff80deea)).copyWith(error: const Color(0xffd32f2f)),
 );
 
 final ThemeData darkTheme = ThemeData(
@@ -86,36 +103,18 @@ final ThemeData darkTheme = ThemeData(
   primaryColor: const Color(0xff212121),
   primaryColorLight: const Color(0xff9e9e9e),
   primaryColorDark: const Color(0xff000000),
-  colorScheme: const ColorScheme(
-    primary: Color(0xff000000),
-    secondary: Colors.orangeAccent,
-    surface: Color(0xff424242),
-    background: Color(0xff616161),
-    error: Color(0xffd32f2f),
-    onPrimary: Color(0xffffffff),
-    onSecondary: Color(0xff000000),
-    onSurface: Color(0xffffffff),
-    onBackground: Color(0xffffffff),
-    onError: Color(0xff000000),
-    brightness: Brightness.dark,
-  ),
   canvasColor: const Color(0xff303030),
   scaffoldBackgroundColor: const Color(0xff303030),
-  bottomAppBarColor: const Color(0xff424242),
   cardColor: const Color(0xff424242),
   dividerColor: const Color(0x1fffffff),
   highlightColor: const Color(0x40cccccc),
   splashColor: const Color(0x40cccccc),
-  selectedRowColor: const Color(0xfff5f5f5),
   unselectedWidgetColor: const Color(0xb3ffffff),
   disabledColor: const Color(0x62ffffff),
-  toggleableActiveColor: const Color(0xff64ffda),
-  secondaryHeaderColor: const Color(0xff616161),
-  backgroundColor: const Color(0xff616161),
   dialogBackgroundColor: const Color(0xff424242),
+  secondaryHeaderColor: const Color(0xff616161),
   indicatorColor: const Color(0xff64ffda),
   hintColor: const Color(0x80ffffff),
-  errorColor: const Color(0xffd32f2f),
   textButtonTheme: TextButtonThemeData(
       style: ButtonStyle(
     backgroundColor: MaterialStateProperty.all<Color>(Colors.orange),
@@ -251,5 +250,40 @@ final ThemeData darkTheme = ThemeData(
     color: Color(0xffffffff),
     opacity: 1,
     size: 24,
-  ),
+  ), checkboxTheme: CheckboxThemeData(
+ fillColor: MaterialStateProperty.resolveWith<Color?>((Set<MaterialState> states) {
+ if (states.contains(MaterialState.disabled)) { return null; }
+ if (states.contains(MaterialState.selected)) { return const Color(0xff64ffda); }
+ return null;
+ }),
+ ), radioTheme: RadioThemeData(
+ fillColor: MaterialStateProperty.resolveWith<Color?>((Set<MaterialState> states) {
+ if (states.contains(MaterialState.disabled)) { return null; }
+ if (states.contains(MaterialState.selected)) { return const Color(0xff64ffda); }
+ return null;
+ }),
+ ), switchTheme: SwitchThemeData(
+ thumbColor: MaterialStateProperty.resolveWith<Color?>((Set<MaterialState> states) {
+ if (states.contains(MaterialState.disabled)) { return null; }
+ if (states.contains(MaterialState.selected)) { return const Color(0xff64ffda); }
+ return null;
+ }),
+ trackColor: MaterialStateProperty.resolveWith<Color?>((Set<MaterialState> states) {
+ if (states.contains(MaterialState.disabled)) { return null; }
+ if (states.contains(MaterialState.selected)) { return const Color(0xff64ffda); }
+ return null;
+ }),
+ ), bottomAppBarTheme: BottomAppBarTheme(color: const Color(0xff424242)), colorScheme: const ColorScheme(
+    primary: Color(0xff000000),
+    secondary: Colors.orangeAccent,
+    surface: Color(0xff424242),
+    background: Color(0xff616161),
+    error: Color(0xffd32f2f),
+    onPrimary: Color(0xffffffff),
+    onSecondary: Color(0xff000000),
+    onSurface: Color(0xffffffff),
+    onBackground: Color(0xffffffff),
+    onError: Color(0xff000000),
+    brightness: Brightness.dark,
+  ).copyWith(background: const Color(0xff616161)).copyWith(error: const Color(0xffd32f2f)),
 );
