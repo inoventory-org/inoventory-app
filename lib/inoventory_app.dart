@@ -28,7 +28,7 @@ class InoventoryApp extends StatelessWidget {
                     padding: EdgeInsets.all(8.0),
                     child: Text("Either you have connection issues or there are problems with the backend."
                         "This app requires a connection to the backend to work."
-                        "Please restart the app or try again later."),
+                        " Please restart the app or try again later."),
                   ),
                 )));
   }

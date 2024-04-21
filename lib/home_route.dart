@@ -78,7 +78,7 @@ class _InoventoryHomeRouteState extends State<InoventoryHomeRoute> {
   }
 
   Future<void> logout() async {
-    authService.logout();
+    await authService.logout();
     setState(() {
       authenticatedUserName = null;
     });

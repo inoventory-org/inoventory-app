@@ -26,7 +26,7 @@ class ItemWrapper {
     return ItemWrapper(
         json['listId'],
         json['productEan'],
-        json['displayName'],
+        json['displayName'] ?? "unknown name",
         items.first.imageUrl ?? json['imageUrl'],
         items.first.thumbUrl ?? json['thumbUrl'],
         items

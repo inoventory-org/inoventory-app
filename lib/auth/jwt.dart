@@ -34,6 +34,18 @@ class JWT {
     return (refreshToken != null) ? Jwt.getExpiryDate(refreshToken!) : null;
   }
 
+  bool isAccessTokenExpired() {
+    final now = DateTime.now();
+    final exp = accessTokenExpiryDate ?? now.subtract(const Duration(days: 7));
+    return now.isAfter(exp);
+  }
+
+  bool isRefreshTokenExpired() {
+    final now = DateTime.now();
+    final exp = refreshTokenExpiryDate ?? now.subtract(const Duration(days: 7));
+    return now.isAfter(exp);
+  }
+
   @override
   String toString() {
     return "access_token: $accessToken\nrefresh_token: $refreshToken\n,token_type: $tokenType";
