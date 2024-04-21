@@ -3,7 +3,6 @@ import 'dart:developer' as developer;
 import 'dart:io';
 
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:inoventory_ui/auth/login_route.dart';
 import 'package:inoventory_ui/auth/services/auth_service.dart';
@@ -36,7 +35,7 @@ class _InoventoryHomeRouteState extends State<InoventoryHomeRoute> {
     whenAuthenticated();
     super.initState();
     _setUpHttpInterceptors();
-    _setUpAutomaticAccessTokenRefreshing(refreshIntervalSeconds: Constants.accessTokenRefreshIntervalSeconds);
+    // _setUpAutomaticAccessTokenRefreshing(refreshIntervalSeconds: Constants.accessTokenRefreshIntervalSeconds);
   }
 
   void whenAuthenticated() {
@@ -56,19 +55,19 @@ class _InoventoryHomeRouteState extends State<InoventoryHomeRoute> {
 
   void _setUpHttpInterceptors() {
     developer.log("Setting up HTTP Interceptors");
-    dio.interceptors.add(InoventoryHttpInterceptor(dio, authService, whenAuthenticated, whenNotAuthenticated));
+    dio.interceptors.add(InoventoryTokenInterceptor(dio, authService, whenAuthenticated, whenNotAuthenticated));
   }
 
-  void _setUpAutomaticAccessTokenRefreshing({refreshIntervalSeconds = 60}) {
-    if (kIsWeb) {
-      developer.log("Automatic refreshing of tokens is currently not supported for the web."
-          "You simply need to reauthenticate once the token expires");
-      return;
-    }
-    Timer.periodic(Duration(seconds: refreshIntervalSeconds), (Timer timer) async {
-      await authService.getTokenResponse(forceRefresh: true);
-    });
-  }
+  // void _setUpAutomaticAccessTokenRefreshing({refreshIntervalSeconds = 60}) {
+  //   if (kIsWeb) {
+  //     developer.log("Automatic refreshing of tokens is currently not supported for the web."
+  //         "You simply need to reauthenticate once the token expires");
+  //     return;
+  //   }
+  //   Timer.periodic(Duration(seconds: refreshIntervalSeconds), (Timer timer) async {
+  //     await authService.getTokenResponse(forceRefresh: true);
+  //   });
+  // }
 
   Future<void> login() async {
     await whenNotAuthenticated();

@@ -23,8 +23,7 @@ class AuthServiceImpl extends AuthService {
     var clientId = Constants.keycloakConf.clientId;
     component.issuer = await Issuer.discover(uri);
     component.client = Client(component.issuer, clientId);
-    component.authenticator =
-        browser.Authenticator(component.client, scopes: scopes);
+    component.authenticator = browser.Authenticator(component.client, scopes: scopes);
     // Should find credentials when initialized directly after a redirect
     await component.getRedirectResult();
 
@@ -50,8 +49,7 @@ class AuthServiceImpl extends AuthService {
   }
 
   @override
-  Future<TokenResponse?> getTokenResponse(
-      {forceRefresh = false, List<String> scopes = const []}) async {
+  Future<TokenResponse?> getTokenResponse({forceRefresh = false, List<String> scopes = const []}) async {
     Credential? c;
     if (forceRefresh) {
       try {
@@ -66,8 +64,7 @@ class AuthServiceImpl extends AuthService {
   }
 
   @override
-  Future<Credential?> getRedirectResult(
-      {List<String> scopes = const []}) async {
+  Future<Credential?> getRedirectResult({List<String> scopes = const []}) async {
     _credential = await authenticator.credential;
     return _credential;
   }
@@ -77,9 +74,15 @@ class AuthServiceImpl extends AuthService {
   }
 
   @override
-  void logout() {
+  Future<void> logout() async {
     authenticator.logout();
     _credential = null;
+  }
+
+  @override
+  Future<String?> getStoredToken() {
+    // TODO: implement getStoredToken -- The web version will get some love at some point, currently no time
+    throw UnimplementedError();
   }
 }
 

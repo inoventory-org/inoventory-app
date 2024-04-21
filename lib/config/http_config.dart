@@ -1,16 +1,17 @@
+import 'dart:developer' as developer;
+
 import 'package:dio/dio.dart';
 import 'package:inoventory_ui/auth/services/auth_service.dart';
 import 'package:inoventory_ui/config/constants.dart';
-import 'dart:developer' as developer;
 import 'package:openid_client/openid_client.dart';
 
-class InoventoryHttpInterceptor extends InterceptorsWrapper {
+class InoventoryTokenInterceptor extends InterceptorsWrapper {
   final AuthService authService;
   final Dio dio;
   final void Function()? onAuthSuccess;
   final Future<void> Function()? onAuthFail;
 
-  InoventoryHttpInterceptor(
+  InoventoryTokenInterceptor(
     this.dio,
     this.authService,
     this.onAuthSuccess,
@@ -18,28 +19,32 @@ class InoventoryHttpInterceptor extends InterceptorsWrapper {
   ) : super();
 
   @override
-  void onRequest(
-      RequestOptions options, RequestInterceptorHandler handler) async {
-    if (options.uri.toString().contains(Constants.inoventoryBackendUrl)) {
-      TokenResponse? tr;
-      try {
-        tr = await authService.getTokenResponse();
-      } catch (e) {
-        developer.log("Unable to retrieve access token", error: e);
-        await onAuthFail?.call();
-        return handler.resolve(await _retry(options));
-      }
-      final accessToken = tr?.accessToken;
-      if (accessToken == null) {
-        developer.log("Access token is null");
-        await onAuthFail?.call();
-        return;
-      }
-      // developer.log("Adding access token to request:");
-      // developer.log(accessToken);
-      options.headers.addAll({"Authorization": "Bearer $accessToken"});
-    }
+  void onRequest(RequestOptions options, RequestInterceptorHandler handler) async {
     developer.log("Request URL: ${options.uri.toString()}");
+    if (!options.uri.toString().contains(Constants.inoventoryBackendUrl)) {
+      return handler.next(options);
+    }
+
+    TokenResponse? tr;
+    try {
+      tr = await authService.getTokenResponse();
+    } catch (e) {
+      developer.log("Unable to retrieve access token", error: e);
+      await onAuthFail?.call();
+      return handler.resolve(await _retry(options));
+    }
+    final accessToken = tr?.accessToken;
+    if (accessToken == null) {
+      developer.log("Access token is null");
+      await onAuthFail?.call();
+      return;
+    }
+    // developer.log("Adding access token to request:");
+    // developer.log(accessToken);
+    // developer.log("");
+    // developer.log(tr!.refreshToken!);
+
+    options.headers.addAll({"Authorization": "Bearer $accessToken"});
     return handler.next(options);
   }
 
@@ -80,9 +85,7 @@ class InoventoryHttpInterceptor extends InterceptorsWrapper {
   }
 
   bool _shouldRetry(DioException err) {
-    final isInoventoryRequest = err.requestOptions.uri
-        .toString()
-        .contains(Constants.inoventoryBackendUrl);
+    final isInoventoryRequest = err.requestOptions.uri.toString().contains(Constants.inoventoryBackendUrl);
     if (isInoventoryRequest && err.response?.statusCode == 401) {
       return true;
     }
