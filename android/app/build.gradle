@@ -64,6 +64,7 @@ android {
             signingConfig signingConfigs.debug
         }
     }
+    namespace 'com.railabouni.inoventory'
 }
 
 flutter {
