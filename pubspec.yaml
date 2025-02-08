@@ -27,6 +27,8 @@ dependencies:
   image_picker: ^1.0.6
   openfoodfacts: ^3.3.0
   uuid: ^4.3.3
+  firebase_messaging: ^15.1.0
+  firebase_core: ^3.4.0
 
 dev_dependencies:
   flutter_test:
