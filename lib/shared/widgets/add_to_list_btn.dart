@@ -19,12 +19,9 @@ class AddToListButton extends StatelessWidget {
             children: [
               Text(
                 "Add to List",
-                style: TextStyle(
-                    fontSize: 30,
-                    color: Theme.of(context).textTheme.bodyText1?.color),
+                style: TextStyle(fontSize: 30, color: Theme.of(context).textTheme.bodyMedium?.color),
               ),
-              Icon(Icons.add_circle,
-                  color: Theme.of(context).textTheme.bodyText1?.color)
+              Icon(Icons.add_circle, color: Theme.of(context).textTheme.bodyMedium?.color)
             ],
           ),
         ));

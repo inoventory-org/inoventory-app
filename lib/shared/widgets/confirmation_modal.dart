@@ -32,7 +32,7 @@ class ConfirmationModal extends StatelessWidget {
               backgroundColor: MaterialStateProperty.all<Color>(
                   Theme.of(context).primaryColor),
               foregroundColor: MaterialStateProperty.all<Color>(
-                  Theme.of(context).textTheme.bodyText1?.color ??
+                  Theme.of(context).textTheme.bodyMedium?.color ??
                       Colors.black)),
           onPressed: () async {
             final navigator = Navigator.of(context);
