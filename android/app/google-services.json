@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "237231491580",
+    "project_id": "inoventory-2c550",
+    "storage_bucket": "inoventory-2c550.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:237231491580:android:2c0b5cfda4ac999c218a79",
+        "android_client_info": {
+          "package_name": "com.inoventory.inoventory"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDxG_27qj86fDPc-RjVDIMfvwqQhq9HPGs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:237231491580:android:3bd09b0bf684ccae218a79",
+        "android_client_info": {
+          "package_name": "com.railabouni.inoventory"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDxG_27qj86fDPc-RjVDIMfvwqQhq9HPGs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
