@@ -42,7 +42,7 @@ dependencies:
   collection: ^1.16.0
   get_it: ^8.0.3
   injectable: ^2.1.0
-  mobile_scanner: ^3.5.5
+  mobile_scanner: ^4.0.1
   image_picker: ^1.0.6
   openfoodfacts: ^3.3.0
   uuid: ^4.3.3
