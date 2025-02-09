@@ -1,0 +1,43 @@
+name: Release App
+
+on:
+  workflow_dispatch: # allows manual trigger
+  workflow_call: # gets called by build-app workflow
+    secrets:
+      androidServiceAccountBase64:
+        required: true
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release_android:
+    runs-on: ubuntu-22.04
+    env:
+      SERVICE_ACCOUNT_PATH: store_credentials.json
+      AAB_NAME: app-release.aab
+      AAB_PATH: ./releases
+
+    steps:
+      - name: Create Releases Dir
+        run: mkdir ${{ env.AAB_PATH }}
+
+      - name: Download Android build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: signed-android-release-aab
+          path: ${{ env.AAB_PATH }}
+
+      - name: Decode Android Service Account
+        run: |
+          touch ${{ env.SERVICE_ACCOUNT_PATH }}
+          echo ${{ secrets.androidServiceAccountBase64 }} | base64 --decode > ${{ env.SERVICE_ACCOUNT_PATH }}
+
+      - name: Deploy to Play Store (Internal testing)
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJson: ${{ env.SERVICE_ACCOUNT_PATH }}
+          packageName: io.bringalong.app
+          releaseFiles: ${{ env.AAB_PATH }}/${{ env.AAB_NAME }}
+          track: internal
