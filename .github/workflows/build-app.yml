@@ -21,6 +21,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Set up Java 17
+        uses: actions/setup-java@v2
+        with:
+          java-version: 17
+          distribution: "temurin"
+
       - name: Setup Flutter SDK
         uses: flutter-actions/setup-flutter@v3
         with:
@@ -44,6 +50,10 @@ jobs:
           echo $NEW_VERSION
           # removes last digit from minutes to stay under maxVersion of 2000000000
           sed -i "s/version: .*/version: 1.0.0+$NEW_VERSION/" pubspec.yaml
+
+      - name: Generate code dependencies
+        run: |
+          flutter packages pub run build_runner build
 
       - name: Build release app bundle
         run: flutter build appbundle --release --obfuscate --split-debug-info=./inoventory/logs
