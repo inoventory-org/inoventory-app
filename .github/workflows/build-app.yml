@@ -27,7 +27,7 @@ jobs:
         with:
           channel: stable
           version: 3.27.4
-          cache: true
+          cache: false
           cache-sdk: true
 
       - name: Get dependencies
