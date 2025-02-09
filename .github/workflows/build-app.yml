@@ -57,7 +57,7 @@ jobs:
         uses: r0adkll/sign-android-release@v1
         id: sign_app
         with:
-          releaseDirectory: ./build/app/outputs/bundle/release/
+          releaseDirectory: build/app/outputs/bundle/release/
           signingKeyBase64: ${{ secrets.ANDROID_KEYSTORE_FILE_BASE64 }}
           alias: ${{ secrets.ANDROID_SIGNING_KEY_ALIAS }}
           keyStorePassword: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
@@ -67,7 +67,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: signed-android-release-aab
-          path: ${{ env.APP_ROOT_PATH }}/${{ env.AAB_PATH }}/${{ env.AAB_NAME }}
+          path: ${{ env.AAB_PATH }}/${{ env.AAB_NAME }}
 
 #
 #  release:
