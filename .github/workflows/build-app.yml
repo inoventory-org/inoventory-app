@@ -64,10 +64,10 @@ jobs:
           name: signed-android-release-aab
           path: ${{ env.APP_ROOT_PATH }}/${{ env.AAB_PATH }}/${{ env.AAB_NAME }}
 
-
-  release:
-    if: github.event_name != 'pull_request'
-    needs: build_android
-    uses: ./.github/workflows/release-app.yml
-    secrets:
-      androidServiceAccountBase64: ${{ secrets.ANDROID_SERVICE_ACCOUNT_BASE64 }}
+#
+#  release:
+#    if: github.event_name != 'pull_request'
+#    needs: build_android
+#    uses: ./.github/workflows/release-app.yml
+#    secrets:
+#      androidServiceAccountBase64: ${{ secrets.ANDROID_SERVICE_ACCOUNT_BASE64 }}
