@@ -1,0 +1,73 @@
+name: Build App
+
+on:
+  push:
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+
+  build_android:
+    runs-on: ubuntu-22.04
+    env:
+      # Setup env variables that will be used throughout the workflow
+      AAB_NAME: app-release.aab
+      AAB_PATH: build/app/outputs/bundle/release
+      KEYSTORE_PATH: android/upload-keystore.jks
+      KEY_PROPS_PATH: android/key.properties
+      SERVICE_ACCOUNT_PATH: store_credentials.json
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter SDK
+        uses: flutter-actions/setup-flutter@v3
+        with:
+          channel: stable
+          version: 3.27.4
+          cache: true
+          cache-sdk: true
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Decode Android keystore
+        run: echo "${{ secrets.ANDROID_KEYSTORE_FILE_BASE64 }}" | base64 --decode > ${{ env.KEYSTORE_PATH }}
+
+      - name: Decode Android key properties
+        run: echo "${{ secrets.ANDROID_KEY_PROPERTIES_BASE64 }}" | base64 --decode > ${{ env.KEY_PROPS_PATH }}
+
+      - name: Update Version
+        run: |
+          export NEW_VERSION=$(date +'%y%m%d%H%M' | cut -c1-9)
+          echo $NEW_VERSION
+          # removes last digit from minutes to stay under maxVersion of 2000000000
+          sed -i "s/version: .*/version: 1.0.0+$NEW_VERSION/" pubspec.yaml
+
+      - name: Build release app bundle
+        run: flutter build appbundle --release --obfuscate --split-debug-info=./inoventory/logs
+
+      - name: Sign App Bundle
+        uses: r0adkll/sign-android-release@v1
+        id: sign_app
+        with:
+          releaseDirectory: ./build/app/outputs/bundle/release/
+          signingKeyBase64: ${{ secrets.ANDROID_KEYSTORE_FILE_BASE64 }}
+          alias: ${{ secrets.ANDROID_SIGNING_KEY_ALIAS }}
+          keyStorePassword: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          keyPassword: ${{ secrets.ANDROID_SIGNING_KEY_PASSWORD }}
+
+      - name: Upload generated aab to the artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: signed-android-release-aab
+          path: ${{ env.APP_ROOT_PATH }}/${{ env.AAB_PATH }}/${{ env.AAB_NAME }}
+
+
+  release:
+    if: github.event_name != 'pull_request'
+    needs: build_android
+    uses: ./.github/workflows/release-app.yml
+    secrets:
+      androidServiceAccountBase64: ${{ secrets.ANDROID_SERVICE_ACCOUNT_BASE64 }}
