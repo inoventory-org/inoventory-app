@@ -1,0 +1,112 @@
+name: Android
+
+on:
+  push:
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build_android:
+    runs-on: ubuntu-24.04
+    env:
+      # Setup env variables that will be used throughout the workflow
+      AAB_NAME: app-release.aab
+      AAB_PATH: build/app/outputs/bundle/release
+      KEYSTORE_PATH: android/upload-keystore.jks
+      KEY_PROPS_PATH: android/key.properties
+      SERVICE_ACCOUNT_PATH: store_credentials.json
+
+    steps:
+      - name: ⏬ Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: ➕ Install GitVersion
+        uses: gittools/actions/gitversion/setup@v3.1.11
+        with:
+          versionSpec: '6.0.x'
+
+      - name: 🛠️ Setup Flutter SDK
+        uses: flutter-actions/setup-flutter@v3
+        with:
+          channel: stable
+          version: 3.27.4
+          cache: true
+          cache-sdk: true
+
+      - name: 🔀  Use GitVersion
+        id: gitversion
+        uses: gittools/actions/gitversion/execute@v1
+
+      - name: 🔢 Update Version
+        run: |
+          export VERSION_CODE=$((${{ steps.gitversion.outputs.commitsSinceVersionSource }}+26))
+          echo $VERSION_CODE
+          sed -i "s/version: .*/version: 0.0.1+$VERSION_CODE/" pubspec.yaml
+
+      - name: 📦 Get dependencies
+        run: flutter pub get
+
+      - name: 🔑 Decode Android keystore
+        run: echo "${{ secrets.ANDROID_KEYSTORE_FILE_BASE64 }}" | base64 --decode > ${{ env.KEYSTORE_PATH }}
+
+      - name: 🔑 Decode Android key properties
+        run: echo "${{ secrets.ANDROID_KEY_PROPERTIES_BASE64 }}" | base64 --decode > ${{ env.KEY_PROPS_PATH }}
+
+      - name: 🏗️ Generate code dependencies
+        run: |
+          flutter packages pub run build_runner build
+
+      - name: 🛠️ Build release app bundle
+        run: flutter build appbundle --release --obfuscate --split-debug-info=./inoventory/logs
+
+      - name: 🔑 Sign App Bundle
+        uses: r0adkll/sign-android-release@v1
+        id: sign_app
+        with:
+          releaseDirectory: build/app/outputs/bundle/release/
+          signingKeyBase64: ${{ secrets.ANDROID_KEYSTORE_FILE_BASE64 }}
+          alias: ${{ secrets.ANDROID_SIGNING_KEY_ALIAS }}
+          keyStorePassword: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          keyPassword: ${{ secrets.ANDROID_SIGNING_KEY_PASSWORD }}
+
+      - name: 🔼 Upload Signed Bundle To Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: signed-android-release-aab
+          path: ${{ env.AAB_PATH }}/${{ env.AAB_NAME }}
+
+
+  release_android:
+    runs-on: ubuntu-24.04
+    needs: build_android
+    if: github.ref == 'refs/heads/main'
+    env:
+      SERVICE_ACCOUNT_PATH: store_credentials.json
+      AAB_NAME: app-release.aab
+      AAB_PATH: ./releases
+
+    steps:
+      - name: 📁 Create Releases Dir
+        run: mkdir ${{ env.AAB_PATH }}
+
+      - name: 🔽 Download Android build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: signed-android-release-aab
+          path: ${{ env.AAB_PATH }}
+          github-token: ${{ github.token }}
+
+      - name: 🔑 Decode Android Service Account
+        run: |
+          touch ${{ env.SERVICE_ACCOUNT_PATH }}
+          echo "${{ secrets.ANDROID_SERVICE_ACCOUNT_BASE64 }}" | base64 --decode > ${{ env.SERVICE_ACCOUNT_PATH }}
+
+      - name: 🚀 Deploy to Play Store (Internal testing)
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJson: ${{ env.SERVICE_ACCOUNT_PATH }}
+          packageName: com.inoventory.inoventory
+          releaseFiles: ${{ env.AAB_PATH }}/${{ env.AAB_NAME }}
+          track: internal
