@@ -24,12 +24,15 @@ jobs:
       - name: 📁 Create Releases Dir
         run: mkdir ${{ env.AAB_PATH }}
 
+      - name: debug workflow_run trigger
+        run: echo ${{ github.event.workflow_run }}
+
       - name: 🔽 Download Android build artifact
         uses: actions/download-artifact@v4
         with:
           name: signed-android-release-aab
           path: ${{ env.AAB_PATH }}
-          run-id: ${{ github.event.workflow_run.id }}
+          run-id: e7c6cea7-4d47-5035-1adf-10999d280675 # ${{ github.event.workflow_run.id }}
           github-token: ${{ github.token }}
 
       - name: 🔑 Decode Android Service Account
