@@ -35,7 +35,7 @@ jobs:
       - name: 🔑 Decode Android Service Account
         run: |
           touch ${{ env.SERVICE_ACCOUNT_PATH }}
-          echo '${{ secrets.ANDROID_SERVICE_ACCOUNT_BASE64 }}' | base64 --decode > ${{ env.SERVICE_ACCOUNT_PATH }}
+          echo "${{ secrets.ANDROID_SERVICE_ACCOUNT_BASE64 }}" | base64 --decode > ${{ env.SERVICE_ACCOUNT_PATH }}
 
       - name: Debug
         run: |
