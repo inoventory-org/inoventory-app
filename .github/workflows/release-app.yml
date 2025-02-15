@@ -3,7 +3,7 @@ name: Release App
 on:
   workflow_dispatch: # allows manual trigger
   workflow_run:
-    workflows: [ "Build Android" ]
+    workflows: [ "Build App" ]
     types:
       - completed
 
