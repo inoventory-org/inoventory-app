@@ -23,36 +23,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Output Run ID
-        run: echo ${{ github.run_id }}
-      - name: Output Run Number
-        run: echo ${{ github.run_number }}
-      - name: Output Run Attempt
-        run: echo ${{ github.run_attempt }}
-
-      - name: Retrieve Tags and Branch History
-        run: |
-          git config --global url."https://x-access-token:${{secrets.TOKEN_GITHUB}}@github.com/".insteadOf "https://github.com/"
-          git fetch --prune --depth=10000
-
       - name: Install GitVersion
         uses: gittools/actions/gitversion/setup@v3.1.11
         with:
           versionSpec: '6.0.x'
-
-      - name: Use GitVersion
-        id: gitversion
-        uses: gittools/actions/gitversion/execute@v3.1.11
-
-      - name: Creating version.txt with nuGetVersion
-        run: echo "${{ steps.gitversion.outputs.PreReleaseNumber }}" > version.txt
-
-      - name: Upload version.txt
-        uses: actions/upload-artifact@v4
-        with:
-          name: gitversion
-          path: version.txt
-
 
       - name: Setup Flutter SDK
         uses: flutter-actions/setup-flutter@v3
@@ -62,6 +36,13 @@ jobs:
           cache: true
           cache-sdk: true
 
+      - name: Use GitVersion
+        id: gitversion
+        uses: gittools/actions/gitversion/execute@v1
+
+      - name: Update Version
+        run: |
+          sed -i "s/version: .*/version: ${{ steps.gitversion.outputs.MajorMinorPatch }}+${{ github.run_number }}/" pubspec.yaml
 
       - name: Get dependencies
         run: flutter pub get
@@ -71,13 +52,6 @@ jobs:
 
       - name: Decode Android key properties
         run: echo "${{ secrets.ANDROID_KEY_PROPERTIES_BASE64 }}" | base64 --decode > ${{ env.KEY_PROPS_PATH }}
-
-      - name: Update Version
-        run: |
-          export NEW_VERSION=$(date +'%y%m%d%H%M' | cut -c1-9)
-          echo $NEW_VERSION
-          # removes last digit from minutes to stay under maxVersion of 2000000000
-          sed -i "s/version: .*/version: 1.0.0+$NEW_VERSION/" pubspec.yaml
 
       - name: Generate code dependencies
         run: |
