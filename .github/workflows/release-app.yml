@@ -21,9 +21,6 @@ jobs:
       AAB_PATH: ./releases
 
     steps:
-      - name: Debug conclusion
-        run: echo "workflow event ${{ github.event.workflow_run }}"
-
       - name: 📁 Create Releases Dir
         run: mkdir ${{ env.AAB_PATH }}
 
