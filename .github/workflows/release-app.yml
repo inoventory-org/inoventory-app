@@ -2,10 +2,10 @@ name: Release App
 
 on:
   workflow_dispatch: # allows manual trigger
-  workflow_call: # gets called by build-app workflow
-    secrets:
-      androidServiceAccountBase64:
-        required: true
+  workflow_run:
+    workflows: [ "Build Android" ]
+    types:
+      - completed
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -14,6 +14,7 @@ concurrency:
 jobs:
   release_android:
     runs-on: ubuntu-24.04
+    if: (github.event.workflow_run.conclusion == 'success') # && github.event.workflow_run.head_branch == 'main')
     env:
       SERVICE_ACCOUNT_PATH: store_credentials.json
       AAB_NAME: app-release.aab
@@ -32,7 +33,7 @@ jobs:
       - name: 🔑 Decode Android Service Account
         run: |
           touch ${{ env.SERVICE_ACCOUNT_PATH }}
-          echo ${{ secrets.androidServiceAccountBase64 }} | base64 --decode > ${{ env.SERVICE_ACCOUNT_PATH }}
+          echo ${{ secrets.ANDROID_SERVICE_ACCOUNT_BASE64 }} | base64 --decode > ${{ env.SERVICE_ACCOUNT_PATH }}
 
       - name: 🚀 Deploy to Play Store (Internal testing)
         uses: r0adkll/upload-google-play@v1
