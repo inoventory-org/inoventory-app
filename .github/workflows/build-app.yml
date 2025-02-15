@@ -21,6 +21,29 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Retrieve Tags and Branch History
+        run: |
+          git config --global url."https://x-access-token:${{secrets.TOKEN_GITHUB}}@github.com/".insteadOf "https://github.com/"
+          git fetch --prune --depth=10000
+
+      - name: Install GitVersion
+        uses: gittools/actions/gitversion/setup@v1
+        with:
+          version: "5.x"
+
+      - name: Use GitVersion
+        id: gitversion
+        uses: gittools/actions/gitversion/execute@v1
+
+      - name: Creating version.txt with nuGetVersion
+        run: echo "${{ steps.gitversion.outputs.nuGetVersion }}" > version.txt
+
+      - name: Upload version.txt
+        uses: actions/upload-artifact@v4
+        with:
+          name: gitversion
+          path: version.txt
+
 
       - name: Setup Flutter SDK
         uses: flutter-actions/setup-flutter@v3
@@ -29,6 +52,7 @@ jobs:
           version: 3.27.4
           cache: true
           cache-sdk: true
+
 
       - name: Get dependencies
         run: flutter pub get
@@ -49,7 +73,6 @@ jobs:
       - name: Generate code dependencies
         run: |
           flutter packages pub run build_runner build
-
       - name: Build release app bundle
         run: flutter build appbundle --release --obfuscate --split-debug-info=./inoventory/logs
 
