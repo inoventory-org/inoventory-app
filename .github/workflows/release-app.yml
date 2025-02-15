@@ -22,7 +22,7 @@ jobs:
 
     steps:
       - name: Debug conclusion
-        run: echo "Workflow run conclusion: ${{ github.event.workflow_run.conclusion }}"
+        run: echo "workflow event ${{ github.event.workflow_run }}"
 
       - name: 📁 Create Releases Dir
         run: mkdir ${{ env.AAB_PATH }}
