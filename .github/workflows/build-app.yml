@@ -42,7 +42,7 @@ jobs:
 
       - name: Update Version
         run: |
-          sed -i "s/version: .*/version: ${{ steps.gitversion.outputs.MajorMinorPatch }}+${{ github.run_number }}/" pubspec.yaml
+          sed -i "s/version: .*/version: ${{ steps.gitversion.outputs.MajorMinorPatch }}+${{ steps.gitversion.outputs.PreReleaseNumber }}/" pubspec.yaml
 
       - name: Get dependencies
         run: flutter pub get
