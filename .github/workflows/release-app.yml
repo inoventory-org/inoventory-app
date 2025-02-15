@@ -32,7 +32,7 @@ jobs:
         with:
           name: signed-android-release-aab
           path: ${{ env.AAB_PATH }}
-          run-id: e7c6cea7-4d47-5035-1adf-10999d280675 # ${{ github.event.workflow_run.id }}
+          run-id: workflow-job-run-e7c6cea7-4d47-5035-1adf-10999d280675 # ${{ github.event.workflow_run.id }}
           github-token: ${{ github.token }}
 
       - name: 🔑 Decode Android Service Account
