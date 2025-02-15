@@ -23,6 +23,13 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Output Run ID
+        run: echo ${{ github.run_id }}
+      - name: Output Run Number
+        run: echo ${{ github.run_number }}
+      - name: Output Run Attempt
+        run: echo ${{ github.run_attempt }}
+
       - name: Retrieve Tags and Branch History
         run: |
           git config --global url."https://x-access-token:${{secrets.TOKEN_GITHUB}}@github.com/".insteadOf "https://github.com/"
