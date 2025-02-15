@@ -8,7 +8,7 @@ on:
 jobs:
 
   build_android:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     env:
       # Setup env variables that will be used throughout the workflow
       AAB_NAME: app-release.aab
@@ -18,10 +18,17 @@ jobs:
       SERVICE_ACCOUNT_PATH: store_credentials.json
 
     steps:
-      - name: Checkout
+      - name: ⏬ Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Setup Flutter SDK
+      - name: ➕ Install GitVersion
+        uses: gittools/actions/gitversion/setup@v3.1.11
+        with:
+          versionSpec: '6.0.x'
+
+      - name: 🛠️ Setup Flutter SDK
         uses: flutter-actions/setup-flutter@v3
         with:
           channel: stable
@@ -29,45 +36,42 @@ jobs:
           cache: true
           cache-sdk: true
 
-      - name: Get dependencies
+      - name: 🔀  Use GitVersion
+        id: gitversion
+        uses: gittools/actions/gitversion/execute@v1
+
+      - name: 🔢 Update Version
+        run: |
+          sed -i "s/version: .*/version: ${{ steps.gitversion.outputs.MajorMinorPatch }}+${{ steps.gitversion.outputs.PreReleaseNumber }}/" pubspec.yaml
+
+      - name: 📦 Get dependencies
         run: flutter pub get
 
-      - name: Decode Android keystore
+      - name: 🔑 Decode Android keystore
         run: echo "${{ secrets.ANDROID_KEYSTORE_FILE_BASE64 }}" | base64 --decode > ${{ env.KEYSTORE_PATH }}
 
-      - name: Decode Android key properties
+      - name: 🔑 Decode Android key properties
         run: echo "${{ secrets.ANDROID_KEY_PROPERTIES_BASE64 }}" | base64 --decode > ${{ env.KEY_PROPS_PATH }}
 
-      - name: Update Version
+      - name: 🏗️ Generate code dependencies
         run: |
-          export NEW_VERSION=$(date +'%y%m%d%H%M' | cut -c1-9)
-          echo $NEW_VERSION
-          # removes last digit from minutes to stay under maxVersion of 2000000000
-          sed -i "s/version: .*/version: 1.0.0+$NEW_VERSION/" pubspec.yaml
+          flutter packages pub run build_runner build
 
-      - name: Build release app bundle
+      - name: 🛠️ Build release app bundle
         run: flutter build appbundle --release --obfuscate --split-debug-info=./inoventory/logs
 
-      - name: Sign App Bundle
+      - name: 🔑 Sign App Bundle
         uses: r0adkll/sign-android-release@v1
         id: sign_app
         with:
-          releaseDirectory: ./build/app/outputs/bundle/release/
+          releaseDirectory: build/app/outputs/bundle/release/
           signingKeyBase64: ${{ secrets.ANDROID_KEYSTORE_FILE_BASE64 }}
           alias: ${{ secrets.ANDROID_SIGNING_KEY_ALIAS }}
           keyStorePassword: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           keyPassword: ${{ secrets.ANDROID_SIGNING_KEY_PASSWORD }}
 
-      - name: Upload generated aab to the artifacts
+      - name: 🔼 Upload Signed Bundle To Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: signed-android-release-aab
-          path: ${{ env.APP_ROOT_PATH }}/${{ env.AAB_PATH }}/${{ env.AAB_NAME }}
-
-#
-#  release:
-#    if: github.event_name != 'pull_request'
-#    needs: build_android
-#    uses: ./.github/workflows/release-app.yml
-#    secrets:
-#      androidServiceAccountBase64: ${{ secrets.ANDROID_SERVICE_ACCOUNT_BASE64 }}
+          path: ${{ env.AAB_PATH }}/${{ env.AAB_NAME }}

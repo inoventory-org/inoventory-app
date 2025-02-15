@@ -5,7 +5,7 @@ import 'package:inoventory_ui/config/injection.config.dart';
 
 final getIt = GetIt.instance;
 
-@InjectableInit()
+@InjectableInit(ignoreUnregisteredTypes: [Dio])
 void configureDependencies() {
   getIt.registerSingleton<Dio>(Dio());
   getIt.init();
