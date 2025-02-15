@@ -14,7 +14,7 @@ concurrency:
 jobs:
   release_android:
     runs-on: ubuntu-24.04
-    if: (github.event.workflow_run.conclusion == 'success') # && github.event.workflow_run.head_branch == 'main')
+#    if: (github.event.workflow_run.conclusion == 'success') # && github.event.workflow_run.head_branch == 'main')
     env:
       SERVICE_ACCOUNT_PATH: store_credentials.json
       AAB_NAME: app-release.aab
@@ -32,7 +32,7 @@ jobs:
         with:
           name: signed-android-release-aab
           path: ${{ env.AAB_PATH }}
-          run-id: workflow-job-run-e7c6cea7-4d47-5035-1adf-10999d280675 # ${{ github.event.workflow_run.id }}
+          run-id: 13346785396 # ${{ github.event.workflow_run.id }}
           github-token: ${{ github.token }}
 
       - name: 🔑 Decode Android Service Account
