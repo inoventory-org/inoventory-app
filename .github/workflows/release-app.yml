@@ -48,6 +48,6 @@ jobs:
         uses: r0adkll/upload-google-play@v1
         with:
           serviceAccountJson: ${{ env.SERVICE_ACCOUNT_PATH }}
-          packageName: io.bringalong.app
+          packageName: com.inoventory.inoventory
           releaseFiles: ${{ env.AAB_PATH }}/${{ env.AAB_NAME }}
           track: internal
