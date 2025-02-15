@@ -28,7 +28,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: signed-android-release-aab
-          path: ${{ env.AAB_PATH }},3
+          path: ${{ env.AAB_PATH }}
           run-id: ${{ github.event.workflow_run.id }}
           github-token: ${{ github.token }}
 
@@ -36,6 +36,10 @@ jobs:
         run: |
           touch ${{ env.SERVICE_ACCOUNT_PATH }}
           echo '${{ secrets.ANDROID_SERVICE_ACCOUNT_BASE64 }}' | base64 --decode > ${{ env.SERVICE_ACCOUNT_PATH }}
+
+      - name: Debug
+        run: |
+          ls -la ${{ env.AAB_PATH }}
 
       - name: 🚀 Deploy to Play Store (Internal testing)
         uses: r0adkll/upload-google-play@v1
