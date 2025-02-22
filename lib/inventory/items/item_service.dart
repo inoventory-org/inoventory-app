@@ -6,6 +6,7 @@ import 'package:injectable/injectable.dart';
 import 'package:inoventory_ui/config/constants.dart';
 import 'package:inoventory_ui/inventory/items/models/item.dart';
 import 'package:inoventory_ui/inventory/items/models/item_wrapper.dart';
+import 'package:inoventory_ui/notifications/notification_service.dart';
 
 abstract class ItemService {
   static const backendUrl = Constants.inoventoryBackendUrl;
@@ -36,9 +37,11 @@ abstract class ItemService {
 @Injectable(as: ItemService)
 class ItemServiceImpl extends ItemService {
   final Dio dio;
+  final NotificationService notificationService;
+
   Item? lastDeletedItem;
 
-  ItemServiceImpl(this.dio);
+  ItemServiceImpl(this.dio, this.notificationService);
 
   @override
   Future<Item> add(Item item) async {
@@ -49,6 +52,8 @@ class ItemServiceImpl extends ItemService {
     if (response.statusCode != HttpStatus.created) {
       throw Exception("Failed to add item with barcode ${item.productEan} to list ${item.listId}");
     }
+
+    notificationService.scheduleNotification();
 
     return Item.fromJson(response.data);
   }
