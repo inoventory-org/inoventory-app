@@ -15,7 +15,7 @@ abstract class OpenFoodFactsService {
 
 @Injectable(as: OpenFoodFactsService)
 class OpenFoodFactsServiceImpl implements OpenFoodFactsService {
-  final User myUser = const User(userId: Constants.openFoodFactsUserName, password: Secrets.openFoodFactsToken);
+  final User myUser = User(userId: Constants.openFoodFactsUserName, password: Secrets.openFoodFactsToken);
 
   OpenFoodFactsServiceImpl() : super() {
     OpenFoodAPIConfiguration.userAgent = UserAgent(name: Constants.appName, version: Constants.version, comment: "(eilabouni.rudy@gmail.com)");
