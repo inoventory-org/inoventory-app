@@ -1,7 +1,8 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:inoventory_ui/config/constants.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:supabase_auth_ui/supabase_auth_ui.dart';
 
 class LoginRoute extends StatelessWidget {
   const LoginRoute({super.key});
@@ -15,22 +16,60 @@ class LoginRoute extends StatelessWidget {
           child: Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 420),
-              child: SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: Colors.black,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SupaEmailAuth(
+                    redirectTo: kIsWeb ? null : Constants.supabaseRedirectUrl(kIsWeb),
+                    onSignInComplete: (response) {},
+                    onSignUpComplete: (response) {},
+                    metadataFields: [
+                      MetaDataField(
+                        prefixIcon: const Icon(Icons.person),
+                        label: 'Username',
+                        key: 'username',
+                        validator: (val) {
+                          if (val == null || val.isEmpty) {
+                            return 'Please enter something';
+                          }
+                          return null;
+                        },
+                      ),
+                      BooleanMetaDataField(
+                        label: 'I wish to receive marketing emails',
+                        key: 'marketing_consent',
+                        checkboxPosition: ListTileControlAffinity.leading,
+                      ),
+                      BooleanMetaDataField(
+                        key: 'terms_agreement',
+                        isRequired: true,
+                        checkboxPosition: ListTileControlAffinity.leading,
+                        richLabelSpans: [
+                          const TextSpan(text: 'I have read and agree to the '),
+                          TextSpan(
+                            text: 'Terms and Conditions',
+                            style: const TextStyle(color: Colors.blue),
+                            recognizer: TapGestureRecognizer()
+                              ..onTap = () {
+                                // TODO: Navigate to terms if needed
+                              },
+                          ),
+                          const WidgetSpan(child: SizedBox(width: 4)),
+                        ],
+                      ),
+                    ],
                   ),
-                  icon: const Icon(Icons.login, color: Colors.black),
-                  label: const Text("Continue with Google"),
-                  onPressed: () async {
-                    await Supabase.instance.client.auth.signInWithOAuth(
-                      OAuthProvider.google,
-                      redirectTo: kIsWeb ? null : Constants.supabaseRedirectUrl(kIsWeb),
-                    );
-                  },
-                ),
+                  const SizedBox(height: 16),
+                  const Divider(),
+                  const SizedBox(height: 16),
+                  SupaSocialsAuth(
+                    socialProviders: const [OAuthProvider.google],
+                    colored: true,
+                    redirectUrl: kIsWeb ? null : Constants.supabaseRedirectUrl(kIsWeb),
+                    onSuccess: (session) {},
+                    onError: (error) {},
+                  ),
+                ],
               ),
             ),
           ),
