@@ -5,7 +5,6 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:inoventory_ui/auth/login_route.dart';
 import 'package:inoventory_ui/config/http_config.dart';
-import 'package:inoventory_ui/shared/widgets/inoventory_appbar.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'config/injection.dart';
@@ -33,12 +32,6 @@ class _InoventoryHomeRouteState extends State<InoventoryHomeRoute> {
         session = data.session;
       });
     });
-    _setUpHttpInterceptors();
-  }
-
-  void _setUpHttpInterceptors() {
-    developer.log("Setting up HTTP Interceptors");
-    dio.interceptors.add(InoventoryTokenInterceptor(dio));
   }
 
   Future<void> logout() async {
@@ -59,6 +52,6 @@ class _InoventoryHomeRouteState extends State<InoventoryHomeRoute> {
     developer.log("supabase session: ${session?.user.id}");
     return session != null
         ? InventoryListRoute(logout: logout)
-        : const Scaffold(appBar: InoventoryAppBar(), body: LoginRoute());
+        : const LoginRoute();
   }
 }

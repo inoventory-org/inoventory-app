@@ -121,6 +121,11 @@ final ThemeData darkTheme = ThemeData(
     foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
     // textStyle: MaterialStateProperty.all<TextStyle>(const TextStyle(color: Colors.white)),
   )),
+  elevatedButtonTheme: ElevatedButtonThemeData(
+      style: ButtonStyle(
+    backgroundColor: MaterialStateProperty.all<Color>(Colors.orange),
+    foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
+  )),
   buttonTheme: const ButtonThemeData(
     textTheme: ButtonTextTheme.normal,
     minWidth: 88,

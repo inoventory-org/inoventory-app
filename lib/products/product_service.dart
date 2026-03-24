@@ -1,5 +1,4 @@
 import 'package:dio/dio.dart';
-import 'package:injectable/injectable.dart';
 import 'package:inoventory_ui/config/constants.dart';
 import 'package:inoventory_ui/products/product_model.dart';
 
@@ -15,7 +14,6 @@ abstract class ProductService {
   Future<bool> delete(String productId);
 }
 
-@Injectable(as: ProductService)
 class ProductServiceImpl implements ProductService {
   final backendUrl = Constants.inoventoryBackendUrl;
   final timeout = const Duration(seconds: 5);

@@ -14,7 +14,11 @@ void main() async {
   configureDependencies();
 
   WidgetsFlutterBinding.ensureInitialized();
-  await dotenv.load(fileName: ".env");
+  try {
+    await dotenv.load(fileName: ".env");
+  } catch (e) {
+    developer.log("No .env file found, continuing without dotenv.", error: e);
+  }
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );

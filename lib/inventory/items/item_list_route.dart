@@ -3,7 +3,7 @@ import 'dart:developer' as developer;
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:inoventory_ui/config/injection.dart';
-import 'package:inoventory_ui/ean/barcode_scanner.dart';
+import 'package:inoventory_ui/ean/barcode_scan_route.dart';
 import 'package:inoventory_ui/inventory/items/item_search_route.dart';
 import 'package:inoventory_ui/inventory/items/item_service.dart';
 import 'package:inoventory_ui/inventory/items/models/item_wrapper.dart';
@@ -30,7 +30,6 @@ class ItemListRoute extends StatefulWidget {
 }
 
 class _ItemListRouteState extends State<ItemListRoute> {
-  final BarcodeScanner _barcodeScanner = BarcodeScanner();
   final ProductService _productService = getIt<ProductService>();
   final ItemService _itemService = getIt<ItemService>();
   late Future<List<ItemWrapper>> futureItems;
@@ -211,7 +210,13 @@ class _ItemListRouteState extends State<ItemListRoute> {
       ActionButton(
           icon: const Icon(Icons.delete, color: Colors.black),
           onPressed: () async {
-            var barcodeScanResult = await _barcodeScanner.scanBarcodeNormal();
+            final navigator = Navigator.of(context);
+            final barcodeScanResult = await navigator.push<String>(
+              MaterialPageRoute(builder: (context) => const BarcodeScanRoute()),
+            );
+            if (barcodeScanResult == null || barcodeScanResult.isEmpty) {
+              return;
+            }
             await onEanDeleteScan(barcodeScanResult);
           }),
     ]);
