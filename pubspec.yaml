@@ -31,14 +31,12 @@ dependencies:
   flutter:
     sdk: flutter
   cupertino_icons: ^1.0.2
-  flutter_barcode_scanner: ^2.0.0
   dio: ^5.4.0
   intl: ^0.20.2
   openid_client: ^0.4.7
   flutter_secure_storage: ^10.0.0-beta.4
   url_launcher: ^6.1.7
   jwt_decode: ^0.3.1
-  flutter_web_auth: ^0.6.0
   collection: ^1.16.0
   get_it: ^8.0.3
   injectable: ^2.1.0
@@ -48,6 +46,9 @@ dependencies:
   uuid: ^4.3.3
   firebase_messaging: ^15.2.2
   firebase_core: ^3.4.0
+  flutter_dotenv: ^5.1.0
+  supabase_flutter: ^2.12.0
+  supabase_auth_ui: ^0.5.5
 
 dev_dependencies:
   flutter_test:
@@ -75,5 +76,5 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
-
-
+  assets:
+    - .env

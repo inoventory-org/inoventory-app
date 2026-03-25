@@ -21,7 +21,7 @@ class _InoDrawerState extends State<InoDrawer> {
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.primary,
             ),
-            child: const Spacer(),
+            child: const SizedBox.shrink(),
           ),
           ListTile(
             title: Row(
@@ -40,13 +40,15 @@ class _InoDrawerState extends State<InoDrawer> {
             title: const Text('Logout'),
             onTap: () async {
               final navigator = Navigator.of(context);
-              final scaffoldMessenger = ScaffoldMessenger.of(context);
+              navigator.pop();
               await widget.logout();
-              scaffoldMessenger.showSnackBar(const SnackBar(
+              if (!context.mounted) {
+                return;
+              }
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                   content: Text("Successfully logged out",
                       style: TextStyle(color: Colors.white)),
                   backgroundColor: Colors.green));
-              navigator.pop();
             },
           )
         ]));

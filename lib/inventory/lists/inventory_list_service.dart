@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
-import 'package:injectable/injectable.dart';
 import 'package:inoventory_ui/config/constants.dart';
 import 'package:inoventory_ui/inventory/items/models/item.dart';
 import 'package:inoventory_ui/inventory/lists/models/inventory_list.dart';
@@ -22,7 +21,6 @@ abstract class InventoryListService {
   }
 }
 
-@Injectable(as: InventoryListService)
 class InventoryListServiceImpl extends InventoryListService {
   final timeoutDuration = const Duration(seconds: 10);
   final Dio dio;

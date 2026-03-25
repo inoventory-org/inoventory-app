@@ -83,7 +83,7 @@ final ThemeData lightTheme = ThemeData(
  if (states.contains(MaterialState.selected)) { return const Color(0xff00acc1); }
  return null;
  }),
- ), bottomAppBarTheme: BottomAppBarTheme(color: const Color(0xffffffff)), colorScheme: const ColorScheme(
+ ), bottomAppBarTheme: BottomAppBarThemeData(color: const Color(0xffffffff)), colorScheme: const ColorScheme(
     primary: Color(0xff00bcd4),
     secondary: Colors.amber,
     surface: Color(0xffffffff),
@@ -120,6 +120,11 @@ final ThemeData darkTheme = ThemeData(
     backgroundColor: MaterialStateProperty.all<Color>(Colors.orange),
     foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
     // textStyle: MaterialStateProperty.all<TextStyle>(const TextStyle(color: Colors.white)),
+  )),
+  elevatedButtonTheme: ElevatedButtonThemeData(
+      style: ButtonStyle(
+    backgroundColor: MaterialStateProperty.all<Color>(Colors.orange),
+    foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
   )),
   buttonTheme: const ButtonThemeData(
     textTheme: ButtonTextTheme.normal,
@@ -273,7 +278,7 @@ final ThemeData darkTheme = ThemeData(
  if (states.contains(MaterialState.selected)) { return const Color(0xff64ffda); }
  return null;
  }),
- ), bottomAppBarTheme: BottomAppBarTheme(color: const Color(0xff424242)), colorScheme: const ColorScheme(
+ ), bottomAppBarTheme: BottomAppBarThemeData(color: const Color(0xff424242)), colorScheme: const ColorScheme(
     primary: Color(0xff000000),
     secondary: Colors.orangeAccent,
     surface: Color(0xff424242),

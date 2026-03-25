@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:developer' as developer;
 import 'dart:io';
 
-import 'package:injectable/injectable.dart';
 import 'package:inoventory_ui/config/constants.dart';
 import 'package:inoventory_ui/config/secrets.dart';
 import 'package:inoventory_ui/products/product_model.dart' as inoventory;
@@ -13,9 +12,8 @@ abstract class OpenFoodFactsService {
   Future<Product?> getProduct(String barcode);
 }
 
-@Injectable(as: OpenFoodFactsService)
 class OpenFoodFactsServiceImpl implements OpenFoodFactsService {
-  final User myUser = const User(userId: Constants.openFoodFactsUserName, password: Secrets.openFoodFactsToken);
+  final User myUser = User(userId: Constants.openFoodFactsUserName, password: Secrets.openFoodFactsToken);
 
   OpenFoodFactsServiceImpl() : super() {
     OpenFoodAPIConfiguration.userAgent = UserAgent(name: Constants.appName, version: Constants.version, comment: "(eilabouni.rudy@gmail.com)");

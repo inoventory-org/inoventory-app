@@ -31,7 +31,7 @@ jobs:
         uses: flutter-actions/setup-flutter@v3
         with:
           channel: stable
-          version: 3.27.4
+          version: 3.41.2
           cache: true
           cache-sdk: true
 
@@ -47,6 +47,18 @@ jobs:
 
       - name: 📦 Get dependencies
         run: flutter pub get
+
+      - name: 🧩 Create .env for build
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+          OPEN_FOOD_FACTS_TOKEN: ${{ secrets.OPEN_FOOD_FACTS_TOKEN }}
+        run: |
+          cat <<EOF > .env
+          SUPABASE_URL=${SUPABASE_URL}
+          SUPABASE_PUBLISHABLE_KEY=${SUPABASE_PUBLISHABLE_KEY}
+          OPEN_FOOD_FACTS_TOKEN=${OPEN_FOOD_FACTS_TOKEN}
+          EOF
 
       - name: 🔑 Decode Android keystore
         run: echo "${{ secrets.ANDROID_KEYSTORE_FILE_BASE64 }}" | base64 --decode > ${{ env.KEYSTORE_PATH }}
