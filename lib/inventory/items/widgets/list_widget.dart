@@ -30,15 +30,17 @@ class _InventoryListWidgetState extends State<InventoryListWidget> {
   Widget build(BuildContext context) {
     return PageStorage(
       bucket: pageBucket,
-      child: ListView(
-          key: PageStorageKey<String>(
-              widget.itemWrappers.isNotEmpty ? "inoventoryList-${widget.itemWrappers.first.listId}" : "inoventoryList-${uuid.v4().toString().substring(0, 8)}"),
-          padding: const EdgeInsets.only(bottom: 60.0),
-          children: ListTile.divideTiles(
-              context: context,
-              tiles: widget.itemWrappers.map((itemWrapper) {
-                return InventoryItemWidget(itemWrapper, widget.onDelete);
-              })).toList()),
+      child: ListView.builder(
+        key: PageStorageKey<String>(
+          widget.itemWrappers.isNotEmpty ? "inoventoryList-${widget.itemWrappers.first.listId}" : "inoventoryList-${uuid.v4().toString().substring(0, 8)}"
+        ),
+        padding: const EdgeInsets.only(top: 12.0, bottom: 80.0),
+        itemCount: widget.itemWrappers.length,
+        itemBuilder: (context, index) {
+          final itemWrapper = widget.itemWrappers[index];
+          return InventoryItemWidget(itemWrapper, widget.onDelete);
+        },
+      ),
     );
   }
 }

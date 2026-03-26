@@ -73,6 +73,10 @@ class _AddProductViewState extends State<AddProductView> {
   }
 
   Future<void> _addProduct() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
     Product product = Product(_barcodeController.text, _productNameController.text, ean: _barcodeController.text, brands: _brandController.text, weight: _weightController.text);
 
     Map<off.ImageField, File> images = {
@@ -107,21 +111,41 @@ class _AddProductViewState extends State<AddProductView> {
     scaffoldMessenger.showSnackBar(SnackBar(content: Text(text, style: style), backgroundColor: color));
   }
 
+  InputDecoration _inputDecoration(String label, IconData icon) {
+    return InputDecoration(
+      labelText: label,
+      prefixIcon: Icon(icon, color: Theme.of(context).colorScheme.primary),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(color: Theme.of(context).colorScheme.outline.withOpacity(0.3)),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(color: Theme.of(context).colorScheme.outline.withOpacity(0.3)),
+      ),
+      filled: true,
+      fillColor: Theme.of(context).colorScheme.surface,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Form(
       key: _formKey,
       child: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.all(8.0),
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              Text(
+                "Product Details",
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
               TextFormField(
                 controller: _barcodeController,
-                decoration: const InputDecoration(
-                  labelText: "Barcode",
-                  border: OutlineInputBorder(),
-                ),
+                decoration: _inputDecoration("Barcode", Icons.qr_code_scanner),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please enter a barcode';
@@ -129,12 +153,10 @@ class _AddProductViewState extends State<AddProductView> {
                   return null;
                 },
               ),
+              const SizedBox(height: 16),
               TextFormField(
                 controller: _productNameController,
-                decoration: const InputDecoration(
-                  labelText: "Product Name",
-                  border: OutlineInputBorder(),
-                ),
+                decoration: _inputDecoration("Product Name", Icons.label_outline),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please enter a product name';
@@ -142,12 +164,10 @@ class _AddProductViewState extends State<AddProductView> {
                   return null;
                 },
               ),
+              const SizedBox(height: 16),
               TextFormField(
                 controller: _brandController,
-                decoration: const InputDecoration(
-                  labelText: "Brand",
-                  border: OutlineInputBorder(),
-                ),
+                decoration: _inputDecoration("Brand", Icons.branding_watermark_outlined),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please enter a brand';
@@ -155,39 +175,62 @@ class _AddProductViewState extends State<AddProductView> {
                   return null;
                 },
               ),
+              const SizedBox(height: 16),
               TextFormField(
                 controller: _weightController,
-                decoration: const InputDecoration(
-                  labelText: "Quantity and Weight",
-                  border: OutlineInputBorder(),
-                ),
+                decoration: _inputDecoration("Quantity and Weight", Icons.scale_outlined),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please enter a quantity or weight';
                   }
-
                   return null;
                 },
               ),
+              const SizedBox(height: 32),
+              Text(
+                "Product Images",
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 16),
-              SingleChildScrollView(
-                child: Row(
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildImageCard("Front", _frontImage, off.ImageField.FRONT.toString()),
+                  _buildImageCard("Ingredients", ingredientsImage, off.ImageField.INGREDIENTS.toString()),
+                  _buildImageCard("Nutrition", _nutritionImage, off.ImageField.NUTRITION.toString()),
+                ],
+              ),
+              const SizedBox(height: 32),
+              if (isWorking) 
+                const Center(child: CircularProgressIndicator())
+              else
+                Row(
                   children: [
-                    _buildImageCard("Front Image", _frontImage, off.ImageField.FRONT.toString()),
-                    _buildImageCard("Ingredients Image", ingredientsImage, off.ImageField.INGREDIENTS.toString()),
-                    _buildImageCard("Nutrition Image", _nutritionImage, off.ImageField.NUTRITION.toString()),
+                    Expanded(
+                      child: TextButton(
+                        onPressed: widget.onCancelProductAddition,
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.all(16),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        ),
+                        child: const Text("Cancel", style: TextStyle(fontSize: 16)),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      flex: 2,
+                      child: ElevatedButton(
+                        onPressed: _addProduct,
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.all(16),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          elevation: 2,
+                        ),
+                        child: const Text("Add Product", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      ),
+                    ),
                   ],
                 ),
-              ),
-              if (isWorking) const Center(child: CircularProgressIndicator()),
-              ElevatedButton(
-                onPressed: _addProduct,
-                child: const Text("Add Product"),
-              ),
-              ElevatedButton(
-                onPressed: widget.onCancelProductAddition,
-                child: const Text("Cancel"),
-              ),
             ],
           ),
         ),
@@ -196,31 +239,53 @@ class _AddProductViewState extends State<AddProductView> {
   }
 
   Widget _buildImageCard(String imageType, XFile? image, String tag) {
-    const double height = 84;
-    const double width = 100;
-
     return Expanded(
       child: GestureDetector(
         onTap: () => _pickImage(tag),
         onLongPress: () => _clearImage(tag),
-        child: Card(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4.0),
           child: Column(
             children: [
-              image != null
-                  ? Image.file(
-                      File(image.path),
-                      height: height,
-                      width: width,
-                      fit: BoxFit.cover,
-                    )
-                  : const SizedBox(
-                      height: height,
-                      width: width,
-                      child: Icon(Icons.camera_alt),
-                    ),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Text(imageType),
+              AspectRatio(
+                aspectRatio: 1,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primary.withOpacity(0.05),
+                    borderRadius: BorderRadius.circular(16),
+                    border: image == null
+                        ? Border.all(color: Theme.of(context).colorScheme.primary.withOpacity(0.3), width: 2)
+                        : null,
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: image != null
+                      ? Image.file(
+                          File(image.path),
+                          fit: BoxFit.cover,
+                        )
+                      : Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.add_a_photo, 
+                                color: Theme.of(context).colorScheme.primary.withOpacity(0.6), 
+                                size: 28),
+                            const SizedBox(height: 8),
+                            Text("Add", 
+                                style: TextStyle(
+                                    fontSize: 12, 
+                                    fontWeight: FontWeight.bold,
+                                    color: Theme.of(context).colorScheme.primary.withOpacity(0.8))),
+                          ],
+                        ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                imageType,
+                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),
