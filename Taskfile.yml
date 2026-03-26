@@ -1,0 +1,19 @@
+version: '3'
+
+vars:
+  ANDROID_DEVICE_ID: "R3CY50G61SF"
+
+tasks:
+  default:
+    cmds:
+      - task --list
+
+  run-android:
+    desc: "Run the Flutter app on the physical Android device (SM S938B)"
+    cmds:
+      - flutter run -d {{.ANDROID_DEVICE_ID}}
+    
+  test:
+    desc: "Run all Flutter tests"
+    cmds:
+      - flutter test
