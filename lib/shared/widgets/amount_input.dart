@@ -1,7 +1,6 @@
 import 'dart:developer' as developer;
 
 import 'package:flutter/material.dart';
-import 'package:inoventory_ui/shared/widgets/container_with_box_decoration.dart';
 
 class AmountInput extends StatefulWidget {
   final int? initialAmount;
@@ -45,34 +44,58 @@ class AmountInputState extends State<AmountInput> {
 
   @override
   Widget build(BuildContext context) {
-    return ContainerWithBoxDecoration(
-      boxColor: Theme.of(context).colorScheme.primary,
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(30),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Text("Amount:", style: TextStyle(fontSize: 30)),
-          Expanded(
-            child: TextField(
-              controller: TextEditingController()..text = _amount.toString(),
-              keyboardType: TextInputType.number,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                  fontSize: 24,
-                  backgroundColor: Theme.of(context).colorScheme.secondary),
-              onChanged: (value) {
-                setState(() {
-                  _amount = int.parse(value);
-                });
-              },
-            ),
+          Text(
+            "Quantity", 
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)
           ),
-          IconButton(
-            icon: const Icon(Icons.arrow_upward),
-            onPressed: _incrementAmount,
-          ),
-          IconButton(
-            icon: const Icon(Icons.arrow_downward),
-            onPressed: _decrementAmount,
+          Row(
+            children: [
+              IconButton(
+                style: IconButton.styleFrom(
+                  backgroundColor: Theme.of(context).colorScheme.surface,
+                  elevation: 2,
+                ),
+                icon: const Icon(Icons.remove),
+                onPressed: _amount > 1 ? _decrementAmount : null,
+              ),
+              SizedBox(
+                width: 60,
+                child: TextField(
+                  controller: TextEditingController()..text = _amount.toString(),
+                  keyboardType: TextInputType.number,
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+                  decoration: const InputDecoration(
+                    border: InputBorder.none,
+                    isDense: true,
+                  ),
+                  onChanged: (value) {
+                    setState(() {
+                      _amount = int.tryParse(value) ?? _amount;
+                    });
+                  },
+                ),
+              ),
+              IconButton(
+                style: IconButton.styleFrom(
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                  elevation: 2,
+                ),
+                icon: const Icon(Icons.add),
+                onPressed: _incrementAmount,
+              ),
+            ],
           ),
         ],
       ),

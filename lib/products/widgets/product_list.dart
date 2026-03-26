@@ -21,15 +21,18 @@ class _ProductListViewState extends State<ProductListView> {
       return const CentralizedElementWithPlusButton(
           nextWidget: EditProductRoute());
     }
-    return ListView(
-        children: ListTile.divideTiles(
-            context: context,
-            tiles: widget.products.map((product) {
-              return ProductListItem(
-                  product: product,
-                  onTap: () {
-                    widget.onProductTap?.call(product);
-                  });
-            })).toList());
+    return ListView.builder(
+      padding: const EdgeInsets.only(top: 12.0, bottom: 80.0),
+      itemCount: widget.products.length,
+      itemBuilder: (context, index) {
+        final product = widget.products[index];
+        return ProductListItem(
+          product: product,
+          onTap: () {
+            widget.onProductTap?.call(product);
+          },
+        );
+      },
+    );
   }
 }
