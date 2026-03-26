@@ -45,7 +45,7 @@ class MyInventoryListsWidget extends StatelessWidget {
                       color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Icon(Icons.inventory_2_outlined, color: Theme.of(context).colorScheme.primary),
+                    child: Icon(Icons.inventory_2_outlined, color: Theme.of(context).colorScheme.secondary),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
