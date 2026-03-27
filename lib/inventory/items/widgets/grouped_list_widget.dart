@@ -37,7 +37,7 @@ class GroupedInventoryListWidget extends StatelessWidget {
                   children: ListTile.divideTiles(
                           context: context,
                           tiles: itemWrappers.map((itemWrapper) {
-                            return InventoryItemWidget(itemWrapper, onDelete);
+                            return InventoryItemWidget(itemWrapper, onDelete, onEdit: onEdit);
                           }).toList())
                       .toList());
             })).toList());

@@ -38,7 +38,7 @@ class _InventoryListWidgetState extends State<InventoryListWidget> {
         itemCount: widget.itemWrappers.length,
         itemBuilder: (context, index) {
           final itemWrapper = widget.itemWrappers[index];
-          return InventoryItemWidget(itemWrapper, widget.onDelete);
+          return InventoryItemWidget(itemWrapper, widget.onDelete, onEdit: widget.onEdit);
         },
       ),
     );
