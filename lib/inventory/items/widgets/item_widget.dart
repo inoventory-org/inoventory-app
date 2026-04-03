@@ -55,8 +55,8 @@ class InventoryItemWidget extends StatelessWidget {
           onTap: () async {
             final navigator = Navigator.of(context);
             InventoryList inventoryList = await _inventoryListService.get(itemWrapper.listId);
-            bool? changed = await navigator.push(MaterialPageRoute(builder: (context) => ItemDetailRoute(itemWrapper: itemWrapper, list: inventoryList)));
-            if (changed == true && onEdit != null) {
+            await navigator.push(MaterialPageRoute(builder: (context) => ItemDetailRoute(itemWrapper: itemWrapper, list: inventoryList)));
+            if (onEdit != null) {
               await onEdit!(itemWrapper);
             }
           },
