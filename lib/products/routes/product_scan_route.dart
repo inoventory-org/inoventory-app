@@ -106,10 +106,10 @@ class _ProductScanRouteState extends State<ProductScanRoute> {
   Widget build(BuildContext context) {
     return Scaffold(
         body: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-      Expanded(flex: 3, child: BarcodeScannerWidget(onDetect: onDetect)),
+      Expanded(flex: 4, child: BarcodeScannerWidget(onDetect: onDetect)),
       _barcode != ""
           ? Expanded(
-              flex: 7,
+              flex: 6,
               child: _productFound
                   ? AddItemView(
                       _product!,
