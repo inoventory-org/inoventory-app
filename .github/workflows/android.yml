@@ -2,9 +2,10 @@ name: Android
 
 on:
   push:
+    branches: [ "main" ]     
   pull_request:
     branches: [ "main" ]
-
+    
 jobs:
   build_android:
     runs-on: ubuntu-24.04
