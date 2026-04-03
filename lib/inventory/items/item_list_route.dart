@@ -22,8 +22,9 @@ enum SORTING { dateAdded, name, expirationDate, quantity }
 
 class ItemListRoute extends StatefulWidget {
   final InventoryList list;
+  final bool focusExpiring;
 
-  const ItemListRoute({super.key, required this.list});
+  const ItemListRoute({super.key, required this.list, this.focusExpiring = false});
 
   @override
   State<ItemListRoute> createState() => _ItemListRouteState();
@@ -42,6 +43,10 @@ class _ItemListRouteState extends State<ItemListRoute> {
   @override
   void initState() {
     super.initState();
+    if (widget.focusExpiring) {
+      _sortByKey = SORTING.expirationDate;
+      _isAsc = true;
+    }
     futureGroupedItems = _itemService.allGroupedBy(widget.list.id, "category");
     futureItems = _itemService.all(widget.list.id);
   }

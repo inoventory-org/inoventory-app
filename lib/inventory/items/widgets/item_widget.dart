@@ -32,9 +32,22 @@ class InventoryItemWidget extends StatelessWidget {
     return expirationDates.firstOrNull;
   }
 
+  bool _isExpiringSoon() {
+    final nextExpiring = _getNextExpiring();
+    if (nextExpiring == null) return false;
+    try {
+      final date = DateTime.parse(nextExpiring);
+      return date.difference(DateTime.now()).inDays <= 30;
+    } catch (_) {
+      return false;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final bool expiringSoon = _isExpiringSoon();
     return Card(
+      color: expiringSoon ? Theme.of(context).colorScheme.errorContainer : null,
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       elevation: 2,
       shadowColor: Colors.black26,
