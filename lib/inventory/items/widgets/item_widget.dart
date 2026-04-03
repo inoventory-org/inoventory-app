@@ -57,7 +57,7 @@ class InventoryItemWidget extends StatelessWidget {
         key: Key(itemWrapper.productEan),
         direction: DismissDirection.endToStart,
         background: Container(
-          color: Theme.of(context).colorScheme.error,
+          color: Theme.of(context).colorScheme.secondary,
           alignment: Alignment.centerRight,
           padding: const EdgeInsets.only(right: 24),
           child: Icon(Icons.delete_outline, color: Theme.of(context).colorScheme.onError, size: 28),
@@ -112,12 +112,12 @@ class InventoryItemWidget extends StatelessWidget {
                         const SizedBox(height: 6),
                         Row(
                           children: [
-                            Icon(Icons.event_busy, size: 14, color: Theme.of(context).colorScheme.error),
+                            Icon(Icons.event_busy, size: 14, color: Theme.of(context).colorScheme.secondary),
                             const SizedBox(width: 4),
                             Text(
                               "Expires: ${_getNextExpiring()}",
                               style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                    color: Theme.of(context).colorScheme.error,
+                                    color: Theme.of(context).colorScheme.secondary,
                                     fontWeight: FontWeight.bold,
                                   ),
                             ),
