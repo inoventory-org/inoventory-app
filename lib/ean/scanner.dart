@@ -16,13 +16,15 @@ class BarcodeScannerWidget extends StatelessWidget {
           actions: [
             IconButton(
               color: Colors.white,
-              icon: ValueListenableBuilder(
-                valueListenable: cameraController.torchState,
+              icon: ValueListenableBuilder<MobileScannerState>(
+                valueListenable: cameraController,
                 builder: (context, state, child) {
-                  switch (state) {
+                  switch (state.torchState) {
                     case TorchState.off:
+                    case TorchState.unavailable:
                       return const Icon(Icons.flash_off, color: Colors.grey);
                     case TorchState.on:
+                    case TorchState.auto:
                       return const Icon(Icons.flash_on, color: Colors.yellow);
                   }
                 },
@@ -32,13 +34,14 @@ class BarcodeScannerWidget extends StatelessWidget {
             ),
             IconButton(
               color: Colors.white,
-              icon: ValueListenableBuilder(
-                valueListenable: cameraController.cameraFacingState,
+              icon: ValueListenableBuilder<MobileScannerState>(
+                valueListenable: cameraController,
                 builder: (context, state, child) {
-                  switch (state) {
+                  switch (state.cameraDirection) {
                     case CameraFacing.front:
                       return const Icon(Icons.camera_front);
                     case CameraFacing.back:
+                    default:
                       return const Icon(Icons.camera_rear);
                   }
                 },

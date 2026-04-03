@@ -8,12 +8,14 @@ import 'package:inoventory_ui/inventory/lists/inventory_list_service.dart';
 import 'package:inoventory_ui/inventory/lists/models/inventory_list.dart';
 import 'package:inoventory_ui/products/product_model.dart';
 import 'package:inoventory_ui/products/product_service.dart';
-import 'package:inoventory_ui/products/routes/product_detail_route.dart';
+import 'package:inoventory_ui/products/product_service.dart';
+import 'package:inoventory_ui/inventory/items/routes/item_detail_route.dart';
 import 'package:inoventory_ui/shared/widgets/inoventory_network_image.dart';
 
 class InventoryItemWidget extends StatelessWidget {
   final ItemWrapper itemWrapper;
   final Future<bool> Function(ItemWrapper itemWrapper)? onDelete;
+  final Future<void> Function(ItemWrapper itemWrapper)? onEdit;
 
   final ProductService _productService = getIt<ProductService>();
   final InventoryListService _inventoryListService = getIt<InventoryListService>();
@@ -21,6 +23,7 @@ class InventoryItemWidget extends StatelessWidget {
   InventoryItemWidget(
     this.itemWrapper,
     this.onDelete, {
+    this.onEdit,
     super.key,
   });
 
@@ -52,8 +55,10 @@ class InventoryItemWidget extends StatelessWidget {
           onTap: () async {
             final navigator = Navigator.of(context);
             InventoryList inventoryList = await _inventoryListService.get(itemWrapper.listId);
-            Product product = (await _productService.search(itemWrapper.productEan)).first;
-            navigator.push(MaterialPageRoute(builder: (context) => ProductDetailRoute(product: product, list: inventoryList)));
+            await navigator.push(MaterialPageRoute(builder: (context) => ItemDetailRoute(itemWrapper: itemWrapper, list: inventoryList)));
+            if (onEdit != null) {
+              await onEdit!(itemWrapper);
+            }
           },
           child: Padding(
             padding: const EdgeInsets.all(12.0),

@@ -21,7 +21,16 @@ class _InoDrawerState extends State<InoDrawer> {
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.primary,
             ),
-            child: const SizedBox.shrink(),
+            child: Align(
+              alignment: Alignment.topLeft,
+              child: Text(
+                'Hi, User!',
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.onPrimary,
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
+            ),
           ),
           ListTile(
             title: Row(
