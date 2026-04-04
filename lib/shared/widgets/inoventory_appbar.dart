@@ -8,8 +8,18 @@ class InoventoryAppBar extends StatefulWidget implements PreferredSizeWidget {
   final Function()? onSearchButtonPressed;
   final Function()? onGroupButtonPressed;
   final SortingOptions? sortingOptions;
+  final bool isFocusExpiring;
+  final Function()? onFocusExpiringToggled;
 
-  const InoventoryAppBar({super.key, this.title = "inoventory", this.onSearchButtonPressed, this.sortingOptions, this.onGroupButtonPressed});
+  const InoventoryAppBar({
+    super.key,
+    this.title = "inoventory",
+    this.onSearchButtonPressed,
+    this.sortingOptions,
+    this.onGroupButtonPressed,
+    this.isFocusExpiring = false,
+    this.onFocusExpiringToggled,
+  });
 
   @override
   State<InoventoryAppBar> createState() => _InoventoryAppBarState();
@@ -33,6 +43,14 @@ class _InoventoryAppBarState extends State<InoventoryAppBar> {
     return AppBar(
       title: Text(widget.title),
       actions: [
+        if (widget.onFocusExpiringToggled != null)
+          IconButton(
+            icon: Icon(
+              widget.isFocusExpiring ? Icons.notification_important : Icons.notifications_none,
+              color: widget.isFocusExpiring ? Theme.of(context).colorScheme.error : null,
+            ),
+            onPressed: widget.onFocusExpiringToggled,
+          ),
         widget.onGroupButtonPressed != null ? IconButton(icon: const Icon(Icons.line_style), onPressed: widget.onGroupButtonPressed) : Container(),
         _withSorting
             ? IconButton(

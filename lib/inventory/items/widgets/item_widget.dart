@@ -16,6 +16,7 @@ class InventoryItemWidget extends StatelessWidget {
   final ItemWrapper itemWrapper;
   final Future<bool> Function(ItemWrapper itemWrapper)? onDelete;
   final Future<void> Function(ItemWrapper itemWrapper)? onEdit;
+  final bool focusExpiring;
 
   final ProductService _productService = getIt<ProductService>();
   final InventoryListService _inventoryListService = getIt<InventoryListService>();
@@ -24,6 +25,7 @@ class InventoryItemWidget extends StatelessWidget {
     this.itemWrapper,
     this.onDelete, {
     this.onEdit,
+    this.focusExpiring = false,
     super.key,
   });
 
@@ -45,7 +47,7 @@ class InventoryItemWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool expiringSoon = _isExpiringSoon();
+    final bool expiringSoon = focusExpiring && _isExpiringSoon();
     return Card(
       color: expiringSoon ? Theme.of(context).colorScheme.errorContainer : null,
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
