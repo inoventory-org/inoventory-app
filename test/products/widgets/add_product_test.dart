@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:inoventory_ui/inventory/lists/models/inventory_list.dart';
 import 'package:inoventory_ui/products/product_service.dart';
+import 'package:inoventory_ui/products/routes/product_detail_route.dart';
 import 'package:inoventory_ui/products/widgets/add_product.dart';
 import 'package:inoventory_ui/products/product_model.dart';
+import 'package:inoventory_ui/inventory/items/widgets/add_item.dart';
 import 'package:inoventory_ui/settings/off_settings_service.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -112,5 +115,20 @@ void main() {
     expect(find.text('My Brand'), findsOneWidget);
     expect(find.text('500g'), findsOneWidget);
     expect(find.byType(AddProductView), findsOneWidget);
+  });
+
+  testWidgets('AddItemView barcode opens product details', (tester) async {
+    final product = Product('1', 'Milk', ean: '123', brands: 'Brand X');
+    final list = InventoryList(1, 'Test List');
+
+    await tester.pumpWidget(TestWrapper(
+      child: AddItemView(product, list),
+    ));
+
+    await tester.tap(find.text('123'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(ProductDetailRoute), findsOneWidget);
+    expect(find.text('Milk'), findsWidgets);
   });
 }

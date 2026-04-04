@@ -16,6 +16,8 @@ import 'package:inoventory_ui/settings/off_settings_service.dart';
 
 class AddProductView extends StatefulWidget {
   String barcode;
+  final Product? initialProduct;
+  final String submitButtonLabel;
   void Function() onCancelProductAddition;
   FutureOr<void> Function(String barcode)? onSuccessfulProductAddition;
   void Function(Object e)? onErrorProductAddition;
@@ -23,6 +25,8 @@ class AddProductView extends StatefulWidget {
   AddProductView(
       {super.key,
       this.barcode = "",
+      this.initialProduct,
+      this.submitButtonLabel = "Add Product",
       required this.onCancelProductAddition,
       this.onSuccessfulProductAddition,
       this.onErrorProductAddition});
@@ -55,9 +59,11 @@ class _AddProductViewState extends State<AddProductView> {
   @override
   void initState() {
     super.initState();
-    ;
     imagePicker = ImagePicker();
-    _barcodeController.text = widget.barcode;
+    _barcodeController.text = widget.initialProduct?.ean ?? widget.barcode;
+    _productNameController.text = widget.initialProduct?.name ?? "";
+    _brandController.text = widget.initialProduct?.brands ?? "";
+    _weightController.text = widget.initialProduct?.weight ?? "";
     _loadContributionSettings();
   }
 
@@ -317,8 +323,8 @@ class _AddProductViewState extends State<AddProductView> {
                               borderRadius: BorderRadius.circular(16)),
                           elevation: 2,
                         ),
-                        child: const Text("Add Product",
-                            style: TextStyle(
+                        child: Text(widget.submitButtonLabel,
+                            style: const TextStyle(
                                 fontSize: 16, fontWeight: FontWeight.bold)),
                       ),
                     ),

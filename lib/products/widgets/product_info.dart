@@ -3,8 +3,10 @@ import 'package:inoventory_ui/products/product_model.dart';
 
 class ProductInfo extends StatelessWidget {
   final Product product;
+  final VoidCallback? onBarcodeTap;
 
-  const ProductInfo({Key? key, required this.product}) : super(key: key);
+  const ProductInfo({Key? key, required this.product, this.onBarcodeTap})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -22,32 +24,44 @@ class ProductInfo extends StatelessWidget {
           Text(
             product.brands!,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                  color:
+                      Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                 ),
           ),
         const SizedBox(height: 16),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onBarcodeTap,
             borderRadius: BorderRadius.circular(12),
-          ),
-          child: Row(
-            children: [
-              Icon(Icons.qr_code_2, color: Theme.of(context).colorScheme.primary),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  product.ean,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        letterSpacing: 2.0,
-                        fontWeight: FontWeight.bold,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                  overflow: TextOverflow.ellipsis,
-                ),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
               ),
-            ],
+              child: Row(
+                children: [
+                  Icon(Icons.qr_code_2,
+                      color: Theme.of(context).colorScheme.primary),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      product.ean,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            letterSpacing: 2.0,
+                            fontWeight: FontWeight.bold,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (onBarcodeTap != null)
+                    Icon(Icons.open_in_new,
+                        color: Theme.of(context).colorScheme.primary),
+                ],
+              ),
+            ),
           ),
         ),
         const SizedBox(height: 24),
@@ -65,9 +79,13 @@ class ProductInfo extends StatelessWidget {
             children: product.tags!
                 .map((tag) => Chip(
                       label: Text(tag, style: const TextStyle(fontSize: 13)),
-                      backgroundColor: Theme.of(context).colorScheme.secondary.withOpacity(0.2),
+                      backgroundColor: Theme.of(context)
+                          .colorScheme
+                          .secondary
+                          .withOpacity(0.2),
                       side: BorderSide.none,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20)),
                     ))
                 .toList(),
           ),

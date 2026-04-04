@@ -6,6 +6,7 @@ import 'package:inoventory_ui/inventory/items/item_service.dart';
 import 'package:inoventory_ui/inventory/items/models/item.dart';
 import 'package:inoventory_ui/inventory/lists/models/inventory_list.dart';
 import 'package:inoventory_ui/products/product_model.dart';
+import 'package:inoventory_ui/products/routes/product_detail_route.dart';
 import 'package:inoventory_ui/products/widgets/product_info.dart';
 import 'package:inoventory_ui/shared/widgets/amount_input.dart';
 import 'package:inoventory_ui/shared/widgets/expiry_date_input.dart';
@@ -24,7 +25,8 @@ class AddItemView extends StatefulWidget {
   // A function that is called after adding items to the list. Can be used for example to pop elements from the navigator to return to the caller
   final void Function()? postAddCallback;
 
-  const AddItemView(this.product, this.list, {super.key, this.postAddCallback, this.onSuccess, this.onError});
+  const AddItemView(this.product, this.list,
+      {super.key, this.postAddCallback, this.onSuccess, this.onError});
 
   @override
   State<AddItemView> createState() => _AddItemViewState();
@@ -38,7 +40,8 @@ class _AddItemViewState extends State<AddItemView> {
   @override
   void initState() {
     super.initState();
-    _items.add(Item(_amount, widget.list.id, widget.product.ean, widget.product.name));
+    _items.add(
+        Item(_amount, widget.list.id, widget.product.ean, widget.product.name));
     _amount++;
   }
 
@@ -47,7 +50,9 @@ class _AddItemViewState extends State<AddItemView> {
       String? lastExpiryDate;
       lastExpiryDate = _items[_amount - 1].expirationDate;
 
-      _items.add(Item(_amount, widget.list.id, widget.product.ean, widget.product.name, expirationDate: lastExpiryDate));
+      _items.add(Item(
+          _amount, widget.list.id, widget.product.ean, widget.product.name,
+          expirationDate: lastExpiryDate));
       _amount++;
     });
   }
@@ -83,9 +88,23 @@ class _AddItemViewState extends State<AddItemView> {
         child: Padding(
           padding: const EdgeInsets.all(12.0),
           child: Column(children: [
-            if (widget.product.imageUrl != null) InoventoryNetworkImage(url: widget.product.imageUrl!),
-            ProductInfo(product: widget.product),
-            AmountInput(onIncrease: _increaseAmount, onDecrease: _decreaseAmount),
+            if (widget.product.imageUrl != null)
+              InoventoryNetworkImage(url: widget.product.imageUrl!),
+            ProductInfo(
+              product: widget.product,
+              onBarcodeTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => ProductDetailRoute(
+                      product: widget.product,
+                      list: widget.list,
+                    ),
+                  ),
+                );
+              },
+            ),
+            AmountInput(
+                onIncrease: _increaseAmount, onDecrease: _decreaseAmount),
             for (var item in _items)
               ExpiryDateEntry(
                   initialDate: item.expirationDate,
@@ -95,7 +114,8 @@ class _AddItemViewState extends State<AddItemView> {
           ]),
         ),
       ),
-      floatingActionButton: FloatingActionButton(onPressed: onAddToListPressed, child: const Icon(Icons.bookmark)),
+      floatingActionButton: FloatingActionButton(
+          onPressed: onAddToListPressed, child: const Icon(Icons.bookmark)),
     );
   }
 }
