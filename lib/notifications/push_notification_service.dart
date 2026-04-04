@@ -1,6 +1,7 @@
 import 'dart:developer' as developer;
 import 'package:dio/dio.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import '../config/constants.dart';
 
@@ -10,6 +11,7 @@ class PushNotificationService {
 
   final Dio _dio;
   final FirebaseMessaging _fcm = FirebaseMessaging.instance;
+  final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
 
   // The UI will set this callback so the service doesn't need to know about Flutter routing
   Function(String listId)? onListNotificationTapped;
@@ -19,6 +21,29 @@ class PushNotificationService {
   Future<void> initialize() async {
     // Request permissions from the user
     await _fcm.requestPermission(provisional: true);
+
+    // Setup local notifications for Android foreground
+    const initializationSettingsAndroid = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const initializationSettingsIOS = DarwinInitializationSettings();
+    const initializationSettings = InitializationSettings(
+      android: initializationSettingsAndroid,
+      iOS: initializationSettingsIOS,
+    );
+    await _localNotifications.initialize(
+      settings: initializationSettings,
+      onDidReceiveNotificationResponse: (NotificationResponse response) {
+        if (response.payload != null) {
+          _handleLocalNotificationTap(response.payload!);
+        }
+      },
+    );
+
+    // Enable foreground notifications for iOS
+    await _fcm.setForegroundNotificationPresentationOptions(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
 
     // Listen for token refreshes (in case Google rotates the device token)
     _fcm.onTokenRefresh.listen(_syncTokenToBackend);
@@ -52,8 +77,28 @@ class PushNotificationService {
     // A. App is open in the FOREGROUND
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       developer.log('Received foreground message: ${message.notification?.title}');
-      // Note: If you want an in-app banner to appear while the app is open, 
-      // you would trigger a local notification or a global Snackbar here.
+      
+      final notification = message.notification;
+      final android = message.notification?.android;
+
+      if (notification != null && android != null) {
+        _localNotifications.show(
+          id: notification.hashCode,
+          title: notification.title,
+          body: notification.body,
+          notificationDetails: const NotificationDetails(
+            android: AndroidNotificationDetails(
+              'expiring_items_channel', 
+              'Expiring Items Notifications',
+              channelDescription: 'Notifications for items soon to expire',
+              importance: Importance.max,
+              priority: Priority.high,
+              playSound: true,
+            ),
+          ),
+          payload: message.data['listId']?.toString(),
+        );
+      }
     });
 
     // B. App is in BACKGROUND and user taps the notification
@@ -73,13 +118,21 @@ class PushNotificationService {
   void _handleNotificationTap(RemoteMessage message) {
     // Extract the listId that backend attached via .putData("listId", ...)
     if (message.data.containsKey('listId')) {
-      final listId = message.data['listId'];
+      final listId = message.data['listId']?.toString();
       
-      if (onListNotificationTapped != null) {
+      if (listId != null && onListNotificationTapped != null) {
          onListNotificationTapped!(listId);
       } else {
          developer.log("Warning: Notification tapped, but no navigation callback was registered by the UI.");
       }
+    }
+  }
+
+  void _handleLocalNotificationTap(String listId) {
+    if (onListNotificationTapped != null) {
+      onListNotificationTapped!(listId);
+    } else {
+      developer.log("Warning: Local Notification tapped but no navigation callback was registered by the UI.");
     }
   }
 }
