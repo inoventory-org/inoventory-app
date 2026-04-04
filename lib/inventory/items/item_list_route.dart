@@ -47,30 +47,33 @@ class _ItemListRouteState extends State<ItemListRoute> {
   @override
   void initState() {
     super.initState();
-    _focusExpiring = widget.focusExpiring;
-    if (_focusExpiring) {
+    // Apply notification-driven focus immediately for a snappy UI, before prefs load.
+    if (widget.focusExpiring) {
+      _focusExpiring = true;
       _sortByKey = SORTING.expirationDate;
       _isAsc = true;
     }
     futureGroupedItems = _itemService.allGroupedBy(widget.list.id, "category");
     futureItems = _itemService.all(widget.list.id);
-
-    if (!widget.focusExpiring) {
-      _loadFocusPreference();
-    } else {
-      _saveFocusPreference(true);
-    }
+    // Always load the stored preference — never save from here.
+    // Opening via a notification must not permanently override the user's setting.
+    _loadFocusPreference();
   }
 
   Future<void> _loadFocusPreference() async {
     final value = await _storage.read(key: "list_${widget.list.id}_focusExpiring");
-    if (value == 'true' && mounted) {
-      setState(() {
-        _focusExpiring = true;
+    if (!mounted) return;
+    final storedFocus = value == 'true';
+    // Merge: show focus expiring if the user has it stored OR this session was
+    // triggered by a notification. Stored preference is never written here.
+    final sessionFocus = storedFocus || widget.focusExpiring;
+    setState(() {
+      _focusExpiring = sessionFocus;
+      if (sessionFocus) {
         _sortByKey = SORTING.expirationDate;
         _isAsc = true;
-      });
-    }
+      }
+    });
   }
 
   Future<void> _saveFocusPreference(bool value) async {
