@@ -273,14 +273,16 @@ class _ItemListRouteState extends State<ItemListRoute> {
     int direction = isAsc ? 1 : -1;
     snapshot.data?.sort((wrapper1, wrapper2) {
       switch (sortByKey) {
+        case SORTING.dateAdded:
+          final id1 = wrapper1.items.map((e) => e.id).reduce((a, b) => a < b ? a : b);
+          final id2 = wrapper2.items.map((e) => e.id).reduce((a, b) => a < b ? a : b);
+          return direction * id1.compareTo(id2);
         case SORTING.name:
           return direction * wrapper1.displayName.compareTo(wrapper2.displayName);
         case SORTING.expirationDate:
           return compareByExpirationDates(wrapper1, wrapper2, isAsc);
         case SORTING.quantity:
           return direction * wrapper1.items.length.compareTo(wrapper2.items.length);
-        default:
-          return 0; // Default return value
       }
     });
   }
