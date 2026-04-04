@@ -76,4 +76,41 @@ void main() {
       ),
     ).called(1);
   });
+
+  testWidgets('AddProductView keeps entered values after submission error',
+      (tester) async {
+    when(
+      () => mockProductService.upsertToOpenFoodFacts(
+        any(),
+        any(),
+        language: any(named: 'language'),
+        region: any(named: 'region'),
+      ),
+    ).thenThrow(Exception('timeout while uploading'));
+
+    await tester.pumpWidget(TestWrapper(
+      child: Scaffold(
+        body: AddProductView(
+          barcode: '404',
+          onCancelProductAddition: () {},
+        ),
+      ),
+    ));
+
+    await tester.enterText(
+        find.byType(TextFormField).at(1), 'My Awesome Product');
+    await tester.enterText(find.byType(TextFormField).at(2), 'My Brand');
+    await tester.enterText(find.byType(TextFormField).at(3), '500g');
+
+    await tester
+        .ensureVisible(find.widgetWithText(ElevatedButton, 'Add Product'));
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Add Product'));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('timeout while uploading'), findsOneWidget);
+    expect(find.text('My Awesome Product'), findsOneWidget);
+    expect(find.text('My Brand'), findsOneWidget);
+    expect(find.text('500g'), findsOneWidget);
+    expect(find.byType(AddProductView), findsOneWidget);
+  });
 }

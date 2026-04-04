@@ -22,15 +22,15 @@ void main() {
     mockProductService = MockProductService();
     mockItemService = MockItemService();
     setupMockGetIt(
-      mockProductService: mockProductService, 
-      mockItemService: mockItemService
-    );
+        mockProductService: mockProductService,
+        mockItemService: mockItemService);
 
     dummyList = InventoryList(1, 'Test List');
     registerFallbackValue(Item(0, 1, '123', 'Milk'));
   });
 
-  testWidgets('ProductScanRoute launches AddItemView for known product', (tester) async {
+  testWidgets('ProductScanRoute launches AddItemView for known product',
+      (tester) async {
     final product = Product('123', 'Milk', ean: '123', brands: 'Brand X');
 
     when(() => mockProductService.search('123', fresh: any(named: 'fresh')))
@@ -41,13 +41,14 @@ void main() {
     ));
 
     // Get the scanner widget and manually trigger the scan event since camera won't run headless
-    final scannerWidget = tester.widget<BarcodeScannerWidget>(find.byType(BarcodeScannerWidget));
-    
+    final scannerWidget =
+        tester.widget<BarcodeScannerWidget>(find.byType(BarcodeScannerWidget));
+
     // Create fake barcode capture
     final fakeBarcode = Barcode(rawValue: '123');
     final fakeCapture = BarcodeCapture(barcodes: [fakeBarcode]);
 
-    await scannerWidget.onDetect(fakeCapture);
+    scannerWidget.onDetect(fakeCapture);
     await tester.pumpAndSettle();
 
     // Valid product means we show AddItemView
@@ -55,7 +56,7 @@ void main() {
     expect(find.byType(AddProductView), findsNothing);
   });
 
-  testWidgets('ProductScanRoute launches AddProductView for unknown product', (tester) async {
+  testWidgets('ProductScanRoute prompts for unknown product', (tester) async {
     when(() => mockProductService.search('404', fresh: any(named: 'fresh')))
         .thenAnswer((_) async => []);
 
@@ -63,16 +64,21 @@ void main() {
       child: ProductScanRoute(inventoryList: dummyList),
     ));
 
-    final scannerWidget = tester.widget<BarcodeScannerWidget>(find.byType(BarcodeScannerWidget));
-    
+    final scannerWidget =
+        tester.widget<BarcodeScannerWidget>(find.byType(BarcodeScannerWidget));
+
     final fakeBarcode = Barcode(rawValue: '404');
     final fakeCapture = BarcodeCapture(barcodes: [fakeBarcode]);
 
-    await scannerWidget.onDetect(fakeCapture);
+    scannerWidget.onDetect(fakeCapture);
     await tester.pumpAndSettle();
 
-    // Unknown product means we show AddProductView
-    expect(find.byType(AddProductView), findsOneWidget);
+    expect(find.text('Unknown Barcode'), findsOneWidget);
     expect(find.byType(AddItemView), findsNothing);
+
+    await tester.tap(find.widgetWithText(TextButton, 'No'));
+    await tester.pumpAndSettle();
+    expect(find.text('Unknown Barcode'), findsNothing);
+    expect(find.byType(AddProductView), findsNothing);
   });
 }

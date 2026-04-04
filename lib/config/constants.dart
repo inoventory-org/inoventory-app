@@ -7,7 +7,13 @@ abstract class Constants {
   static const appName = "inoventory";
   static const version = "0.0.1";
   // static const inoventoryBackendUrl = "https://www.inoventory.railabouni.fra.ics.inovex.io";
-  static String inoventoryBackendUrl = dotenv.env["BACKEND_URL"]  ?? "https://inoventory.onrender.com";
+  static String get inoventoryBackendUrl {
+    try {
+      return dotenv.env["BACKEND_URL"] ?? "https://inoventory.onrender.com";
+    } catch (_) {
+      return "https://inoventory.onrender.com";
+    }
+  }
 
   static const darkMode = true;
   static const openFoodFactsUserName = "inoventory";

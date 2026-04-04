@@ -36,7 +36,7 @@ abstract class ProductService {
 
 class ProductServiceImpl implements ProductService {
   final backendUrl = Constants.inoventoryBackendUrl;
-  final timeout = const Duration(seconds: 30);
+  final timeout = const Duration(minutes: 3);
   final Dio dio;
 
   ProductServiceImpl(this.dio);

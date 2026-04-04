@@ -47,6 +47,7 @@ class _AddProductViewState extends State<AddProductView> {
   XFile? ingredientsImage;
   XFile? _nutritionImage;
   bool isWorking = false;
+  String? _errorMessage;
 
   String _region = OffSettingsService.defaultRegion;
   String _language = OffSettingsService.defaultLanguage;
@@ -125,6 +126,7 @@ class _AddProductViewState extends State<AddProductView> {
     try {
       setState(() {
         isWorking = true;
+        _errorMessage = null;
       });
 
       // Submit via Inoventory backend → backend forwards to OpenFoodFacts
@@ -158,6 +160,10 @@ class _AddProductViewState extends State<AddProductView> {
     } catch (e) {
       developer.log("An error occurred while adding a new product...",
           error: e);
+      final errorMessage = e.toString();
+      setState(() {
+        _errorMessage = errorMessage;
+      });
       _showSnackbar("An error occurred while adding a new product", Colors.red);
       widget.onErrorProductAddition?.call(e);
     }
@@ -258,8 +264,33 @@ class _AddProductViewState extends State<AddProductView> {
                 ],
               ),
               const SizedBox(height: 32),
+              if (_errorMessage != null) ...[
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.errorContainer,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    _errorMessage!,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onErrorContainer,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
               if (isWorking)
-                const Center(child: CircularProgressIndicator())
+                Column(
+                  children: const [
+                    CircularProgressIndicator(),
+                    SizedBox(height: 12),
+                    Text(
+                      'Submitting to Open Food Facts. This can take a while.',
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                )
               else
                 Row(
                   children: [
