@@ -37,7 +37,7 @@ class ProductInfo extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                color: Theme.of(context).colorScheme.secondary.withOpacity(0.8),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
