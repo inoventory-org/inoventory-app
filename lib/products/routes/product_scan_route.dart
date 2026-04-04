@@ -39,10 +39,24 @@ class _ProductScanRouteState extends State<ProductScanRoute> {
         _getSnackBar("Failed to lookup barcode $barcode", Colors.red));
   }
 
-  void onSuccessfulProductAddition(String barcode) {
-    setState(() {
-      _barcode = "";
-    });
+  Future<void> onSuccessfulProductAddition(String barcode) async {
+    try {
+      final products = await _productService.search(barcode, fresh: true);
+      if (!mounted) return;
+      setState(() {
+        _barcode = barcode;
+        if (products.isNotEmpty) {
+          _product = products.last;
+          _productFound = true;
+        } else {
+          _product = null;
+          _productFound = false;
+        }
+      });
+    } catch (e) {
+      onErrorProductAddition(e);
+      return;
+    }
     final scaffoldMessenger = ScaffoldMessenger.of(context);
     scaffoldMessenger.clearSnackBars();
     scaffoldMessenger.showSnackBar(
@@ -82,7 +96,8 @@ class _ProductScanRouteState extends State<ProductScanRoute> {
 
       List<Product> products = [];
       try {
-        products = await _productService.search(code, fresh: Globals.forceFetchProducts);
+        products = await _productService.search(code,
+            fresh: Globals.forceFetchProducts);
       } catch (e) {
         onFailedToLookupBarcode(code);
         developer.log("An error occurred while looking up barcode $code",

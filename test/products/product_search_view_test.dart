@@ -21,7 +21,7 @@ class FakeProductService implements ProductService {
   ];
 
   @override
-  Future<List<Product>> search(String query,  { bool fresh = false }) async {
+  Future<List<Product>> search(String query, {bool fresh = false}) async {
     return _products.where((p) => p.ean == query).toList();
   }
 
@@ -53,6 +53,7 @@ class FakeProductService implements ProductService {
   Future<void> upsertToOpenFoodFacts(
     Product product,
     Map<String, File> images, {
+    String language = 'en',
     String region = 'world',
   }) async {}
 }

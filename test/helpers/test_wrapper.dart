@@ -4,6 +4,7 @@ import 'package:inoventory_ui/inventory/items/item_service.dart';
 import 'package:inoventory_ui/inventory/lists/inventory_list_service.dart';
 import 'package:inoventory_ui/products/open_food_facts_service.dart';
 import 'package:inoventory_ui/products/product_service.dart';
+import 'package:inoventory_ui/settings/off_settings_service.dart';
 import 'package:mocktail/mocktail.dart';
 import 'mocks.dart';
 
@@ -26,7 +27,16 @@ void setupMockGetIt({
   MockInventoryListService? mockInventoryListService,
   MockProductService? mockProductService,
   MockOpenFoodFactsService? mockOpenFoodFactsService,
+  MockOffSettingsService? mockOffSettingsService,
 }) {
+  final settingsService = mockOffSettingsService ?? MockOffSettingsService();
+  when(() => settingsService.loadContributionSettings()).thenAnswer(
+    (_) async => const OffContributionSettings(
+      region: OffSettingsService.defaultRegion,
+      language: OffSettingsService.defaultLanguage,
+    ),
+  );
+
   GetIt.I.reset();
   GetIt.I.registerSingleton<ItemService>(mockItemService ?? MockItemService());
   GetIt.I.registerSingleton<InventoryListService>(
@@ -35,4 +45,5 @@ void setupMockGetIt({
       mockProductService ?? MockProductService());
   GetIt.I.registerSingleton<OpenFoodFactsService>(
       mockOpenFoodFactsService ?? MockOpenFoodFactsService());
+  GetIt.I.registerSingleton<OffSettingsService>(settingsService);
 }

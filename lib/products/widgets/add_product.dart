@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:developer' as developer;
 import 'dart:io';
 
@@ -6,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:inoventory_ui/config/injection.dart';
 import 'package:inoventory_ui/products/product_model.dart';
 import 'package:inoventory_ui/products/product_service.dart';
+import 'package:inoventory_ui/settings/off_settings_service.dart';
 
 // Note: the OpenFoodFacts Dart SDK implementation is kept below, commented out,
 // so it can be reactivated easily if needed in the future.
@@ -15,10 +17,15 @@ import 'package:inoventory_ui/products/product_service.dart';
 class AddProductView extends StatefulWidget {
   String barcode;
   void Function() onCancelProductAddition;
-  void Function(String barcode)? onSuccessfulProductAddition;
+  FutureOr<void> Function(String barcode)? onSuccessfulProductAddition;
   void Function(Object e)? onErrorProductAddition;
 
-  AddProductView({super.key, this.barcode = "", required this.onCancelProductAddition, this.onSuccessfulProductAddition, this.onErrorProductAddition});
+  AddProductView(
+      {super.key,
+      this.barcode = "",
+      required this.onCancelProductAddition,
+      this.onSuccessfulProductAddition,
+      this.onErrorProductAddition});
 
   @override
   _AddProductViewState createState() => _AddProductViewState();
@@ -26,6 +33,7 @@ class AddProductView extends StatefulWidget {
 
 class _AddProductViewState extends State<AddProductView> {
   final ProductService _productService = getIt<ProductService>();
+  final OffSettingsService _settingsService = getIt<OffSettingsService>();
   // Commented out: direct OFF SDK integration (kept for future reference)
   // final OpenFoodFactsService _oFFService = getIt<OpenFoodFactsService>();
 
@@ -40,19 +48,31 @@ class _AddProductViewState extends State<AddProductView> {
   XFile? _nutritionImage;
   bool isWorking = false;
 
-  // Optional: allow overriding region (future enhancement)
-  final String _region = 'world';
+  String _region = OffSettingsService.defaultRegion;
+  String _language = OffSettingsService.defaultLanguage;
 
   @override
   void initState() {
-    super.initState();;
+    super.initState();
+    ;
     imagePicker = ImagePicker();
     _barcodeController.text = widget.barcode;
+    _loadContributionSettings();
+  }
+
+  Future<void> _loadContributionSettings() async {
+    final settings = await _settingsService.loadContributionSettings();
+    if (!mounted) return;
+    setState(() {
+      _region = settings.region;
+      _language = settings.language;
+    });
   }
 
   Future<void> _pickImage(String imageType) async {
     try {
-      final image = await imagePicker.pickImage(source: ImageSource.camera, imageQuality: 50);
+      final image = await imagePicker.pickImage(
+          source: ImageSource.camera, imageQuality: 50);
       if (image != null) {
         setState(() {
           if (imageType == 'nutrition') {
@@ -63,7 +83,8 @@ class _AddProductViewState extends State<AddProductView> {
             _frontImage = image;
           }
         });
-        _showSnackbar("Long press on the added image to clear it", Colors.green);
+        _showSnackbar(
+            "Long press on the added image to clear it", Colors.green);
       }
     } catch (error) {
       developer.log("error: $error");
@@ -102,10 +123,17 @@ class _AddProductViewState extends State<AddProductView> {
     };
 
     try {
-      setState(() { isWorking = true; });
+      setState(() {
+        isWorking = true;
+      });
 
       // Submit via Inoventory backend → backend forwards to OpenFoodFacts
-      await _productService.upsertToOpenFoodFacts(product, images, region: _region);
+      await _productService.upsertToOpenFoodFacts(
+        product,
+        images,
+        language: _language,
+        region: _region,
+      );
 
       // ── Alternative: submit directly to OpenFoodFacts using the OFF Dart SDK ──────────────────
       // (Kept commented out for easy reactivation if the backend-proxy approach is abandoned.)
@@ -126,20 +154,24 @@ class _AddProductViewState extends State<AddProductView> {
       // ─────────────────────────────────────────────────────────────────────────────────────────
 
       _showSnackbar("Product added successfully", Colors.green);
-      widget.onSuccessfulProductAddition?.call(product.ean);
+      await widget.onSuccessfulProductAddition?.call(product.ean);
     } catch (e) {
-      developer.log("An error occurred while adding a new product...", error: e);
+      developer.log("An error occurred while adding a new product...",
+          error: e);
       _showSnackbar("An error occurred while adding a new product", Colors.red);
       widget.onErrorProductAddition?.call(e);
     }
-    setState(() { isWorking = false; });
+    setState(() {
+      isWorking = false;
+    });
   }
 
   void _showSnackbar(String text, Color color) {
     final scaffoldMessenger = ScaffoldMessenger.of(context);
     scaffoldMessenger.clearSnackBars();
     TextStyle style = const TextStyle(color: Colors.white);
-    scaffoldMessenger.showSnackBar(SnackBar(content: Text(text, style: style), backgroundColor: color));
+    scaffoldMessenger.showSnackBar(
+        SnackBar(content: Text(text, style: style), backgroundColor: color));
   }
 
   InputDecoration _inputDecoration(String label, IconData icon) {
@@ -148,11 +180,13 @@ class _AddProductViewState extends State<AddProductView> {
       prefixIcon: Icon(icon, color: Theme.of(context).colorScheme.primary),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide(color: Theme.of(context).colorScheme.outline.withOpacity(0.3)),
+        borderSide: BorderSide(
+            color: Theme.of(context).colorScheme.outline.withOpacity(0.3)),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide(color: Theme.of(context).colorScheme.outline.withOpacity(0.3)),
+        borderSide: BorderSide(
+            color: Theme.of(context).colorScheme.outline.withOpacity(0.3)),
       ),
       filled: true,
       fillColor: Theme.of(context).colorScheme.surface,
@@ -171,7 +205,10 @@ class _AddProductViewState extends State<AddProductView> {
             children: [
               Text(
                 "Product Details",
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+                style: Theme.of(context)
+                    .textTheme
+                    .headlineSmall
+                    ?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 16),
               TextFormField(
@@ -187,35 +224,36 @@ class _AddProductViewState extends State<AddProductView> {
               const SizedBox(height: 16),
               TextFormField(
                 controller: _productNameController,
-                decoration: _inputDecoration("Product Name", Icons.label_outline),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter a product name';
-                  }
-                  return null;
-                },
+                decoration:
+                    _inputDecoration("Product Name", Icons.label_outline),
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _brandController,
-                decoration: _inputDecoration("Brand", Icons.branding_watermark_outlined),
+                decoration: _inputDecoration(
+                    "Brand", Icons.branding_watermark_outlined),
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _weightController,
-                decoration: _inputDecoration("Quantity and Weight", Icons.scale_outlined),
+                decoration: _inputDecoration(
+                    "Quantity and Weight", Icons.scale_outlined),
               ),
               const SizedBox(height: 32),
               Text(
                 "Product Images",
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                style: Theme.of(context)
+                    .textTheme
+                    .titleLarge
+                    ?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 16),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildImageCard("Front", _frontImage, 'front'),
-                  _buildImageCard("Ingredients", ingredientsImage, 'ingredients'),
+                  _buildImageCard(
+                      "Ingredients", ingredientsImage, 'ingredients'),
                   _buildImageCard("Nutrition", _nutritionImage, 'nutrition'),
                 ],
               ),
@@ -230,9 +268,11 @@ class _AddProductViewState extends State<AddProductView> {
                         onPressed: widget.onCancelProductAddition,
                         style: TextButton.styleFrom(
                           padding: const EdgeInsets.all(16),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16)),
                         ),
-                        child: const Text("Cancel", style: TextStyle(fontSize: 16)),
+                        child: const Text("Cancel",
+                            style: TextStyle(fontSize: 16)),
                       ),
                     ),
                     const SizedBox(width: 16),
@@ -242,10 +282,13 @@ class _AddProductViewState extends State<AddProductView> {
                         onPressed: _addProduct,
                         style: ElevatedButton.styleFrom(
                           padding: const EdgeInsets.all(16),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16)),
                           elevation: 2,
                         ),
-                        child: const Text("Add Product", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        child: const Text("Add Product",
+                            style: TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.bold)),
                       ),
                     ),
                   ],
@@ -270,10 +313,16 @@ class _AddProductViewState extends State<AddProductView> {
                 aspectRatio: 1,
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primary.withOpacity(0.05),
+                    color:
+                        Theme.of(context).colorScheme.primary.withOpacity(0.05),
                     borderRadius: BorderRadius.circular(16),
                     border: image == null
-                        ? Border.all(color: Theme.of(context).colorScheme.primary.withOpacity(0.3), width: 2)
+                        ? Border.all(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .primary
+                                .withOpacity(0.3),
+                            width: 2)
                         : null,
                   ),
                   clipBehavior: Clip.antiAlias,
@@ -286,14 +335,20 @@ class _AddProductViewState extends State<AddProductView> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(Icons.add_a_photo,
-                                color: Theme.of(context).colorScheme.primary.withOpacity(0.6),
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .primary
+                                    .withOpacity(0.6),
                                 size: 28),
                             const SizedBox(height: 8),
                             Text("Add",
                                 style: TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.bold,
-                                    color: Theme.of(context).colorScheme.primary.withOpacity(0.8))),
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .primary
+                                        .withOpacity(0.8))),
                           ],
                         ),
                 ),
@@ -301,7 +356,8 @@ class _AddProductViewState extends State<AddProductView> {
               const SizedBox(height: 8),
               Text(
                 imageType,
-                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                style:
+                    const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
                 textAlign: TextAlign.center,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,

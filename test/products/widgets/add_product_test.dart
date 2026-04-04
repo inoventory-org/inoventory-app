@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:inoventory_ui/products/product_service.dart';
 import 'package:inoventory_ui/products/widgets/add_product.dart';
 import 'package:inoventory_ui/products/product_model.dart';
+import 'package:inoventory_ui/settings/off_settings_service.dart';
 import 'package:mocktail/mocktail.dart';
 
 import '../../helpers/mocks.dart';
@@ -10,10 +11,19 @@ import '../../helpers/test_wrapper.dart';
 
 void main() {
   late MockProductService mockProductService;
+  late MockOffSettingsService mockOffSettingsService;
 
   setUp(() {
     mockProductService = MockProductService();
-    setupMockGetIt(mockProductService: mockProductService);
+    mockOffSettingsService = MockOffSettingsService();
+    when(() => mockOffSettingsService.loadContributionSettings()).thenAnswer(
+      (_) async =>
+          const OffContributionSettings(region: 'world', language: 'en'),
+    );
+    setupMockGetIt(
+      mockProductService: mockProductService,
+      mockOffSettingsService: mockOffSettingsService,
+    );
 
     registerFallbackValue(Product('1', 'Test', ean: '1'));
   });
@@ -23,6 +33,7 @@ void main() {
       () => mockProductService.upsertToOpenFoodFacts(
         any(),
         any(),
+        language: any(named: 'language'),
         region: any(named: 'region'),
       ),
     ).thenAnswer((_) async {});
@@ -36,17 +47,12 @@ void main() {
       ),
     ));
 
-    // Press Add Product immediately
-    await tester
-        .ensureVisible(find.widgetWithText(ElevatedButton, 'Add Product'));
-    await tester.tap(find.widgetWithText(ElevatedButton, 'Add Product'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Please enter a product name'), findsOneWidget);
+    expect(find.text('Please enter a product name'), findsNothing);
     expect(find.text('Please enter a brand'), findsNothing);
     expect(find.text('Please enter a quantity or weight'), findsNothing);
 
-    await tester.enterText(find.byType(TextFormField).at(1), 'My Awesome Product');
+    await tester.enterText(
+        find.byType(TextFormField).at(1), 'My Awesome Product');
     await tester.enterText(find.byType(TextFormField).at(2), 'My Brand');
     await tester.enterText(find.byType(TextFormField).at(3), '500g');
 
@@ -65,6 +71,7 @@ void main() {
               .having((p) => p.weight, 'weight', '500g'),
         ),
         any(that: isEmpty),
+        language: 'en',
         region: 'world',
       ),
     ).called(1);

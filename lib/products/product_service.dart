@@ -29,6 +29,7 @@ abstract class ProductService {
   Future<void> upsertToOpenFoodFacts(
     Product product,
     Map<String, File> images, {
+    String language = 'en',
     String region = 'world',
   });
 }
@@ -48,7 +49,8 @@ class ProductServiceImpl implements ProductService {
 
   @override
   Future<List<Product>> all() async {
-    final response = await dio.get("$backendUrl/api/v1/products").timeout(timeout);
+    final response =
+        await dio.get("$backendUrl/api/v1/products").timeout(timeout);
     if (response.statusCode == 200) {
       // If the server did return a 200 OK response,
       // then parse the JSON.
@@ -96,6 +98,7 @@ class ProductServiceImpl implements ProductService {
   Future<void> upsertToOpenFoodFacts(
     Product product,
     Map<String, File> images, {
+    String language = 'en',
     String region = 'world',
   }) async {
     final formData = FormData();
@@ -110,6 +113,7 @@ class ProductServiceImpl implements ProductService {
     if (product.weight != null && product.weight!.isNotEmpty) {
       formData.fields.add(MapEntry('weight', product.weight!));
     }
+    formData.fields.add(MapEntry('language', language));
     formData.fields.add(MapEntry('region', region));
 
     // Add image files
@@ -125,10 +129,12 @@ class ProductServiceImpl implements ProductService {
       ));
     }
 
-    final response = await dio.put(
-      '$backendUrl/api/v1/products/${product.ean}',
-      data: formData,
-    ).timeout(timeout);
+    final response = await dio
+        .put(
+          '$backendUrl/api/v1/products/${product.ean}',
+          data: formData,
+        )
+        .timeout(timeout);
 
     if (response.statusCode != 204) {
       throw Exception(
