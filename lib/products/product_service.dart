@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:inoventory_ui/config/constants.dart';
 import 'package:inoventory_ui/products/product_model.dart';
@@ -12,11 +14,28 @@ abstract class ProductService {
   Future<Product> update(String productId, Product product);
 
   Future<bool> delete(String productId);
+
+  /// Creates or updates a product in the OpenFoodFacts database.
+  ///
+  /// Works as an upsert: OFF identifies the product by barcode (EAN).
+  /// If the product already exists, its fields will be updated; otherwise it will be created.
+  ///
+  /// [images] is a map of OFF image field names to local files:
+  ///   - "front"       → front-of-pack photo
+  ///   - "ingredients" → ingredients list photo
+  ///   - "nutrition"   → nutritional info photo
+  ///
+  /// [region] controls the OFF subdomain (e.g. "world", "de", "us"). Defaults to "world".
+  Future<void> upsertToOpenFoodFacts(
+    Product product,
+    Map<String, File> images, {
+    String region = 'world',
+  });
 }
 
 class ProductServiceImpl implements ProductService {
   final backendUrl = Constants.inoventoryBackendUrl;
-  final timeout = const Duration(seconds: 5);
+  final timeout = const Duration(seconds: 30);
   final Dio dio;
 
   ProductServiceImpl(this.dio);
@@ -71,5 +90,50 @@ class ProductServiceImpl implements ProductService {
   Future<Product> update(String productId, Product product) {
     // TODO: implement update
     throw UnimplementedError();
+  }
+
+  @override
+  Future<void> upsertToOpenFoodFacts(
+    Product product,
+    Map<String, File> images, {
+    String region = 'world',
+  }) async {
+    final formData = FormData();
+
+    // Add text fields
+    if (product.name.isNotEmpty) {
+      formData.fields.add(MapEntry('productName', product.name));
+    }
+    if (product.brands != null && product.brands!.isNotEmpty) {
+      formData.fields.add(MapEntry('brands', product.brands!));
+    }
+    if (product.weight != null && product.weight!.isNotEmpty) {
+      formData.fields.add(MapEntry('weight', product.weight!));
+    }
+    formData.fields.add(MapEntry('region', region));
+
+    // Add image files
+    for (final entry in images.entries) {
+      final imageType = entry.key; // "front", "ingredients", or "nutrition"
+      final imageFile = entry.value;
+      formData.files.add(MapEntry(
+        '${imageType}Image',
+        await MultipartFile.fromFile(
+          imageFile.path,
+          filename: '${imageType}.jpg',
+        ),
+      ));
+    }
+
+    final response = await dio.put(
+      '$backendUrl/api/v1/products/${product.ean}',
+      data: formData,
+    ).timeout(timeout);
+
+    if (response.statusCode != 204) {
+      throw Exception(
+        'Failed to submit product to OFF: ${response.statusCode} ${response.data}',
+      );
+    }
   }
 }

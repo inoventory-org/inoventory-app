@@ -17,6 +17,10 @@ void configureDependencies() {
   getIt.registerLazySingleton<ProductService>(() => ProductServiceImpl(getIt<Dio>()));
   getIt.registerLazySingleton<InventoryListService>(() => InventoryListServiceImpl(getIt<Dio>()));
   getIt.registerLazySingleton<ItemService>(() => ItemServiceImpl(getIt<Dio>()));
-  getIt.registerLazySingleton<OpenFoodFactsService>(() => OpenFoodFactsServiceImpl());
   getIt.registerLazySingleton<PushNotificationService>(() => PushNotificationService(getIt<Dio>()));
-  }
+
+  // OpenFoodFactsService is kept for direct reads via the OFF Dart SDK (getProduct()).
+  // Product writes/uploads now go through the Inoventory backend (ProductService.upsertToOpenFoodFacts).
+  // Uncomment the line below to re-enable the direct OFF SDK approach for writes if needed in the future.
+  getIt.registerLazySingleton<OpenFoodFactsService>(() => OpenFoodFactsServiceImpl());
+}

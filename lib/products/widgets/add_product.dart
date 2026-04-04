@@ -4,9 +4,13 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:inoventory_ui/config/injection.dart';
-import 'package:inoventory_ui/products/open_food_facts_service.dart';
 import 'package:inoventory_ui/products/product_model.dart';
-import 'package:openfoodfacts/openfoodfacts.dart' as off;
+import 'package:inoventory_ui/products/product_service.dart';
+
+// Note: the OpenFoodFacts Dart SDK implementation is kept below, commented out,
+// so it can be reactivated easily if needed in the future.
+// import 'package:inoventory_ui/products/open_food_facts_service.dart';
+// import 'package:openfoodfacts/openfoodfacts.dart' as off;
 
 class AddProductView extends StatefulWidget {
   String barcode;
@@ -21,7 +25,10 @@ class AddProductView extends StatefulWidget {
 }
 
 class _AddProductViewState extends State<AddProductView> {
-  final OpenFoodFactsService _oFFService = getIt<OpenFoodFactsService>();
+  final ProductService _productService = getIt<ProductService>();
+  // Commented out: direct OFF SDK integration (kept for future reference)
+  // final OpenFoodFactsService _oFFService = getIt<OpenFoodFactsService>();
+
   final _formKey = GlobalKey<FormState>();
   final _barcodeController = TextEditingController();
   final _productNameController = TextEditingController();
@@ -33,9 +40,12 @@ class _AddProductViewState extends State<AddProductView> {
   XFile? _nutritionImage;
   bool isWorking = false;
 
+  // Optional: allow overriding region (future enhancement)
+  final String _region = 'world';
+
   @override
   void initState() {
-    super.initState();
+    super.initState();;
     imagePicker = ImagePicker();
     _barcodeController.text = widget.barcode;
   }
@@ -45,9 +55,9 @@ class _AddProductViewState extends State<AddProductView> {
       final image = await imagePicker.pickImage(source: ImageSource.camera, imageQuality: 50);
       if (image != null) {
         setState(() {
-          if (imageType == off.ImageField.NUTRITION.toString()) {
+          if (imageType == 'nutrition') {
             _nutritionImage = image;
-          } else if (imageType == off.ImageField.INGREDIENTS.toString()) {
+          } else if (imageType == 'ingredients') {
             ingredientsImage = image;
           } else {
             _frontImage = image;
@@ -62,9 +72,9 @@ class _AddProductViewState extends State<AddProductView> {
 
   Future<void> _clearImage(String imageType) async {
     setState(() {
-      if (imageType == off.ImageField.FRONT.toString()) {
+      if (imageType == 'front') {
         _frontImage = null;
-      } else if (imageType == off.ImageField.INGREDIENTS.toString()) {
+      } else if (imageType == 'ingredients') {
         ingredientsImage = null;
       } else {
         _nutritionImage = null;
@@ -77,21 +87,44 @@ class _AddProductViewState extends State<AddProductView> {
       return;
     }
 
-    Product product = Product(_barcodeController.text, _productNameController.text, ean: _barcodeController.text, brands: _brandController.text, weight: _weightController.text);
+    final product = Product(
+      _barcodeController.text,
+      _productNameController.text,
+      ean: _barcodeController.text,
+      brands: _brandController.text,
+      weight: _weightController.text,
+    );
 
-    Map<off.ImageField, File> images = {
-      if (_frontImage != null) off.ImageField.FRONT: File(_frontImage!.path),
-      if (_frontImage != null) off.ImageField.PACKAGING: File(_frontImage!.path), // use the front image for now
-      if (ingredientsImage != null) off.ImageField.INGREDIENTS: File(ingredientsImage!.path),
-      if (_nutritionImage != null) off.ImageField.NUTRITION: File(_nutritionImage!.path),
+    final Map<String, File> images = {
+      if (_frontImage != null) 'front': File(_frontImage!.path),
+      if (ingredientsImage != null) 'ingredients': File(ingredientsImage!.path),
+      if (_nutritionImage != null) 'nutrition': File(_nutritionImage!.path),
     };
 
     try {
-      setState(() {
-        isWorking = true;
-      });
-      await _oFFService.addProduct(product, images);
-      // developer.log("newProduct: $newProduct");
+      setState(() { isWorking = true; });
+
+      // Submit via Inoventory backend → backend forwards to OpenFoodFacts
+      await _productService.upsertToOpenFoodFacts(product, images, region: _region);
+
+      // ── Alternative: submit directly to OpenFoodFacts using the OFF Dart SDK ──────────────────
+      // (Kept commented out for easy reactivation if the backend-proxy approach is abandoned.)
+      //
+      // final offProduct = off.Product(
+      //   barcode: product.ean,
+      //   productName: product.name,
+      //   brands: product.brands,
+      //   quantity: product.weight,
+      // );
+      // final offImages = <off.ImageField, File>{
+      //   if (_frontImage != null) off.ImageField.FRONT: File(_frontImage!.path),
+      //   if (_frontImage != null) off.ImageField.PACKAGING: File(_frontImage!.path),
+      //   if (ingredientsImage != null) off.ImageField.INGREDIENTS: File(ingredientsImage!.path),
+      //   if (_nutritionImage != null) off.ImageField.NUTRITION: File(_nutritionImage!.path),
+      // };
+      // await _oFFService.addProduct(product, offImages);
+      // ─────────────────────────────────────────────────────────────────────────────────────────
+
       _showSnackbar("Product added successfully", Colors.green);
       widget.onSuccessfulProductAddition?.call(product.ean);
     } catch (e) {
@@ -99,9 +132,7 @@ class _AddProductViewState extends State<AddProductView> {
       _showSnackbar("An error occurred while adding a new product", Colors.red);
       widget.onErrorProductAddition?.call(e);
     }
-    setState(() {
-      isWorking = false;
-    });
+    setState(() { isWorking = false; });
   }
 
   void _showSnackbar(String text, Color color) {
@@ -168,23 +199,11 @@ class _AddProductViewState extends State<AddProductView> {
               TextFormField(
                 controller: _brandController,
                 decoration: _inputDecoration("Brand", Icons.branding_watermark_outlined),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter a brand';
-                  }
-                  return null;
-                },
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _weightController,
                 decoration: _inputDecoration("Quantity and Weight", Icons.scale_outlined),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter a quantity or weight';
-                  }
-                  return null;
-                },
               ),
               const SizedBox(height: 32),
               Text(
@@ -195,13 +214,13 @@ class _AddProductViewState extends State<AddProductView> {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildImageCard("Front", _frontImage, off.ImageField.FRONT.toString()),
-                  _buildImageCard("Ingredients", ingredientsImage, off.ImageField.INGREDIENTS.toString()),
-                  _buildImageCard("Nutrition", _nutritionImage, off.ImageField.NUTRITION.toString()),
+                  _buildImageCard("Front", _frontImage, 'front'),
+                  _buildImageCard("Ingredients", ingredientsImage, 'ingredients'),
+                  _buildImageCard("Nutrition", _nutritionImage, 'nutrition'),
                 ],
               ),
               const SizedBox(height: 32),
-              if (isWorking) 
+              if (isWorking)
                 const Center(child: CircularProgressIndicator())
               else
                 Row(
@@ -266,13 +285,13 @@ class _AddProductViewState extends State<AddProductView> {
                       : Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.add_a_photo, 
-                                color: Theme.of(context).colorScheme.primary.withOpacity(0.6), 
+                            Icon(Icons.add_a_photo,
+                                color: Theme.of(context).colorScheme.primary.withOpacity(0.6),
                                 size: 28),
                             const SizedBox(height: 8),
-                            Text("Add", 
+                            Text("Add",
                                 style: TextStyle(
-                                    fontSize: 12, 
+                                    fontSize: 12,
                                     fontWeight: FontWeight.bold,
                                     color: Theme.of(context).colorScheme.primary.withOpacity(0.8))),
                           ],
