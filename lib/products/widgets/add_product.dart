@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:inoventory_ui/config/injection.dart';
 import 'package:inoventory_ui/products/product_model.dart';
-import 'package:inoventory_ui/products/product_service.dart';
+import 'package:inoventory_ui/products/product_upload_job_service.dart';
 import 'package:inoventory_ui/settings/off_settings_service.dart';
 
 // Note: the OpenFoodFacts Dart SDK implementation is kept below, commented out,
@@ -36,7 +36,7 @@ class AddProductView extends StatefulWidget {
 }
 
 class _AddProductViewState extends State<AddProductView> {
-  final ProductService _productService = getIt<ProductService>();
+  final ProductUploadJobService _jobService = getIt<ProductUploadJobService>();
   final OffSettingsService _settingsService = getIt<OffSettingsService>();
   // Commented out: direct OFF SDK integration (kept for future reference)
   // final OpenFoodFactsService _oFFService = getIt<OpenFoodFactsService>();
@@ -136,11 +136,13 @@ class _AddProductViewState extends State<AddProductView> {
       });
 
       // Submit via Inoventory backend → backend forwards to OpenFoodFacts
-      await _productService.upsertToOpenFoodFacts(
-        product,
-        images,
+      await _jobService.enqueueUpsert(
+        product: product,
+        images: images,
         language: _language,
         region: _region,
+        actionLabel:
+            widget.initialProduct == null ? 'Product upload' : 'Product edit',
       );
 
       // ── Alternative: submit directly to OpenFoodFacts using the OFF Dart SDK ──────────────────
@@ -161,7 +163,7 @@ class _AddProductViewState extends State<AddProductView> {
       // await _oFFService.addProduct(product, offImages);
       // ─────────────────────────────────────────────────────────────────────────────────────────
 
-      _showSnackbar("Product added successfully", Colors.green);
+      _showSnackbar("Product upload queued", Colors.green);
       await widget.onSuccessfulProductAddition?.call(product.ean);
     } catch (e) {
       developer.log("An error occurred while adding a new product...",

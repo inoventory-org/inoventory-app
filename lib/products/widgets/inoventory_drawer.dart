@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:inoventory_ui/config/constants.dart';
+import 'package:inoventory_ui/config/injection.dart';
+import 'package:inoventory_ui/products/product_upload_job_service.dart';
 import 'package:inoventory_ui/settings/off_settings_route.dart';
 
 class InoDrawer extends StatefulWidget {
@@ -13,6 +15,7 @@ class InoDrawer extends StatefulWidget {
 
 class _InoDrawerState extends State<InoDrawer> {
   bool forceFetchProducts = Globals.forceFetchProducts;
+  final ProductUploadJobService _jobService = getIt<ProductUploadJobService>();
 
   @override
   Widget build(BuildContext context) {
@@ -59,6 +62,46 @@ class _InoDrawerState extends State<InoDrawer> {
             return;
           }
           navigator.pop();
+        },
+      ),
+      AnimatedBuilder(
+        animation: _jobService,
+        builder: (context, _) {
+          final jobs = _jobService.jobs.take(5).toList();
+          if (jobs.isEmpty) {
+            return const SizedBox.shrink();
+          }
+
+          return ExpansionTile(
+            initiallyExpanded: true,
+            title: Text('Product Upload Jobs (${jobs.length})'),
+            children: jobs
+                .map(
+                  (job) => ListTile(
+                    dense: true,
+                    title: Text('${job.actionLabel}: ${job.product.ean}'),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(job.message ?? job.status.name),
+                        if (job.status == ProductUploadJobStatus.uploading ||
+                            job.status == ProductUploadJobStatus.processing)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8),
+                            child: LinearProgressIndicator(
+                              value: job.status ==
+                                      ProductUploadJobStatus.processing
+                                  ? null
+                                  : job.progress,
+                            ),
+                          ),
+                      ],
+                    ),
+                    trailing: Text(job.status.name),
+                  ),
+                )
+                .toList(),
+          );
         },
       ),
       ListTile(

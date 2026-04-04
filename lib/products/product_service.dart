@@ -31,6 +31,7 @@ abstract class ProductService {
     Map<String, File> images, {
     String language = 'en',
     String region = 'world',
+    void Function(int sent, int total)? onSendProgress,
   });
 }
 
@@ -100,6 +101,7 @@ class ProductServiceImpl implements ProductService {
     Map<String, File> images, {
     String language = 'en',
     String region = 'world',
+    void Function(int sent, int total)? onSendProgress,
   }) async {
     final formData = FormData();
 
@@ -133,6 +135,7 @@ class ProductServiceImpl implements ProductService {
         .put(
           '$backendUrl/api/v1/products/${product.ean}',
           data: formData,
+          onSendProgress: onSendProgress,
         )
         .timeout(timeout);
 

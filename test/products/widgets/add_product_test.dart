@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:inoventory_ui/inventory/lists/models/inventory_list.dart';
-import 'package:inoventory_ui/products/product_service.dart';
 import 'package:inoventory_ui/products/routes/product_detail_route.dart';
 import 'package:inoventory_ui/products/widgets/add_product.dart';
 import 'package:inoventory_ui/products/product_model.dart';
 import 'package:inoventory_ui/inventory/items/widgets/add_item.dart';
+import 'package:inoventory_ui/products/product_upload_job_service.dart';
 import 'package:inoventory_ui/settings/off_settings_service.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -13,18 +13,21 @@ import '../../helpers/mocks.dart';
 import '../../helpers/test_wrapper.dart';
 
 void main() {
-  late MockProductService mockProductService;
+  late MockProductUploadJobService mockProductUploadJobService;
   late MockOffSettingsService mockOffSettingsService;
 
   setUp(() {
-    mockProductService = MockProductService();
+    mockProductUploadJobService = MockProductUploadJobService();
     mockOffSettingsService = MockOffSettingsService();
     when(() => mockOffSettingsService.loadContributionSettings()).thenAnswer(
       (_) async =>
           const OffContributionSettings(region: 'world', language: 'en'),
     );
+    when(() => mockProductUploadJobService.jobs).thenReturn(const []);
+    when(() => mockProductUploadJobService.events)
+        .thenAnswer((_) => const Stream.empty());
     setupMockGetIt(
-      mockProductService: mockProductService,
+      mockProductUploadJobService: mockProductUploadJobService,
       mockOffSettingsService: mockOffSettingsService,
     );
 
@@ -33,11 +36,12 @@ void main() {
 
   testWidgets('AddProductView validates and creates product', (tester) async {
     when(
-      () => mockProductService.upsertToOpenFoodFacts(
-        any(),
-        any(),
+      () => mockProductUploadJobService.enqueueUpsert(
+        product: any(named: 'product'),
+        images: any(named: 'images'),
         language: any(named: 'language'),
         region: any(named: 'region'),
+        actionLabel: any(named: 'actionLabel'),
       ),
     ).thenAnswer((_) async {});
 
@@ -64,30 +68,37 @@ void main() {
     await tester.tap(find.widgetWithText(ElevatedButton, 'Add Product'));
     await tester.pumpAndSettle();
 
-    verify(
-      () => mockProductService.upsertToOpenFoodFacts(
-        any(
-          that: isA<Product>()
-              .having((p) => p.ean, 'ean', '404')
-              .having((p) => p.name, 'name', 'My Awesome Product')
-              .having((p) => p.brands, 'brands', 'My Brand')
-              .having((p) => p.weight, 'weight', '500g'),
-        ),
-        any(that: isEmpty),
-        language: 'en',
-        region: 'world',
+    final captured = verify(
+      () => mockProductUploadJobService.enqueueUpsert(
+        product: captureAny(named: 'product'),
+        images: captureAny(named: 'images'),
+        language: captureAny(named: 'language'),
+        region: captureAny(named: 'region'),
+        actionLabel: captureAny(named: 'actionLabel'),
       ),
-    ).called(1);
+    ).captured;
+
+    final product = captured[0] as Product;
+    final images = captured[1] as Map;
+    expect(product.ean, '404');
+    expect(product.name, 'My Awesome Product');
+    expect(product.brands, 'My Brand');
+    expect(product.weight, '500g');
+    expect(images, isEmpty);
+    expect(captured[2], 'en');
+    expect(captured[3], 'world');
+    expect(captured[4], 'Product upload');
   });
 
   testWidgets('AddProductView keeps entered values after submission error',
       (tester) async {
     when(
-      () => mockProductService.upsertToOpenFoodFacts(
-        any(),
-        any(),
+      () => mockProductUploadJobService.enqueueUpsert(
+        product: any(named: 'product'),
+        images: any(named: 'images'),
         language: any(named: 'language'),
         region: any(named: 'region'),
+        actionLabel: any(named: 'actionLabel'),
       ),
     ).thenThrow(Exception('timeout while uploading'));
 

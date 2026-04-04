@@ -7,6 +7,7 @@ import 'package:inoventory_ui/inventory/lists/inventory_list_service.dart';
 import 'package:inoventory_ui/notifications/push_notification_service.dart';
 import 'package:inoventory_ui/products/open_food_facts_service.dart';
 import 'package:inoventory_ui/products/product_service.dart';
+import 'package:inoventory_ui/products/product_upload_job_service.dart';
 import 'package:inoventory_ui/settings/off_settings_service.dart';
 
 final getIt = GetIt.instance;
@@ -21,6 +22,8 @@ void configureDependencies() {
       () => OffSettingsServiceImpl(getIt<FlutterSecureStorage>()));
   getIt.registerLazySingleton<ProductService>(
       () => ProductServiceImpl(getIt<Dio>()));
+  getIt.registerLazySingleton<ProductUploadJobService>(
+      () => ProductUploadJobServiceImpl(getIt<ProductService>()));
   getIt.registerLazySingleton<InventoryListService>(
       () => InventoryListServiceImpl(getIt<Dio>()));
   getIt.registerLazySingleton<ItemService>(() => ItemServiceImpl(getIt<Dio>()));

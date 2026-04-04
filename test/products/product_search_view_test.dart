@@ -55,6 +55,7 @@ class FakeProductService implements ProductService {
     Map<String, File> images, {
     String language = 'en',
     String region = 'world',
+    void Function(int sent, int total)? onSendProgress,
   }) async {}
 }
 

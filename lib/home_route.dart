@@ -4,6 +4,7 @@ import 'dart:developer' as developer;
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:inoventory_ui/auth/login_route.dart';
+import 'package:inoventory_ui/products/product_upload_job_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'config/injection.dart';
@@ -26,9 +27,10 @@ class _InoventoryHomeRouteState extends State<InoventoryHomeRoute> {
   final supabase = Supabase.instance.client;
   Session? session;
   late final StreamSubscription<AuthState> authSubscription;
+  StreamSubscription<ProductUploadJobEvent>? jobEventsSubscription;
 
   final _notificationService = getIt<PushNotificationService>();
-  
+  final _productUploadJobService = getIt<ProductUploadJobService>();
   final _inventoryListService = getIt<InventoryListService>();
 
   @override
@@ -79,6 +81,23 @@ class _InoventoryHomeRouteState extends State<InoventoryHomeRoute> {
         await _notificationService.syncFcmToken();
       }
     });
+
+    jobEventsSubscription = _productUploadJobService.events.listen((event) {
+      if (!mounted) {
+        return;
+      }
+      final isCompleted = event.job.status == ProductUploadJobStatus.completed;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            isCompleted
+                ? '${event.job.actionLabel} finished for ${event.job.product.ean}'
+                : '${event.job.actionLabel} failed for ${event.job.product.ean}: ${event.job.message}',
+          ),
+          backgroundColor: isCompleted ? Colors.green : Colors.red,
+        ),
+      );
+    });
   }
 
   Future<void> logout() async {
@@ -91,6 +110,7 @@ class _InoventoryHomeRouteState extends State<InoventoryHomeRoute> {
   @override
   void dispose() {
     authSubscription.cancel();
+    jobEventsSubscription?.cancel();
     super.dispose();
   }
 

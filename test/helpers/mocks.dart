@@ -3,6 +3,7 @@ import 'package:inoventory_ui/inventory/items/item_service.dart';
 import 'package:inoventory_ui/inventory/lists/inventory_list_service.dart';
 import 'package:inoventory_ui/products/open_food_facts_service.dart';
 import 'package:inoventory_ui/products/product_service.dart';
+import 'package:inoventory_ui/products/product_upload_job_service.dart';
 import 'package:inoventory_ui/settings/off_settings_service.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -13,6 +14,9 @@ class MockInventoryListService extends Mock implements InventoryListService {}
 class MockProductService extends Mock implements ProductService {}
 
 class MockOpenFoodFactsService extends Mock implements OpenFoodFactsService {}
+
+class MockProductUploadJobService extends Mock
+    implements ProductUploadJobService {}
 
 class MockOffSettingsService extends Mock implements OffSettingsService {}
 
