@@ -16,6 +16,7 @@ class InventoryItemWidget extends StatelessWidget {
   final ItemWrapper itemWrapper;
   final Future<bool> Function(ItemWrapper itemWrapper)? onDelete;
   final Future<void> Function(ItemWrapper itemWrapper)? onEdit;
+  final bool focusExpiring;
 
   final ProductService _productService = getIt<ProductService>();
   final InventoryListService _inventoryListService = getIt<InventoryListService>();
@@ -24,6 +25,7 @@ class InventoryItemWidget extends StatelessWidget {
     this.itemWrapper,
     this.onDelete, {
     this.onEdit,
+    this.focusExpiring = false,
     super.key,
   });
 
@@ -32,9 +34,22 @@ class InventoryItemWidget extends StatelessWidget {
     return expirationDates.firstOrNull;
   }
 
+  bool _isExpiringSoon() {
+    final nextExpiring = _getNextExpiring();
+    if (nextExpiring == null) return false;
+    try {
+      final date = DateTime.parse(nextExpiring);
+      return date.difference(DateTime.now()).inDays <= 30;
+    } catch (_) {
+      return false;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final bool expiringSoon = focusExpiring && _isExpiringSoon();
     return Card(
+      color: expiringSoon ? Theme.of(context).colorScheme.errorContainer : null,
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       elevation: 2,
       shadowColor: Colors.black26,
@@ -44,7 +59,7 @@ class InventoryItemWidget extends StatelessWidget {
         key: Key(itemWrapper.productEan),
         direction: DismissDirection.endToStart,
         background: Container(
-          color: Theme.of(context).colorScheme.error,
+          color: Theme.of(context).colorScheme.secondary,
           alignment: Alignment.centerRight,
           padding: const EdgeInsets.only(right: 24),
           child: Icon(Icons.delete_outline, color: Theme.of(context).colorScheme.onError, size: 28),
@@ -99,12 +114,12 @@ class InventoryItemWidget extends StatelessWidget {
                         const SizedBox(height: 6),
                         Row(
                           children: [
-                            Icon(Icons.event_busy, size: 14, color: Theme.of(context).colorScheme.error),
+                            Icon(Icons.event_busy, size: 14, color: Theme.of(context).colorScheme.secondary),
                             const SizedBox(width: 4),
                             Text(
                               "Expires: ${_getNextExpiring()}",
                               style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                    color: Theme.of(context).colorScheme.error,
+                                    color: Theme.of(context).colorScheme.secondary,
                                     fontWeight: FontWeight.bold,
                                   ),
                             ),

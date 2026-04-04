@@ -2,6 +2,7 @@ import 'dart:developer' as developer;
 
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:inoventory_ui/config/injection.dart';
 import 'package:inoventory_ui/ean/barcode_scan_route.dart';
 import 'package:inoventory_ui/inventory/items/item_search_route.dart';
@@ -22,8 +23,9 @@ enum SORTING { dateAdded, name, expirationDate, quantity }
 
 class ItemListRoute extends StatefulWidget {
   final InventoryList list;
+  final bool focusExpiring;
 
-  const ItemListRoute({super.key, required this.list});
+  const ItemListRoute({super.key, required this.list, this.focusExpiring = false});
 
   @override
   State<ItemListRoute> createState() => _ItemListRouteState();
@@ -32,18 +34,64 @@ class ItemListRoute extends StatefulWidget {
 class _ItemListRouteState extends State<ItemListRoute> {
   final ProductService _productService = getIt<ProductService>();
   final ItemService _itemService = getIt<ItemService>();
+  final _storage = const FlutterSecureStorage();
+  
   late Future<List<ItemWrapper>> futureItems;
   late List<ItemWrapper> itemWrappers;
   late Future<Map<String, List<ItemWrapper>>> futureGroupedItems;
   bool groupByCategory = false;
   SORTING _sortByKey = SORTING.dateAdded;
   bool _isAsc = false;
+  bool _focusExpiring = false;
 
   @override
   void initState() {
     super.initState();
+    // Apply notification-driven focus immediately for a snappy UI, before prefs load.
+    if (widget.focusExpiring) {
+      _focusExpiring = true;
+      _sortByKey = SORTING.expirationDate;
+      _isAsc = true;
+    }
     futureGroupedItems = _itemService.allGroupedBy(widget.list.id, "category");
     futureItems = _itemService.all(widget.list.id);
+    // Always load the stored preference — never save from here.
+    // Opening via a notification must not permanently override the user's setting.
+    _loadFocusPreference();
+  }
+
+  Future<void> _loadFocusPreference() async {
+    final value = await _storage.read(key: "list_${widget.list.id}_focusExpiring");
+    if (!mounted) return;
+    final storedFocus = value == 'true';
+    // Merge: show focus expiring if the user has it stored OR this session was
+    // triggered by a notification. Stored preference is never written here.
+    final sessionFocus = storedFocus || widget.focusExpiring;
+    setState(() {
+      _focusExpiring = sessionFocus;
+      if (sessionFocus) {
+        _sortByKey = SORTING.expirationDate;
+        _isAsc = true;
+      }
+    });
+  }
+
+  Future<void> _saveFocusPreference(bool value) async {
+    await _storage.write(key: "list_${widget.list.id}_focusExpiring", value: value.toString());
+  }
+
+  void _toggleFocusExpiring() {
+    setState(() {
+      _focusExpiring = !_focusExpiring;
+      if (_focusExpiring) {
+        _sortByKey = SORTING.expirationDate;
+        _isAsc = true;
+      } else {
+        _sortByKey = SORTING.dateAdded;
+        _isAsc = false;
+      }
+    });
+    _saveFocusPreference(_focusExpiring);
   }
 
   Future<void> onEdit(ItemWrapper itemWrapper) async {
@@ -160,7 +208,7 @@ class _ItemListRouteState extends State<ItemListRoute> {
               : ItemsFutureBuilder<List<ItemWrapper>>(futureItems, _refreshList, (context, snapshot) {
                   sortItemsByKey(snapshot, _sortByKey, _isAsc);
                   itemWrappers = snapshot.data!;
-                  return InventoryListWidget(itemWrappers: snapshot.data!, onDelete: onDelete, onEdit: onEdit);
+                  return InventoryListWidget(itemWrappers: snapshot.data!, onDelete: onDelete, onEdit: onEdit, focusExpiring: _focusExpiring);
                 })),
       floatingActionButton: buildFloatingActionButton(context),
     );
@@ -169,6 +217,8 @@ class _ItemListRouteState extends State<ItemListRoute> {
   InoventoryAppBar buildInoventoryAppBar() {
     return InoventoryAppBar(
       title: widget.list.name,
+      isFocusExpiring: _focusExpiring,
+      onFocusExpiringToggled: _toggleFocusExpiring,
       onSearchButtonPressed: () {
         transitToItemSearchPage(context, "");
       },
@@ -226,14 +276,16 @@ class _ItemListRouteState extends State<ItemListRoute> {
     int direction = isAsc ? 1 : -1;
     snapshot.data?.sort((wrapper1, wrapper2) {
       switch (sortByKey) {
+        case SORTING.dateAdded:
+          final id1 = wrapper1.items.map((e) => e.id).reduce((a, b) => a < b ? a : b);
+          final id2 = wrapper2.items.map((e) => e.id).reduce((a, b) => a < b ? a : b);
+          return direction * id1.compareTo(id2);
         case SORTING.name:
           return direction * wrapper1.displayName.compareTo(wrapper2.displayName);
         case SORTING.expirationDate:
           return compareByExpirationDates(wrapper1, wrapper2, isAsc);
         case SORTING.quantity:
           return direction * wrapper1.items.length.compareTo(wrapper2.items.length);
-        default:
-          return 0; // Default return value
       }
     });
   }
