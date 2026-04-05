@@ -2,6 +2,8 @@ import 'dart:developer' as developer;
 
 import 'package:flutter/material.dart';
 import 'package:inoventory_ui/config/injection.dart';
+import 'package:inoventory_ui/inventory/items/item_service.dart';
+import 'package:inoventory_ui/inventory/items/models/item_wrapper.dart';
 import 'package:inoventory_ui/inventory/lists/inventory_list_service.dart';
 import 'package:inoventory_ui/inventory/lists/models/inventory_list.dart';
 import 'package:inoventory_ui/inventory/lists/widgets/create_list_widget.dart';
@@ -22,16 +24,37 @@ class InventoryListRoute extends StatefulWidget {
 
 class _InventoryListRouteState extends State<InventoryListRoute> {
   final listService = getIt<InventoryListService>();
+  final itemService = getIt<ItemService>();
   late Future<List<InventoryList>> futureLists;
   List<InventoryList>? _lists;
+  Map<int, int> _listCounts = {};
 
   @override
   void initState() {
     super.initState();
-    futureLists = listService.all().then((lists) {
-      _lists = List.of(lists);
-      return lists;
-    });
+    futureLists = _loadLists();
+  }
+
+  Future<List<InventoryList>> _loadLists() async {
+    final lists = await listService.all();
+    final counts = await _loadListCounts(lists);
+    _lists = List.of(lists);
+    _listCounts = counts;
+    return lists;
+  }
+
+  Future<Map<int, int>> _loadListCounts(List<InventoryList> lists) async {
+    final entries = await Future.wait(
+      lists.map((list) async {
+        final wrappers = await itemService.all(list.id);
+        final count = wrappers.fold<int>(
+          0,
+          (sum, wrapper) => sum + wrapper.items.length,
+        );
+        return MapEntry(list.id, count);
+      }),
+    );
+    return Map<int, int>.fromEntries(entries);
   }
 
   Future<void> onEdit(InventoryList list) async {
@@ -59,10 +82,7 @@ class _InventoryListRouteState extends State<InventoryListRoute> {
 
   Future<void> _refreshList() async {
     setState(() {
-      futureLists = listService.all().then((lists) {
-        _lists = List.of(lists);
-        return lists;
-      });
+      futureLists = _loadLists();
     });
   }
 
@@ -128,6 +148,7 @@ class _InventoryListRouteState extends State<InventoryListRoute> {
               if (snapshot.hasData) {
                 return MyInventoryListsWidget(
                   lists: _lists ?? snapshot.data!,
+                  listCounts: _listCounts,
                   onDelete: onDelete,
                   onEdit: onEdit,
                   onReorder: _onReorder,

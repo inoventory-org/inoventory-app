@@ -358,6 +358,7 @@ class _ItemDetailRouteState extends State<ItemDetailRoute> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -419,7 +420,8 @@ class _ItemDetailRouteState extends State<ItemDetailRoute> {
               label: const Text("View Product Details"),
               style: OutlinedButton.styleFrom(
                 backgroundColor:
-                    Theme.of(context).colorScheme.secondary.withOpacity(0.8),
+                    Theme.of(context).colorScheme.secondaryContainer,
+                textStyle: TextStyle(color: Theme.of(context).colorScheme.onSecondaryContainer),
                 minimumSize: const Size.fromHeight(40),
               ),
             ),
@@ -461,8 +463,10 @@ class _ItemDetailRouteState extends State<ItemDetailRoute> {
               itemCount: items.length,
               itemBuilder: (context, index) {
                 final item = items[index];
+                final isExpired = widget.list.isOpenList && _isExpired(item);
+                final openItemForegroundColor =
+                    isExpired ? colorScheme.onErrorContainer : colorScheme.onSurface ;
                 return Card(
-                  // 1. Removed the color property from here
                   margin:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                   shape: RoundedRectangleBorder(
@@ -473,28 +477,26 @@ class _ItemDetailRouteState extends State<ItemDetailRoute> {
                       if (widget.list.isOpenList)
                         _DateDetailRow(
                           icon: Icons.lock_open,
-                          iconColor: Theme.of(context).colorScheme.secondary,
+                          iconColor: colorScheme.secondary,
                           label: _openedAtLabel(item),
                           valueHint: _openedDaysCount(item),
+                          labelColor: openItemForegroundColor,
                           onTap: () => _editOpenedDate(item),
                         ),
                       if (widget.list.isOpenList) const Divider(height: 1),
-
-                      // 2. Wrapped the middle row in a Container to apply the color
                       Container(
-                        color: widget.list.isOpenList && _isExpired(item)
-                            ? Theme.of(context).colorScheme.errorContainer
-                            : null, // null means transparent/default background
+                        color: isExpired ? colorScheme.errorContainer : null,
                         child: widget.list.isOpenList
                             ? _DateDetailRow(
                                 icon: item.expirationDate != null
                                     ? Icons.event
                                     : Icons.event_available,
                                 iconColor: item.expirationDate != null
-                                    ? Theme.of(context).colorScheme.secondary
-                                    : Colors.grey,
+                                    ? openItemForegroundColor
+                                    : colorScheme.onSurfaceVariant,
                                 label: _expirationLabel(item),
                                 valueHint: _remainingDaysCount(item),
+                                labelColor: openItemForegroundColor,
                                 onTap: () => _editExpirationDate(item),
                               )
                             : ListTile(
@@ -527,19 +529,19 @@ class _ItemDetailRouteState extends State<ItemDetailRoute> {
                             onPressed: () => _handleItemRemoval(item),
                             icon: Icon(
                               Icons.delete_outline,
-                              color: Theme.of(context).colorScheme.onSurface,
+                              color: openItemForegroundColor,
                             ),
                             label: Text(
                               "Remove",
                               style: TextStyle(
-                                color: Theme.of(context).colorScheme.onSurface,
+                                color: openItemForegroundColor,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
                             style: TextButton.styleFrom(
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 16, vertical: 14),
-                              alignment: Alignment.center,
+                              alignment: Alignment.centerLeft,
                               shape: const RoundedRectangleBorder(
                                 borderRadius: BorderRadius.vertical(
                                   bottom: Radius.circular(16.0),
@@ -565,6 +567,7 @@ class _DateDetailRow extends StatelessWidget {
   final Color iconColor;
   final String label;
   final String valueHint;
+  final Color? labelColor;
   final VoidCallback onTap;
 
   const _DateDetailRow({
@@ -572,6 +575,7 @@ class _DateDetailRow extends StatelessWidget {
     required this.iconColor,
     required this.label,
     required this.valueHint,
+    this.labelColor,
     required this.onTap,
   });
 
@@ -588,7 +592,9 @@ class _DateDetailRow extends StatelessWidget {
             Expanded(
               child: Text(
                 label,
-                style: Theme.of(context).textTheme.bodyLarge,
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: labelColor,
+                    ),
               ),
             ),
             if (valueHint.isNotEmpty)

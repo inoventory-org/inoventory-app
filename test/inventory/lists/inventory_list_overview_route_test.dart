@@ -9,10 +9,15 @@ import '../../helpers/test_wrapper.dart';
 
 void main() {
   late MockInventoryListService mockListService;
+  late MockItemService mockItemService;
 
   setUp(() {
     mockListService = MockInventoryListService();
-    setupMockGetIt(mockInventoryListService: mockListService);
+    mockItemService = MockItemService();
+    setupMockGetIt(
+      mockInventoryListService: mockListService,
+      mockItemService: mockItemService,
+    );
   });
 
   testWidgets('InventoryListRoute renders lists properly', (tester) async {
@@ -20,6 +25,8 @@ void main() {
           InventoryList(1, 'Kitchen'),
           InventoryList(2, 'Open', type: 'OPEN'),
         ]);
+    when(() => mockItemService.all(1)).thenAnswer((_) async => []);
+    when(() => mockItemService.all(2)).thenAnswer((_) async => []);
 
     await tester.pumpWidget(TestWrapper(
       child: InventoryListRoute(logout: () async {}),
@@ -34,6 +41,7 @@ void main() {
     expect(find.text('Kitchen'), findsOneWidget);
     expect(find.text('Open'), findsOneWidget);
     expect(find.text('Opened items'), findsOneWidget);
+    expect(find.text('0 items'), findsNWidgets(2));
     expect(find.byIcon(Icons.lock_open), findsOneWidget);
     expect(find.byIcon(Icons.add), findsOneWidget);
   });
@@ -46,6 +54,7 @@ void main() {
     ];
 
     when(() => mockListService.all()).thenAnswer((_) async => initialLists);
+    when(() => mockItemService.all(any())).thenAnswer((_) async => []);
     when(() => mockListService.reorder(any())).thenAnswer(
       (_) async => [
         InventoryList(2, 'Pantry', sortOrder: 0),

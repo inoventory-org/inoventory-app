@@ -49,6 +49,7 @@ void main() {
 
     // There are 2 quantity of Apple
     expect(find.text('2'), findsOneWidget);
+    expect(find.text('2 items'), findsOneWidget);
   });
 
   testWidgets(

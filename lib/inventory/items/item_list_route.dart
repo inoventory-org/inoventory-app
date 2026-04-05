@@ -283,17 +283,43 @@ class _ItemListRouteState extends State<ItemListRoute> {
           backgroundColor: Theme.of(context).colorScheme.secondary,
           child: groupByCategory
               ? ItemsFutureBuilder<Map<String, List<ItemWrapper>>>(futureGroupedItems, _refreshList, (context, snapshot) {
-                  return GroupedInventoryListWidget(snapshot.data!, onDelete, onEdit);
+                  final groupedItems = snapshot.data!;
+                  final itemCount = groupedItems.values
+                      .expand((wrappers) => wrappers)
+                      .fold<int>(0, (sum, wrapper) => sum + wrapper.items.length);
+                  return Column(
+                    children: [
+                      _ListItemCountHeader(
+                        itemCount: itemCount,
+                        isOpenList: widget.list.isOpenList,
+                      ),
+                      Expanded(
+                        child: GroupedInventoryListWidget(groupedItems, onDelete, onEdit),
+                      ),
+                    ],
+                  );
                 })
               : ItemsFutureBuilder<List<ItemWrapper>>(futureItems, _refreshList, (context, snapshot) {
                   sortItemsByKey(snapshot, _sortByKey, _isAsc);
                   itemWrappers = snapshot.data!;
-                  return InventoryListWidget(
-                    itemWrappers: snapshot.data!,
-                    onDelete: onDelete,
-                    onEdit: onEdit,
-                    focusExpiring: _focusExpiring,
-                    isOpenList: widget.list.isOpenList,
+                  final itemCount = snapshot.data!
+                      .fold<int>(0, (sum, wrapper) => sum + wrapper.items.length);
+                  return Column(
+                    children: [
+                      _ListItemCountHeader(
+                        itemCount: itemCount,
+                        isOpenList: widget.list.isOpenList,
+                      ),
+                      Expanded(
+                        child: InventoryListWidget(
+                          itemWrappers: snapshot.data!,
+                          onDelete: onDelete,
+                          onEdit: onEdit,
+                          focusExpiring: _focusExpiring,
+                          isOpenList: widget.list.isOpenList,
+                        ),
+                      ),
+                    ],
                   );
                 })),
       floatingActionButton: buildFloatingActionButton(context),
@@ -396,5 +422,46 @@ class _ItemListRouteState extends State<ItemListRoute> {
     DateTime firstCandidate = firstDates.firstOrNull ?? defaultDate;
     DateTime secondCandidate = secondDates.firstOrNull ?? defaultDate;
     return direction * firstCandidate.compareTo(secondCandidate);
+  }
+}
+
+class _ListItemCountHeader extends StatelessWidget {
+  final int itemCount;
+  final bool isOpenList;
+
+  const _ListItemCountHeader({
+    required this.itemCount,
+    required this.isOpenList,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final label = "$itemCount ${itemCount == 1 ? 'item' : 'items'}";
+
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: isOpenList ? colorScheme.tertiaryContainer.withOpacity(0.4) : colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            isOpenList ? Icons.lock_open : Icons.inventory_2_outlined,
+            color: isOpenList ? colorScheme.tertiary : colorScheme.secondary,
+          ),
+          const SizedBox(width: 12),
+          Text(
+            label,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+          ),
+        ],
+      ),
+    );
   }
 }

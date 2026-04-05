@@ -4,6 +4,7 @@ import 'package:inoventory_ui/inventory/lists/models/inventory_list.dart';
 
 class MyInventoryListsWidget extends StatelessWidget {
   final List<InventoryList> lists;
+  final Map<int, int> listCounts;
   final Future<void> Function(int listId, BuildContext context) onDelete;
   final Future<void> Function(InventoryList list) onEdit;
   final Future<void> Function(int oldIndex, int newIndex) onReorder;
@@ -11,6 +12,7 @@ class MyInventoryListsWidget extends StatelessWidget {
   const MyInventoryListsWidget(
       {Key? key,
       required this.lists,
+      required this.listCounts,
       required this.onDelete,
       required this.onEdit,
       required this.onReorder})
@@ -27,6 +29,8 @@ class MyInventoryListsWidget extends StatelessWidget {
       itemBuilder: (context, index) {
         final myList = lists[index];
         final isOpenList = myList.isOpenList;
+        final itemCount = listCounts[myList.id] ?? 0;
+        final countLabel = "$itemCount ${itemCount == 1 ? 'item' : 'items'}";
         return Padding(
             key: ValueKey("list-${myList.id}"),
             padding: const EdgeInsets.only(bottom: 12),
@@ -104,6 +108,14 @@ class MyInventoryListsWidget extends StatelessWidget {
                                     ),
                               ),
                             ],
+                            const SizedBox(height: 6),
+                            Text(
+                              countLabel,
+                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                            ),
                           ],
                         ),
                       ),
