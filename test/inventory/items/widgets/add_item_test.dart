@@ -53,4 +53,19 @@ void main() {
     // add() should be called twice since amount is 2
     verify(() => mockItemService.add(any())).called(2);
   });
+
+  testWidgets('AddItemView requires expiration date for opened items', (tester) async {
+    final openList = InventoryList(2, 'Open', type: 'OPEN');
+
+    await tester.pumpWidget(TestWrapper(
+      child: AddItemView(dummyProduct, openList),
+    ));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.bookmark));
+    await tester.pumpAndSettle();
+
+    verifyNever(() => mockItemService.add(any()));
+    expect(find.text('Please add an expiration date before opening an item.'), findsOneWidget);
+  });
 }

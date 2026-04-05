@@ -17,6 +17,7 @@ class InventoryItemWidget extends StatelessWidget {
   final Future<bool> Function(ItemWrapper itemWrapper)? onDelete;
   final Future<void> Function(ItemWrapper itemWrapper)? onEdit;
   final bool focusExpiring;
+  final bool isOpenList;
 
   final ProductService _productService = getIt<ProductService>();
   final InventoryListService _inventoryListService = getIt<InventoryListService>();
@@ -26,6 +27,7 @@ class InventoryItemWidget extends StatelessWidget {
     this.onDelete, {
     this.onEdit,
     this.focusExpiring = false,
+    this.isOpenList = false,
     super.key,
   });
 
@@ -45,11 +47,62 @@ class InventoryItemWidget extends StatelessWidget {
     }
   }
 
+  bool _hasExpiredItem() {
+    return itemWrapper.items.any((item) {
+      if (item.expirationDate == null) {
+        return false;
+      }
+      final expiration = DateTime.tryParse(item.expirationDate!);
+      if (expiration == null) {
+        return false;
+      }
+      return expiration.isBefore(DateTime.now().subtract(const Duration(days: 1)));
+    });
+  }
+
+  String? _getOpenedSince() {
+    final openedAt = itemWrapper.items
+        .map((item) => item.openedAt)
+        .whereType<String>()
+        .sorted()
+        .firstOrNull;
+    if (openedAt == null) {
+      return null;
+    }
+    final openedDate = DateTime.tryParse(openedAt);
+    if (openedDate == null) {
+      return openedAt;
+    }
+    final days = DateTime.now().difference(openedDate).inDays;
+    if (days >= 60) {
+      final months = (days / 30).floor();
+      return "Opened $months month${months == 1 ? '' : 's'} ago";
+    }
+    if (days >= 14) {
+      final weeks = (days / 7).floor();
+      return "Opened $weeks week${weeks == 1 ? '' : 's'} ago";
+    }
+    return "Opened $days day${days == 1 ? '' : 's'} ago";
+  }
+
+  String? _getExpirationLabel() {
+    final nextExpiring = _getNextExpiring();
+    if (nextExpiring == null) {
+      return null;
+    }
+    return _hasExpiredItem() ? "Expired: $nextExpiring" : "Expires: $nextExpiring";
+  }
+
   @override
   Widget build(BuildContext context) {
     final bool expiringSoon = focusExpiring && _isExpiringSoon();
+    final bool expiredOpenItem = isOpenList && _hasExpiredItem();
     return Card(
-      color: expiringSoon ? Theme.of(context).colorScheme.errorContainer : null,
+      color: expiredOpenItem
+          ? Theme.of(context).colorScheme.errorContainer
+          : expiringSoon
+              ? Theme.of(context).colorScheme.errorContainer
+              : null,
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       elevation: 2,
       shadowColor: Colors.black26,
@@ -83,13 +136,21 @@ class InventoryItemWidget extends StatelessWidget {
                   height: 64,
                   width: 64,
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                    color: isOpenList
+                        ? Theme.of(context).colorScheme.tertiaryContainer.withOpacity(0.7)
+                        : Theme.of(context).colorScheme.primary.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   clipBehavior: Clip.antiAlias,
                   child: itemWrapper.thumbUrl != null
                       ? InoventoryNetworkImage(url: itemWrapper.thumbUrl!)
-                      : Icon(Icons.inventory_2_outlined, color: Theme.of(context).colorScheme.primary.withOpacity(0.5)),
+                      : Icon(
+                          isOpenList ? Icons.lock_open : Icons.inventory_2_outlined,
+                          color: (isOpenList
+                                  ? Theme.of(context).colorScheme.tertiary
+                                  : Theme.of(context).colorScheme.primary)
+                              .withOpacity(0.7),
+                        ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -110,14 +171,14 @@ class InventoryItemWidget extends StatelessWidget {
                               letterSpacing: 1.2,
                             ),
                       ),
-                      if (_getNextExpiring() != null) ...[
+                      if (_getExpirationLabel() != null) ...[
                         const SizedBox(height: 6),
                         Row(
                           children: [
                             Icon(Icons.event_busy, size: 14, color: Theme.of(context).colorScheme.secondary),
                             const SizedBox(width: 4),
                             Text(
-                              "Expires: ${_getNextExpiring()}",
+                              _getExpirationLabel()!,
                               style: Theme.of(context).textTheme.labelSmall?.copyWith(
                                     color: Theme.of(context).colorScheme.secondary,
                                     fontWeight: FontWeight.bold,
@@ -125,7 +186,27 @@ class InventoryItemWidget extends StatelessWidget {
                             ),
                           ],
                         ),
-                      ]
+                      ],
+                      if (isOpenList && _getOpenedSince() != null) ...[
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.schedule,
+                              size: 14,
+                              color: Theme.of(context).colorScheme.secondary,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              _getOpenedSince()!,
+                              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                    color: Theme.of(context).colorScheme.secondary,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ],
                   ),
                 ),

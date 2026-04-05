@@ -5,12 +5,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:inoventory_ui/config/injection.dart';
 import 'package:inoventory_ui/ean/barcode_scan_route.dart';
+import 'package:inoventory_ui/inventory/items/models/item.dart';
 import 'package:inoventory_ui/inventory/items/item_search_route.dart';
 import 'package:inoventory_ui/inventory/items/item_service.dart';
 import 'package:inoventory_ui/inventory/items/models/item_wrapper.dart';
 import 'package:inoventory_ui/inventory/items/widgets/grouped_list_widget.dart';
 import 'package:inoventory_ui/inventory/items/widgets/items_future_builder.dart';
 import 'package:inoventory_ui/inventory/items/widgets/list_widget.dart';
+import 'package:inoventory_ui/inventory/lists/inventory_list_service.dart';
 import 'package:inoventory_ui/inventory/lists/models/inventory_list.dart';
 import 'package:inoventory_ui/products/product_service.dart';
 import 'package:inoventory_ui/products/routes/product_scan_route.dart';
@@ -20,6 +22,7 @@ import 'package:inoventory_ui/shared/widgets/expandable_floating_action_button.d
 import 'package:inoventory_ui/shared/widgets/inoventory_appbar.dart';
 
 enum SORTING { dateAdded, name, expirationDate, quantity }
+enum _RemovalAction { checkout, open }
 
 class ItemListRoute extends StatefulWidget {
   final InventoryList list;
@@ -34,6 +37,7 @@ class ItemListRoute extends StatefulWidget {
 class _ItemListRouteState extends State<ItemListRoute> {
   final ProductService _productService = getIt<ProductService>();
   final ItemService _itemService = getIt<ItemService>();
+  final InventoryListService _listService = getIt<InventoryListService>();
   final _storage = const FlutterSecureStorage();
   
   late Future<List<ItemWrapper>> futureItems;
@@ -43,6 +47,7 @@ class _ItemListRouteState extends State<ItemListRoute> {
   SORTING _sortByKey = SORTING.dateAdded;
   bool _isAsc = false;
   bool _focusExpiring = false;
+  int _itemCount = 0;
 
   @override
   void initState() {
@@ -53,11 +58,39 @@ class _ItemListRouteState extends State<ItemListRoute> {
       _sortByKey = SORTING.expirationDate;
       _isAsc = true;
     }
-    futureGroupedItems = _itemService.allGroupedBy(widget.list.id, "category");
-    futureItems = _itemService.all(widget.list.id);
+    futureGroupedItems = _loadGroupedItems();
+    futureItems = _loadItems();
     // Always load the stored preference — never save from here.
     // Opening via a notification must not permanently override the user's setting.
     _loadFocusPreference();
+  }
+
+  Future<List<ItemWrapper>> _loadItems() async {
+    final wrappers = await _itemService.all(widget.list.id);
+    final count = wrappers.fold<int>(0, (sum, wrapper) => sum + wrapper.items.length);
+    if (mounted && _itemCount != count) {
+      setState(() {
+        _itemCount = count;
+      });
+    } else {
+      _itemCount = count;
+    }
+    return wrappers;
+  }
+
+  Future<Map<String, List<ItemWrapper>>> _loadGroupedItems() async {
+    final groupedItems = await _itemService.allGroupedBy(widget.list.id, "category");
+    final count = groupedItems.values
+        .expand((wrappers) => wrappers)
+        .fold<int>(0, (sum, wrapper) => sum + wrapper.items.length);
+    if (mounted && _itemCount != count) {
+      setState(() {
+        _itemCount = count;
+      });
+    } else {
+      _itemCount = count;
+    }
+    return groupedItems;
   }
 
   Future<void> _loadFocusPreference() async {
@@ -101,15 +134,37 @@ class _ItemListRouteState extends State<ItemListRoute> {
   Future<bool> onDelete(ItemWrapper itemWrapper) async {
     final scaffoldMessenger = ScaffoldMessenger.of(context);
 
-    final int? itemId = await getItemIdToDelete(itemWrapper);
-    if (itemId == null) {
+    final item = await _getItemToRemove(itemWrapper);
+    if (item == null) {
       return false;
     }
 
     try {
-      await _itemService.delete(widget.list.id, itemId);
+      if (widget.list.isOpenList) {
+        await _itemService.delete(widget.list.id, item.id);
+        scaffoldMessenger.showSnackBar(
+          _getSnackBar("Removed opened item", Colors.green),
+        );
+      } else {
+        final action = await _chooseRemovalAction(itemWrapper);
+        if (action == null) {
+          return false;
+        }
 
-      scaffoldMessenger.showSnackBar(_getSnackBar("Successfully deleted item", Colors.green, withUndo: true));
+        if (action == _RemovalAction.checkout) {
+          await _itemService.delete(widget.list.id, item.id);
+          scaffoldMessenger.showSnackBar(
+            _getSnackBar("Successfully deleted item", Colors.green, withUndo: true),
+          );
+        } else {
+          final expirationDate = item.expirationDate ?? await _pickRequiredExpirationDate();
+          if (expirationDate == null) {
+            return false;
+          }
+          await _itemService.open(widget.list.id, item.id, expirationDate: expirationDate);
+          await _showMovedToOpenListSnackBar(scaffoldMessenger);
+        }
+      }
     } catch (e) {
       scaffoldMessenger.showSnackBar(_getSnackBar("Error deleting item: ", Colors.red));
 
@@ -120,6 +175,60 @@ class _ItemListRouteState extends State<ItemListRoute> {
 
     await _refreshList();
     return true;
+  }
+
+  Future<_RemovalAction?> _chooseRemovalAction(ItemWrapper itemWrapper) {
+    return showModalBottomSheet<_RemovalAction>(
+      context: context,
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  "What do you want to do with ${itemWrapper.displayName}?",
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 16),
+                FilledButton.icon(
+                  onPressed: () => Navigator.pop(context, _RemovalAction.open),
+                  icon: const Icon(Icons.lock_open),
+                  label: const Text("Open Item"),
+                ),
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  onPressed: () => Navigator.pop(context, _RemovalAction.checkout),
+                  icon: const Icon(Icons.check_circle_outline),
+                  label: const Text("Check Out"),
+                ),
+                const SizedBox(height: 8),
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text("Cancel"),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<String?> _pickRequiredExpirationDate() async {
+    final pickedDate = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+      helpText: "Select an expiration date for the opened item",
+    );
+    if (pickedDate == null) {
+      return null;
+    }
+    return "${pickedDate.year.toString().padLeft(4, '0')}-${pickedDate.month.toString().padLeft(2, '0')}-${pickedDate.day.toString().padLeft(2, '0')}";
   }
 
   SnackBar _getSnackBar(String text, Color color, {bool withUndo = false}) {
@@ -140,6 +249,54 @@ class _ItemListRouteState extends State<ItemListRoute> {
             : null);
   }
 
+  Future<void> _showMovedToOpenListSnackBar(
+    ScaffoldMessengerState scaffoldMessenger,
+  ) async {
+    final openList = await _findOpenList();
+    if (!mounted) {
+      return;
+    }
+
+    scaffoldMessenger.showSnackBar(
+      SnackBar(
+        backgroundColor: Colors.green,
+        duration: const Duration(seconds: 5),
+        content: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: openList == null
+              ? null
+              : () {
+                  scaffoldMessenger.hideCurrentSnackBar();
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => ItemListRoute(list: openList),
+                    ),
+                  );
+                },
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  openList == null
+                      ? "Moved item to open list"
+                      : "Moved item to open list. Tap to view",
+                  style: const TextStyle(color: Colors.white),
+                ),
+              ),
+              if (openList != null)
+                const Icon(Icons.chevron_right, color: Colors.white),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<InventoryList?> _findOpenList() async {
+    final lists = await _listService.all();
+    return lists.firstWhereOrNull((list) => list.isOpenList);
+  }
+
   Future<void> onEanDeleteScan(String ean) async {
     futureItems.then((value) async {
       ItemWrapper? result = value.firstWhereOrNull((element) => element.productEan == ean);
@@ -151,12 +308,12 @@ class _ItemListRouteState extends State<ItemListRoute> {
     });
   }
 
-  Future<int?> getItemIdToDelete(ItemWrapper itemWrapper) async {
+  Future<Item?> _getItemToRemove(ItemWrapper itemWrapper) async {
     if (itemWrapper.items.map((e) => e.expirationDate).toSet().length == 1) {
-      return itemWrapper.items.first.id;
+      return itemWrapper.items.first;
     }
 
-    return await showDialog<int>(
+    return await showDialog<Item>(
         context: context,
         builder: (context) {
           return AlertDialog(
@@ -165,7 +322,7 @@ class _ItemListRouteState extends State<ItemListRoute> {
               content: Column(mainAxisSize: MainAxisSize.min, children: [
                 const Text("Which item do you want to remove?"),
                 ...itemWrapper.items.map((e) => TextButton(
-                      onPressed: () => Navigator.pop(context, e.id),
+                      onPressed: () => Navigator.pop(context, e),
                       child: Text(e.expirationDate ?? "<no expiration date>"),
                     )),
                 OutlinedButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel"))
@@ -177,9 +334,9 @@ class _ItemListRouteState extends State<ItemListRoute> {
     Future.delayed(const Duration(milliseconds: 200), () {
       setState(() {
         if (groupByCategory) {
-          futureGroupedItems = _itemService.allGroupedBy(widget.list.id, "category");
+          futureGroupedItems = _loadGroupedItems();
         } else {
-          futureItems = _itemService.all(widget.list.id);
+          futureItems = _loadItems();
         }
       });
     });
@@ -203,12 +360,19 @@ class _ItemListRouteState extends State<ItemListRoute> {
           backgroundColor: Theme.of(context).colorScheme.secondary,
           child: groupByCategory
               ? ItemsFutureBuilder<Map<String, List<ItemWrapper>>>(futureGroupedItems, _refreshList, (context, snapshot) {
-                  return GroupedInventoryListWidget(snapshot.data!, onDelete, onEdit);
+                  final groupedItems = snapshot.data!;
+                  return GroupedInventoryListWidget(groupedItems, onDelete, onEdit);
                 })
               : ItemsFutureBuilder<List<ItemWrapper>>(futureItems, _refreshList, (context, snapshot) {
                   sortItemsByKey(snapshot, _sortByKey, _isAsc);
                   itemWrappers = snapshot.data!;
-                  return InventoryListWidget(itemWrappers: snapshot.data!, onDelete: onDelete, onEdit: onEdit, focusExpiring: _focusExpiring);
+                  return InventoryListWidget(
+                    itemWrappers: snapshot.data!,
+                    onDelete: onDelete,
+                    onEdit: onEdit,
+                    focusExpiring: _focusExpiring,
+                    isOpenList: widget.list.isOpenList,
+                  );
                 })),
       floatingActionButton: buildFloatingActionButton(context),
     );
@@ -217,6 +381,7 @@ class _ItemListRouteState extends State<ItemListRoute> {
   InoventoryAppBar buildInoventoryAppBar() {
     return InoventoryAppBar(
       title: widget.list.name,
+      subtitle: "$_itemCount ${_itemCount == 1 ? 'item' : 'items'}",
       isFocusExpiring: _focusExpiring,
       onFocusExpiringToggled: _toggleFocusExpiring,
       onSearchButtonPressed: () {

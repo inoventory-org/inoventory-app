@@ -14,6 +14,7 @@ abstract class InventoryListService {
   Future<InventoryList> get(int listId);
   Future<InventoryList> add(InventoryList list);
   Future<InventoryList> update(int listId, InventoryList updatedList);
+  Future<List<InventoryList>> reorder(List<int> listIds);
   Future<void> delete(int listId);
 
   String getSpecificListUrl(int listId) {
@@ -32,7 +33,10 @@ class InventoryListServiceImpl extends InventoryListService {
     final response = await dio.post(InventoryListService.listUrl,
         options: Options(
             headers: {HttpHeaders.contentTypeHeader: "application/json"}),
-        data: {"name": list.name}).timeout(timeoutDuration);
+        data: {
+          "name": list.name,
+          "sortOrder": list.sortOrder
+        }).timeout(timeoutDuration);
 
     if (response.statusCode != HttpStatus.created) {
       throw Exception("Failed to create list");
@@ -56,8 +60,9 @@ class InventoryListServiceImpl extends InventoryListService {
 
   @override
   Future<InventoryList> get(int listId) async {
-    final response =
-    await dio.get("${InventoryListService.listUrl}/$listId").timeout(timeoutDuration);
+    final response = await dio
+        .get("${InventoryListService.listUrl}/$listId")
+        .timeout(timeoutDuration);
 
     if (response.statusCode != HttpStatus.ok) {
       throw Exception("Failed to fetch list with id $listId");
@@ -74,8 +79,10 @@ class InventoryListServiceImpl extends InventoryListService {
     final response = await dio.put(getSpecificListUrl(listId),
         options: Options(
             headers: {HttpHeaders.contentTypeHeader: "application/json"}),
-        data: <String, String>{
-          "name": updatedList.name
+        data: <String, dynamic>{
+          "name": updatedList.name,
+          "sortOrder": updatedList.sortOrder,
+          "type": updatedList.type,
         }).timeout(timeoutDuration);
 
     if (response.statusCode != HttpStatus.ok) {
@@ -83,6 +90,24 @@ class InventoryListServiceImpl extends InventoryListService {
     }
 
     return InventoryList.fromJson(response.data);
+  }
+
+  @override
+  Future<List<InventoryList>> reorder(List<int> listIds) async {
+    final response = await dio.post(
+      "${InventoryListService.listUrl}/reorder",
+      options: Options(
+        headers: {HttpHeaders.contentTypeHeader: "application/json"},
+      ),
+      data: {"listIds": listIds},
+    ).timeout(timeoutDuration);
+
+    if (response.statusCode != HttpStatus.ok) {
+      throw Exception("Failed to reorder lists");
+    }
+
+    final Iterable listsJson = response.data;
+    return listsJson.map((json) => InventoryList.fromJson(json)).toList();
   }
 
   @override

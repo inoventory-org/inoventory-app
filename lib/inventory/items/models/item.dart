@@ -4,12 +4,13 @@ class Item {
   final String productEan;
   final String displayName;
   String? expirationDate;
+  String? openedAt;
   final String? imageUrl;
   final String? thumbUrl;
   final Set<String>? tags;
 
   Item(this.id, this.listId, this.productEan, this.displayName,
-      {this.expirationDate, this.imageUrl, this.thumbUrl, this.tags});
+      {this.expirationDate, this.openedAt, this.imageUrl, this.thumbUrl, this.tags});
 
   factory Item.fromJson(Map<String, dynamic> json) {
     return Item(
@@ -18,6 +19,7 @@ class Item {
       json['productEan'],
       json['displayName'],
       expirationDate: json['expirationDate'],
+      openedAt: json['openedAt'],
       imageUrl: json['imageUrl'],
       thumbUrl: json['thumbUrl'],
       tags: json['tags']
