@@ -1,5 +1,20 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+const offRegionOptions = <String, String>{
+  'world': 'World',
+  'de': 'Germany',
+  'us': 'United States',
+  'fr': 'France',
+  'be': 'Belgium',
+};
+
+const offLanguageOptions = <String, String>{
+  'en': 'English',
+  'de': 'German',
+  'fr': 'French',
+  'nl': 'Dutch',
+};
+
 class OffContributionSettings {
   final String region;
   final String language;
@@ -15,6 +30,8 @@ abstract class OffSettingsService {
   static const defaultLanguage = 'en';
 
   Future<OffContributionSettings> loadContributionSettings();
+
+  Future<bool> hasContributionSettings();
 
   Future<void> saveContributionSettings({
     required String region,
@@ -38,6 +55,13 @@ class OffSettingsServiceImpl implements OffSettingsService {
         OffSettingsService.defaultLanguage;
 
     return OffContributionSettings(region: region, language: language);
+  }
+
+  @override
+  Future<bool> hasContributionSettings() async {
+    final region = await storage.read(key: _regionKey);
+    final language = await storage.read(key: _languageKey);
+    return region != null && language != null;
   }
 
   @override

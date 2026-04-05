@@ -12,21 +12,6 @@ class OffSettingsRoute extends StatefulWidget {
 class _OffSettingsRouteState extends State<OffSettingsRoute> {
   final OffSettingsService _settingsService = getIt<OffSettingsService>();
 
-  static const _regions = <DropdownMenuItem<String>>[
-    DropdownMenuItem(value: 'world', child: Text('World')),
-    DropdownMenuItem(value: 'de', child: Text('Germany')),
-    DropdownMenuItem(value: 'us', child: Text('United States')),
-    DropdownMenuItem(value: 'fr', child: Text('France')),
-    DropdownMenuItem(value: 'be', child: Text('Belgium')),
-  ];
-
-  static const _languages = <DropdownMenuItem<String>>[
-    DropdownMenuItem(value: 'en', child: Text('English')),
-    DropdownMenuItem(value: 'de', child: Text('German')),
-    DropdownMenuItem(value: 'fr', child: Text('French')),
-    DropdownMenuItem(value: 'nl', child: Text('Dutch')),
-  ];
-
   String _region = OffSettingsService.defaultRegion;
   String _language = OffSettingsService.defaultLanguage;
   bool _isLoading = true;
@@ -89,7 +74,14 @@ class _OffSettingsRouteState extends State<OffSettingsRoute> {
                 const SizedBox(height: 8),
                 DropdownButtonFormField<String>(
                   value: _region,
-                  items: _regions,
+                  items: offRegionOptions.entries
+                      .map(
+                        (entry) => DropdownMenuItem(
+                          value: entry.key,
+                          child: Text(entry.value),
+                        ),
+                      )
+                      .toList(),
                   onChanged: (value) {
                     if (value == null) return;
                     setState(() {
@@ -108,7 +100,14 @@ class _OffSettingsRouteState extends State<OffSettingsRoute> {
                 const SizedBox(height: 8),
                 DropdownButtonFormField<String>(
                   value: _language,
-                  items: _languages,
+                  items: offLanguageOptions.entries
+                      .map(
+                        (entry) => DropdownMenuItem(
+                          value: entry.key,
+                          child: Text(entry.value),
+                        ),
+                      )
+                      .toList(),
                   onChanged: (value) {
                     if (value == null) return;
                     setState(() {

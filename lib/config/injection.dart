@@ -23,7 +23,10 @@ void configureDependencies() {
   getIt.registerLazySingleton<ProductService>(
       () => ProductServiceImpl(getIt<Dio>()));
   getIt.registerLazySingleton<ProductUploadJobService>(
-      () => ProductUploadJobServiceImpl(getIt<ProductService>()));
+      () => ProductUploadJobServiceImpl(
+            getIt<ProductService>(),
+            getIt<FlutterSecureStorage>(),
+          ));
   getIt.registerLazySingleton<InventoryListService>(
       () => InventoryListServiceImpl(getIt<Dio>()));
   getIt.registerLazySingleton<ItemService>(() => ItemServiceImpl(getIt<Dio>()));

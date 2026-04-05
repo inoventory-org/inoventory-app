@@ -40,6 +40,9 @@ void setupMockGetIt({
       language: OffSettingsService.defaultLanguage,
     ),
   );
+  when(() => settingsService.hasContributionSettings()).thenAnswer(
+    (_) async => true,
+  );
   when(() => jobService.jobs).thenReturn(const []);
   when(() => jobService.events).thenAnswer((_) => const Stream.empty());
   when(() => jobService.addListener(any())).thenReturn(null);
