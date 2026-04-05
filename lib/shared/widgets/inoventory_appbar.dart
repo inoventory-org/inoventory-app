@@ -27,9 +27,7 @@ class InoventoryAppBar extends StatefulWidget implements PreferredSizeWidget {
   State<InoventoryAppBar> createState() => _InoventoryAppBarState();
 
   @override
-  Size get preferredSize => Size.fromHeight(
-        subtitle != null ? kToolbarHeight + 44 : kToolbarHeight,
-      );
+  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
 }
 
 class _InoventoryAppBarState extends State<InoventoryAppBar> {
@@ -65,26 +63,15 @@ class _InoventoryAppBarState extends State<InoventoryAppBar> {
             ),
         ],
       ),
-      actions: widget.subtitle == null ? actions : const [],
-      bottom: widget.subtitle == null
-          ? null
-          : PreferredSize(
-              preferredSize: const Size.fromHeight(44),
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 8, 8),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: actions,
-                ),
-              ),
-            ),
+      actions: actions,
     );
   }
 
   List<Widget> _buildActions(BuildContext context) {
     return [
       if (widget.onFocusExpiringToggled != null)
-        IconButton(
+        _buildCompactAction(
+          context: context,
           icon: Icon(
             widget.isFocusExpiring
                 ? Icons.notification_important
@@ -92,15 +79,17 @@ class _InoventoryAppBarState extends State<InoventoryAppBar> {
             color:
                 widget.isFocusExpiring ? Theme.of(context).colorScheme.error : null,
           ),
-          onPressed: widget.onFocusExpiringToggled,
+          onPressed: widget.onFocusExpiringToggled!,
         ),
       if (widget.onGroupButtonPressed != null)
-        IconButton(
+        _buildCompactAction(
+          context: context,
           icon: const Icon(Icons.line_style),
-          onPressed: widget.onGroupButtonPressed,
+          onPressed: widget.onGroupButtonPressed!,
         ),
       if (_withSorting)
-        IconButton(
+        _buildCompactAction(
+          context: context,
           icon: _isAsc
               ? const Icon(Icons.arrow_upward)
               : const Icon(Icons.arrow_downward),
@@ -112,11 +101,35 @@ class _InoventoryAppBarState extends State<InoventoryAppBar> {
           },
         ),
       if (_withSorting)
-        InoventoryPopupMenu(sortingOptions: widget.sortingOptions!),
-      IconButton(
+        Theme(
+          data: Theme.of(context).copyWith(
+            visualDensity: VisualDensity.compact,
+          ),
+          child: InoventoryPopupMenu(sortingOptions: widget.sortingOptions!),
+        ),
+      _buildCompactAction(
+        context: context,
         icon: const Icon(Icons.search),
         onPressed: widget.onSearchButtonPressed ?? () {},
       ),
     ];
+  }
+
+  Widget _buildCompactAction({
+    required BuildContext context,
+    required Widget icon,
+    required VoidCallback onPressed,
+  }) {
+    return IconButton(
+      icon: icon,
+      onPressed: onPressed,
+      padding: const EdgeInsets.symmetric(horizontal: 6),
+      constraints: const BoxConstraints(
+        minWidth: 36,
+        minHeight: 36,
+      ),
+      visualDensity: VisualDensity.compact,
+      splashRadius: 20,
+    );
   }
 }
