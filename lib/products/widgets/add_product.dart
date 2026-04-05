@@ -320,13 +320,60 @@ class _AddProductViewState extends State<AddProductView> {
                 ],
               ),
               const SizedBox(height: 32),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  Chip(label: Text('Region: $_region')),
-                  Chip(label: Text('Language: $_language')),
-                ],
+              Text(
+                "Open Food Facts Settings",
+                style: Theme.of(context)
+                    .textTheme
+                    .titleLarge
+                    ?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                value: _region,
+                items: offRegionOptions.entries
+                    .map(
+                      (entry) => DropdownMenuItem(
+                        value: entry.key,
+                        child: Text(entry.value),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (value) {
+                  if (value == null) {
+                    return;
+                  }
+                  setState(() {
+                    _region = value;
+                  });
+                },
+                decoration: _inputDecoration(
+                  "Contribution Region",
+                  Icons.public,
+                ),
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                value: _language,
+                items: offLanguageOptions.entries
+                    .map(
+                      (entry) => DropdownMenuItem(
+                        value: entry.key,
+                        child: Text(entry.value),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (value) {
+                  if (value == null) {
+                    return;
+                  }
+                  setState(() {
+                    _language = value;
+                  });
+                },
+                decoration: _inputDecoration(
+                  "Product Language",
+                  Icons.translate,
+                ),
               ),
               const SizedBox(height: 16),
               if (_errorMessage != null) ...[
