@@ -2,8 +2,10 @@ import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:inoventory_ui/config/injection.dart';
 import 'package:inoventory_ui/inventory/items/item_service.dart';
+import 'package:inoventory_ui/inventory/items/item_list_route.dart';
 import 'package:inoventory_ui/inventory/items/models/item.dart';
 import 'package:inoventory_ui/inventory/items/models/item_wrapper.dart';
+import 'package:inoventory_ui/inventory/lists/inventory_list_service.dart';
 import 'package:inoventory_ui/inventory/lists/models/inventory_list.dart';
 import 'package:inoventory_ui/products/product_model.dart';
 import 'package:inoventory_ui/products/product_service.dart';
@@ -27,6 +29,7 @@ class ItemDetailRoute extends StatefulWidget {
 class _ItemDetailRouteState extends State<ItemDetailRoute> {
   late List<Item> items;
   final ItemService _itemService = getIt<ItemService>();
+  final InventoryListService _listService = getIt<InventoryListService>();
   final ProductService _productService = getIt<ProductService>();
 
   @override
@@ -85,11 +88,7 @@ class _ItemDetailRouteState extends State<ItemDetailRoute> {
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text("Item moved to open list"),
-            backgroundColor: Colors.green),
-      );
+      await _showMovedToOpenListSnackBar();
       if (items.isEmpty) {
         Navigator.of(context).pop(true);
       }
@@ -258,6 +257,53 @@ class _ItemDetailRouteState extends State<ItemDetailRoute> {
     } else if (action == 'open') {
       await _openItem(item);
     }
+  }
+
+  Future<void> _showMovedToOpenListSnackBar() async {
+    final openList = await _findOpenList();
+    if (!mounted) {
+      return;
+    }
+
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    scaffoldMessenger.showSnackBar(
+      SnackBar(
+        backgroundColor: Colors.green,
+        duration: const Duration(seconds: 5),
+        content: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: openList == null
+              ? null
+              : () {
+                  scaffoldMessenger.hideCurrentSnackBar();
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => ItemListRoute(list: openList),
+                    ),
+                  );
+                },
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  openList == null
+                      ? "Item moved to open list"
+                      : "Item moved to open list. Tap to view",
+                  style: const TextStyle(color: Colors.white),
+                ),
+              ),
+              if (openList != null)
+                const Icon(Icons.chevron_right, color: Colors.white),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<InventoryList?> _findOpenList() async {
+    final lists = await _listService.all();
+    return lists.firstWhereOrNull((list) => list.isOpenList);
   }
 
   bool _isExpired(Item item) {

@@ -12,14 +12,17 @@ import '../../helpers/test_wrapper.dart';
 void main() {
   late MockItemService mockItemService;
   late MockProductService mockProductService;
+  late MockInventoryListService mockInventoryListService;
   late InventoryList dummyList;
 
   setUp(() {
     mockItemService = MockItemService();
     mockProductService = MockProductService();
+    mockInventoryListService = MockInventoryListService();
     setupMockGetIt(
       mockItemService: mockItemService,
       mockProductService: mockProductService,
+      mockInventoryListService: mockInventoryListService,
     );
 
     dummyList = InventoryList(1, 'Test List');
@@ -128,6 +131,13 @@ void main() {
     when(() => mockItemService.allGroupedBy(1, any()))
         .thenAnswer((_) async => {});
     when(() => mockItemService.all(1)).thenAnswer((_) async => [itemWrapper]);
+    when(() => mockInventoryListService.all()).thenAnswer((_) async => [
+          dummyList,
+          InventoryList(99, 'Open', type: 'OPEN'),
+        ]);
+    when(() => mockItemService.all(99)).thenAnswer((_) async => []);
+    when(() => mockItemService.allGroupedBy(99, any()))
+        .thenAnswer((_) async => {});
     when(() => mockItemService.open(any(), any(),
         expirationDate: any(named: 'expirationDate'))).thenAnswer(
       (_) async => Item(1, 99, '111', 'Apple',
@@ -146,5 +156,12 @@ void main() {
 
     verify(() => mockItemService.open(1, 1, expirationDate: '2025-01-01'))
         .called(1);
+    expect(find.text('Moved item to open list. Tap to view'), findsOneWidget);
+
+    await tester.tap(find.text('Moved item to open list. Tap to view'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Open'), findsWidgets);
+    verify(() => mockItemService.all(99)).called(greaterThanOrEqualTo(1));
   });
 }
