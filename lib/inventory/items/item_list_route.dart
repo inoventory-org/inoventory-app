@@ -45,6 +45,7 @@ class _ItemListRouteState extends State<ItemListRoute> {
   SORTING _sortByKey = SORTING.dateAdded;
   bool _isAsc = false;
   bool _focusExpiring = false;
+  int _itemCount = 0;
 
   @override
   void initState() {
@@ -55,11 +56,39 @@ class _ItemListRouteState extends State<ItemListRoute> {
       _sortByKey = SORTING.expirationDate;
       _isAsc = true;
     }
-    futureGroupedItems = _itemService.allGroupedBy(widget.list.id, "category");
-    futureItems = _itemService.all(widget.list.id);
+    futureGroupedItems = _loadGroupedItems();
+    futureItems = _loadItems();
     // Always load the stored preference — never save from here.
     // Opening via a notification must not permanently override the user's setting.
     _loadFocusPreference();
+  }
+
+  Future<List<ItemWrapper>> _loadItems() async {
+    final wrappers = await _itemService.all(widget.list.id);
+    final count = wrappers.fold<int>(0, (sum, wrapper) => sum + wrapper.items.length);
+    if (mounted && _itemCount != count) {
+      setState(() {
+        _itemCount = count;
+      });
+    } else {
+      _itemCount = count;
+    }
+    return wrappers;
+  }
+
+  Future<Map<String, List<ItemWrapper>>> _loadGroupedItems() async {
+    final groupedItems = await _itemService.allGroupedBy(widget.list.id, "category");
+    final count = groupedItems.values
+        .expand((wrappers) => wrappers)
+        .fold<int>(0, (sum, wrapper) => sum + wrapper.items.length);
+    if (mounted && _itemCount != count) {
+      setState(() {
+        _itemCount = count;
+      });
+    } else {
+      _itemCount = count;
+    }
+    return groupedItems;
   }
 
   Future<void> _loadFocusPreference() async {
@@ -257,9 +286,9 @@ class _ItemListRouteState extends State<ItemListRoute> {
     Future.delayed(const Duration(milliseconds: 200), () {
       setState(() {
         if (groupByCategory) {
-          futureGroupedItems = _itemService.allGroupedBy(widget.list.id, "category");
+          futureGroupedItems = _loadGroupedItems();
         } else {
-          futureItems = _itemService.all(widget.list.id);
+          futureItems = _loadItems();
         }
       });
     });
@@ -284,42 +313,17 @@ class _ItemListRouteState extends State<ItemListRoute> {
           child: groupByCategory
               ? ItemsFutureBuilder<Map<String, List<ItemWrapper>>>(futureGroupedItems, _refreshList, (context, snapshot) {
                   final groupedItems = snapshot.data!;
-                  final itemCount = groupedItems.values
-                      .expand((wrappers) => wrappers)
-                      .fold<int>(0, (sum, wrapper) => sum + wrapper.items.length);
-                  return Column(
-                    children: [
-                      _ListItemCountHeader(
-                        itemCount: itemCount,
-                        isOpenList: widget.list.isOpenList,
-                      ),
-                      Expanded(
-                        child: GroupedInventoryListWidget(groupedItems, onDelete, onEdit),
-                      ),
-                    ],
-                  );
+                  return GroupedInventoryListWidget(groupedItems, onDelete, onEdit);
                 })
               : ItemsFutureBuilder<List<ItemWrapper>>(futureItems, _refreshList, (context, snapshot) {
                   sortItemsByKey(snapshot, _sortByKey, _isAsc);
                   itemWrappers = snapshot.data!;
-                  final itemCount = snapshot.data!
-                      .fold<int>(0, (sum, wrapper) => sum + wrapper.items.length);
-                  return Column(
-                    children: [
-                      _ListItemCountHeader(
-                        itemCount: itemCount,
-                        isOpenList: widget.list.isOpenList,
-                      ),
-                      Expanded(
-                        child: InventoryListWidget(
-                          itemWrappers: snapshot.data!,
-                          onDelete: onDelete,
-                          onEdit: onEdit,
-                          focusExpiring: _focusExpiring,
-                          isOpenList: widget.list.isOpenList,
-                        ),
-                      ),
-                    ],
+                  return InventoryListWidget(
+                    itemWrappers: snapshot.data!,
+                    onDelete: onDelete,
+                    onEdit: onEdit,
+                    focusExpiring: _focusExpiring,
+                    isOpenList: widget.list.isOpenList,
                   );
                 })),
       floatingActionButton: buildFloatingActionButton(context),
@@ -329,6 +333,7 @@ class _ItemListRouteState extends State<ItemListRoute> {
   InoventoryAppBar buildInoventoryAppBar() {
     return InoventoryAppBar(
       title: widget.list.name,
+      subtitle: "$_itemCount ${_itemCount == 1 ? 'item' : 'items'}",
       isFocusExpiring: _focusExpiring,
       onFocusExpiringToggled: _toggleFocusExpiring,
       onSearchButtonPressed: () {
@@ -422,46 +427,5 @@ class _ItemListRouteState extends State<ItemListRoute> {
     DateTime firstCandidate = firstDates.firstOrNull ?? defaultDate;
     DateTime secondCandidate = secondDates.firstOrNull ?? defaultDate;
     return direction * firstCandidate.compareTo(secondCandidate);
-  }
-}
-
-class _ListItemCountHeader extends StatelessWidget {
-  final int itemCount;
-  final bool isOpenList;
-
-  const _ListItemCountHeader({
-    required this.itemCount,
-    required this.isOpenList,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final label = "$itemCount ${itemCount == 1 ? 'item' : 'items'}";
-
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: isOpenList ? colorScheme.tertiaryContainer.withOpacity(0.4) : colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            isOpenList ? Icons.lock_open : Icons.inventory_2_outlined,
-            color: isOpenList ? colorScheme.tertiary : colorScheme.secondary,
-          ),
-          const SizedBox(width: 12),
-          Text(
-            label,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
-          ),
-        ],
-      ),
-    );
   }
 }
