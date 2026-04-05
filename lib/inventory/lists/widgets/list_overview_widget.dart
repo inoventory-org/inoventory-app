@@ -43,8 +43,6 @@ class MyInventoryListsWidget extends StatelessWidget {
                   borderRadius: BorderRadius.circular(16)),
               clipBehavior: Clip.antiAlias,
               child: InkWell(
-                onLongPress:
-                    isOpenList ? null : () => onDelete(myList.id, context),
                 onTap: () {
                   Navigator.push(
                     context,
