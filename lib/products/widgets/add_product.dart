@@ -17,19 +17,36 @@ import 'package:inoventory_ui/settings/off_settings_service.dart';
 class AddProductView extends StatefulWidget {
   String barcode;
   final Product? initialProduct;
+  final Map<String, File> initialImages;
+  final String? initialRegion;
+  final String? initialLanguage;
+  final String? initialErrorMessage;
   final String submitButtonLabel;
+  final String successMessage;
   void Function() onCancelProductAddition;
   FutureOr<void> Function(String barcode)? onSuccessfulProductAddition;
   void Function(Object e)? onErrorProductAddition;
+  final Future<void> Function(
+    Product product,
+    Map<String, File> images,
+    String language,
+    String region,
+  )? onSubmitProduct;
 
   AddProductView(
       {super.key,
       this.barcode = "",
       this.initialProduct,
+      this.initialImages = const {},
+      this.initialRegion,
+      this.initialLanguage,
+      this.initialErrorMessage,
       this.submitButtonLabel = "Add Product",
+      this.successMessage = "Product upload queued",
       required this.onCancelProductAddition,
       this.onSuccessfulProductAddition,
-      this.onErrorProductAddition});
+      this.onErrorProductAddition,
+      this.onSubmitProduct});
 
   @override
   _AddProductViewState createState() => _AddProductViewState();
@@ -64,7 +81,23 @@ class _AddProductViewState extends State<AddProductView> {
     _productNameController.text = widget.initialProduct?.name ?? "";
     _brandController.text = widget.initialProduct?.brands ?? "";
     _weightController.text = widget.initialProduct?.weight ?? "";
-    _loadContributionSettings();
+    _frontImage = _xFileFromInitialImage('front');
+    ingredientsImage = _xFileFromInitialImage('ingredients');
+    _nutritionImage = _xFileFromInitialImage('nutrition');
+    _errorMessage = widget.initialErrorMessage;
+    _region = widget.initialRegion ?? OffSettingsService.defaultRegion;
+    _language = widget.initialLanguage ?? OffSettingsService.defaultLanguage;
+    if (widget.initialRegion == null || widget.initialLanguage == null) {
+      _loadContributionSettings();
+    }
+  }
+
+  XFile? _xFileFromInitialImage(String imageType) {
+    final image = widget.initialImages[imageType];
+    if (image == null) {
+      return null;
+    }
+    return XFile(image.path);
   }
 
   Future<void> _loadContributionSettings() async {
@@ -136,14 +169,18 @@ class _AddProductViewState extends State<AddProductView> {
       });
 
       // Submit via Inoventory backend → backend forwards to OpenFoodFacts
-      await _jobService.enqueueUpsert(
-        product: product,
-        images: images,
-        language: _language,
-        region: _region,
-        actionLabel:
-            widget.initialProduct == null ? 'Product upload' : 'Product edit',
-      );
+      if (widget.onSubmitProduct != null) {
+        await widget.onSubmitProduct!(product, images, _language, _region);
+      } else {
+        await _jobService.enqueueUpsert(
+          product: product,
+          images: images,
+          language: _language,
+          region: _region,
+          actionLabel:
+              widget.initialProduct == null ? 'Product upload' : 'Product edit',
+        );
+      }
 
       // ── Alternative: submit directly to OpenFoodFacts using the OFF Dart SDK ──────────────────
       // (Kept commented out for easy reactivation if the backend-proxy approach is abandoned.)
@@ -163,21 +200,32 @@ class _AddProductViewState extends State<AddProductView> {
       // await _oFFService.addProduct(product, offImages);
       // ─────────────────────────────────────────────────────────────────────────────────────────
 
-      _showSnackbar("Product upload queued", Colors.green);
+      _showSnackbar(widget.successMessage, Colors.green);
       await widget.onSuccessfulProductAddition?.call(product.ean);
     } catch (e) {
       developer.log("An error occurred while adding a new product...",
           error: e);
-      final errorMessage = e.toString();
+      final errorMessage = _formatUserFacingError(e);
       setState(() {
         _errorMessage = errorMessage;
       });
-      _showSnackbar("An error occurred while adding a new product", Colors.red);
+      _showSnackbar(errorMessage, Colors.red);
       widget.onErrorProductAddition?.call(e);
+    }
+    if (!mounted) {
+      return;
     }
     setState(() {
       isWorking = false;
     });
+  }
+
+  String _formatUserFacingError(Object error) {
+    final raw = error.toString().trim();
+    if (raw.startsWith('Exception: ')) {
+      return raw.substring('Exception: '.length);
+    }
+    return raw;
   }
 
   void _showSnackbar(String text, Color color) {
@@ -272,6 +320,15 @@ class _AddProductViewState extends State<AddProductView> {
                 ],
               ),
               const SizedBox(height: 32),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  Chip(label: Text('Region: $_region')),
+                  Chip(label: Text('Language: $_language')),
+                ],
+              ),
+              const SizedBox(height: 16),
               if (_errorMessage != null) ...[
                 Container(
                   padding: const EdgeInsets.all(12),

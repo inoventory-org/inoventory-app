@@ -88,6 +88,16 @@ abstract class ProductUploadJobService implements Listenable {
     required String actionLabel,
   });
 
+  Future<void> updateJob({
+    required String jobId,
+    required Product product,
+    required Map<String, File> images,
+    required String language,
+    required String region,
+    String? actionLabel,
+    bool queueForRetry = false,
+  });
+
   Future<void> retryJob(String jobId);
 
   Future<void> deleteJob(String jobId);
@@ -150,6 +160,43 @@ class ProductUploadJobServiceImpl extends ChangeNotifier
     await _persistJobs();
     notifyListeners();
     unawaited(_processQueue());
+  }
+
+  @override
+  Future<void> updateJob({
+    required String jobId,
+    required Product product,
+    required Map<String, File> images,
+    required String language,
+    required String region,
+    String? actionLabel,
+    bool queueForRetry = false,
+  }) async {
+    await _ready;
+    final existingJob = _findJob(jobId);
+    final persistedImages = await _copyImagesToStableStorage(images);
+    await _deleteImageFiles(existingJob.images.values);
+
+    _updateJob(
+      jobId,
+      ProductUploadJob(
+        id: existingJob.id,
+        product: product,
+        images: persistedImages,
+        language: language,
+        region: region,
+        actionLabel: actionLabel ?? existingJob.actionLabel,
+        createdAt: existingJob.createdAt,
+        status:
+            queueForRetry ? ProductUploadJobStatus.queued : existingJob.status,
+        progress: 0,
+        message: queueForRetry ? 'Queued for retry' : existingJob.message,
+      ),
+    );
+
+    if (queueForRetry) {
+      unawaited(_processQueue());
+    }
   }
 
   @override
@@ -350,7 +397,7 @@ class ProductUploadJobServiceImpl extends ChangeNotifier
           _findJob(nextJob.id).copyWith(
             status: ProductUploadJobStatus.failed,
             progress: 0,
-            message: e.toString(),
+            message: _formatErrorMessage(e),
           ),
         );
         _eventsController.add(ProductUploadJobEvent(_findJob(nextJob.id)));
@@ -474,5 +521,16 @@ class ProductUploadJobServiceImpl extends ChangeNotifier
       imageUrl: json['imageUrl'] as String?,
       thumbUrl: json['thumbUrl'] as String?,
     );
+  }
+
+  String _formatErrorMessage(Object error) {
+    final raw = error.toString().trim();
+    if (raw.startsWith('Exception: ')) {
+      return raw.substring('Exception: '.length);
+    }
+    if (raw.startsWith('DioException [') && raw.contains(']: ')) {
+      return raw.split(']: ').last.trim();
+    }
+    return raw;
   }
 }

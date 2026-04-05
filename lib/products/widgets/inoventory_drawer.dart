@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:inoventory_ui/config/constants.dart';
 import 'package:inoventory_ui/config/injection.dart';
+import 'package:inoventory_ui/products/routes/product_upload_job_route.dart';
 import 'package:inoventory_ui/products/product_upload_job_service.dart';
 import 'package:inoventory_ui/settings/off_settings_route.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -163,6 +164,14 @@ class _InoDrawerState extends State<InoDrawer> {
                 children: jobs
                     .map(
                       (job) => ListTile(
+                        onTap: () async {
+                          await Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  ProductUploadJobRoute(job: job),
+                            ),
+                          );
+                        },
                         dense: true,
                         title: Text('${job.actionLabel}: ${job.product.ean}'),
                         subtitle: Column(
@@ -187,6 +196,19 @@ class _InoDrawerState extends State<InoDrawer> {
                                 child: Wrap(
                                   spacing: 8,
                                   children: [
+                                    OutlinedButton.icon(
+                                      onPressed: () async {
+                                        await Navigator.of(context).push(
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                ProductUploadJobRoute(job: job),
+                                          ),
+                                        );
+                                      },
+                                      icon: const Icon(Icons.visibility,
+                                          size: 18),
+                                      label: const Text('View'),
+                                    ),
                                     if (job.canRetry)
                                       OutlinedButton.icon(
                                         onPressed: () =>

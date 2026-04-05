@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
@@ -131,18 +132,71 @@ class ProductServiceImpl implements ProductService {
       ));
     }
 
-    final response = await dio
-        .put(
-          '$backendUrl/api/v1/products/${product.ean}',
-          data: formData,
-          onSendProgress: onSendProgress,
-        )
-        .timeout(timeout);
+    try {
+      final response = await dio
+          .put(
+            '$backendUrl/api/v1/products/${product.ean}',
+            data: formData,
+            onSendProgress: onSendProgress,
+          )
+          .timeout(timeout);
 
-    if (response.statusCode != 204) {
+      if (response.statusCode != 204) {
+        throw Exception(_extractErrorMessage(
+          statusCode: response.statusCode,
+          responseData: response.data,
+          fallback:
+              'Failed to submit product to Open Food Facts. Please try again.',
+        ));
+      }
+    } on DioException catch (error) {
       throw Exception(
-        'Failed to submit product to OFF: ${response.statusCode} ${response.data}',
+        _extractErrorMessage(
+          statusCode: error.response?.statusCode,
+          responseData: error.response?.data,
+          fallback: error.message ??
+              'Failed to submit product to Open Food Facts. Please try again.',
+        ),
+      );
+    } on TimeoutException {
+      throw Exception(
+        'Submitting the product took too long. Please try again.',
       );
     }
+  }
+
+  String _extractErrorMessage({
+    required int? statusCode,
+    required Object? responseData,
+    required String fallback,
+  }) {
+    final extracted = _extractMessageFromResponseData(responseData);
+    if (extracted != null && extracted.isNotEmpty) {
+      return extracted;
+    }
+    if (statusCode != null) {
+      return 'Request failed with status $statusCode. $fallback';
+    }
+    return fallback;
+  }
+
+  String? _extractMessageFromResponseData(Object? responseData) {
+    if (responseData == null) {
+      return null;
+    }
+    if (responseData is String) {
+      final trimmed = responseData.trim();
+      return trimmed.isEmpty ? null : trimmed;
+    }
+    if (responseData is Map) {
+      for (final key in const ['message', 'error', 'detail', 'debug']) {
+        final value = responseData[key];
+        if (value is String && value.trim().isNotEmpty) {
+          return value.trim();
+        }
+      }
+      return responseData.toString();
+    }
+    return responseData.toString();
   }
 }

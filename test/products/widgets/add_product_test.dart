@@ -121,7 +121,7 @@ void main() {
     await tester.tap(find.widgetWithText(ElevatedButton, 'Add Product'));
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('timeout while uploading'), findsOneWidget);
+    expect(find.textContaining('timeout while uploading'), findsWidgets);
     expect(find.text('My Awesome Product'), findsOneWidget);
     expect(find.text('My Brand'), findsOneWidget);
     expect(find.text('500g'), findsOneWidget);
