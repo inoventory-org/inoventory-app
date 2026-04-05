@@ -43,7 +43,7 @@ void main() {
     expect(find.text('Apple'), findsOneWidget); // Column display name
     expect(find.text('EAN: 111'), findsOneWidget);
     expect(find.text('Inventory Items (2)'), findsOneWidget);
-    expect(find.text('Expires: 2025-01-01'), findsOneWidget);
+    expect(find.text('Expired: 2025-01-01'), findsOneWidget);
     expect(find.text('Expires: 2026-06-06'), findsOneWidget);
   });
 

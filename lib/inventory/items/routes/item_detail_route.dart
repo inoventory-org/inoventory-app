@@ -48,14 +48,17 @@ class _ItemDetailRouteState extends State<ItemDetailRoute> {
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Item deleted"), backgroundColor: Colors.green),
+            const SnackBar(
+                content: Text("Item deleted"), backgroundColor: Colors.green),
           );
         }
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error deleting item: $e"), backgroundColor: Colors.red),
+          SnackBar(
+              content: Text("Error deleting item: $e"),
+              backgroundColor: Colors.red),
         );
       }
     }
@@ -74,7 +77,8 @@ class _ItemDetailRouteState extends State<ItemDetailRoute> {
     }
 
     try {
-      await _itemService.open(widget.list.id, item.id, expirationDate: expirationDate);
+      await _itemService.open(widget.list.id, item.id,
+          expirationDate: expirationDate);
       setState(() {
         items.remove(item);
       });
@@ -82,7 +86,9 @@ class _ItemDetailRouteState extends State<ItemDetailRoute> {
         return;
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Item moved to open list"), backgroundColor: Colors.green),
+        const SnackBar(
+            content: Text("Item moved to open list"),
+            backgroundColor: Colors.green),
       );
       if (items.isEmpty) {
         Navigator.of(context).pop(true);
@@ -90,14 +96,18 @@ class _ItemDetailRouteState extends State<ItemDetailRoute> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error opening item: $e"), backgroundColor: Colors.red),
+          SnackBar(
+              content: Text("Error opening item: $e"),
+              backgroundColor: Colors.red),
         );
       }
     }
   }
 
   Future<void> _editExpirationDate(Item item) async {
-    final initialDate = item.expirationDate != null ? DateTime.tryParse(item.expirationDate!) : null;
+    final initialDate = item.expirationDate != null
+        ? DateTime.tryParse(item.expirationDate!)
+        : null;
     final newDateOptions = await _pickDate(initialDate: initialDate);
     if (newDateOptions != null) {
       if (newDateOptions != item.expirationDate) {
@@ -120,13 +130,17 @@ class _ItemDetailRouteState extends State<ItemDetailRoute> {
           });
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text("Expiration date updated"), backgroundColor: Colors.green),
+              const SnackBar(
+                  content: Text("Expiration date updated"),
+                  backgroundColor: Colors.green),
             );
           }
         } catch (e) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text("Error updating expiration date: $e"), backgroundColor: Colors.red),
+              SnackBar(
+                  content: Text("Error updating expiration date: $e"),
+                  backgroundColor: Colors.red),
             );
           }
         }
@@ -135,7 +149,8 @@ class _ItemDetailRouteState extends State<ItemDetailRoute> {
   }
 
   Future<void> _editOpenedDate(Item item) async {
-    final initialDate = item.openedAt != null ? DateTime.tryParse(item.openedAt!) : null;
+    final initialDate =
+        item.openedAt != null ? DateTime.tryParse(item.openedAt!) : null;
     final newOpenedDate = await _pickDate(
       initialDate: initialDate ?? DateTime.now(),
       helpText: "Select the date this item was opened",
@@ -162,13 +177,17 @@ class _ItemDetailRouteState extends State<ItemDetailRoute> {
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Opened date updated"), backgroundColor: Colors.green),
+          const SnackBar(
+              content: Text("Opened date updated"),
+              backgroundColor: Colors.green),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error updating opened date: $e"), backgroundColor: Colors.red),
+          SnackBar(
+              content: Text("Error updating opened date: $e"),
+              backgroundColor: Colors.red),
         );
       }
     }
@@ -206,7 +225,10 @@ class _ItemDetailRouteState extends State<ItemDetailRoute> {
             children: [
               Text(
                 "What do you want to do with this item?",
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                style: Theme.of(context)
+                    .textTheme
+                    .titleMedium
+                    ?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 16),
               FilledButton.icon(
@@ -268,20 +290,67 @@ class _ItemDetailRouteState extends State<ItemDetailRoute> {
     return "Opened $days day${days == 1 ? '' : 's'} ago";
   }
 
+  String _expirationLabel(Item item) {
+    if (item.expirationDate == null) {
+      return "No Expiration Date";
+    }
+    return _isExpired(item)
+        ? "Expired: ${item.expirationDate}"
+        : "Expires: ${item.expirationDate}";
+  }
+
+  String _openedAtLabel(Item item) {
+    if (item.openedAt == null) {
+      return "Opened At: not set";
+    }
+    return "Opened At: ${item.openedAt}";
+  }
+
+  String _openedDaysCount(Item item) {
+    if (item.openedAt == null) {
+      return "";
+    }
+    final openedDate = DateTime.tryParse(item.openedAt!);
+    if (openedDate == null) {
+      return "";
+    }
+    final days = DateTime.now().difference(openedDate).inDays;
+    return "$days d";
+  }
+
+  String _remainingDaysCount(Item item) {
+    if (item.expirationDate == null) {
+      return "";
+    }
+    final expirationDate = DateTime.tryParse(item.expirationDate!);
+    if (expirationDate == null) {
+      return "";
+    }
+    final days = expirationDate.difference(DateTime.now()).inDays;
+    if (days >= 0) {
+      return "$days d left";
+    }
+    return "${days.abs()} d ago";
+  }
+
   Future<void> _viewProductDetails() async {
     try {
-      Product product = (await _productService.search(widget.itemWrapper.productEan)).first;
+      Product product =
+          (await _productService.search(widget.itemWrapper.productEan)).first;
       if (!mounted) return;
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => ProductDetailRoute(product: product, list: widget.list),
+          builder: (context) =>
+              ProductDetailRoute(product: product, list: widget.list),
         ),
       );
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Error loading product details"), backgroundColor: Colors.red),
+          const SnackBar(
+              content: Text("Error loading product details"),
+              backgroundColor: Colors.red),
         );
       }
     }
@@ -291,7 +360,8 @@ class _ItemDetailRouteState extends State<ItemDetailRoute> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.list.isOpenList ? "Opened Item Details" : "Item Details"),
+        title: Text(
+            widget.list.isOpenList ? "Opened Item Details" : "Item Details"),
       ),
       body: Column(
         children: [
@@ -303,13 +373,20 @@ class _ItemDetailRouteState extends State<ItemDetailRoute> {
                   height: 80,
                   width: 80,
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                    color:
+                        Theme.of(context).colorScheme.primary.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   clipBehavior: Clip.antiAlias,
                   child: widget.itemWrapper.thumbUrl != null
-                      ? InoventoryNetworkImage(url: widget.itemWrapper.thumbUrl!)
-                      : Icon(Icons.inventory_2_outlined, size: 40, color: Theme.of(context).colorScheme.primary.withOpacity(0.5)),
+                      ? InoventoryNetworkImage(
+                          url: widget.itemWrapper.thumbUrl!)
+                      : Icon(Icons.inventory_2_outlined,
+                          size: 40,
+                          color: Theme.of(context)
+                              .colorScheme
+                              .primary
+                              .withOpacity(0.5)),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -318,12 +395,16 @@ class _ItemDetailRouteState extends State<ItemDetailRoute> {
                     children: [
                       Text(
                         widget.itemWrapper.displayName,
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                        style: Theme.of(context)
+                            .textTheme
+                            .titleLarge
+                            ?.copyWith(fontWeight: FontWeight.bold),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 4),
-                      Text("EAN: ${widget.itemWrapper.productEan}", style: Theme.of(context).textTheme.bodyMedium),
+                      Text("EAN: ${widget.itemWrapper.productEan}",
+                          style: Theme.of(context).textTheme.bodyMedium),
                     ],
                   ),
                 ),
@@ -337,7 +418,8 @@ class _ItemDetailRouteState extends State<ItemDetailRoute> {
               icon: const Icon(Icons.info_outline),
               label: const Text("View Product Details"),
               style: OutlinedButton.styleFrom(
-                backgroundColor: Theme.of(context).colorScheme.secondary.withOpacity(0.8),
+                backgroundColor:
+                    Theme.of(context).colorScheme.secondary.withOpacity(0.8),
                 minimumSize: const Size.fromHeight(40),
               ),
             ),
@@ -348,21 +430,29 @@ class _ItemDetailRouteState extends State<ItemDetailRoute> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: Card(
-                color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.45),
+                color: Theme.of(context)
+                    .colorScheme
+                    .primaryContainer
+                    .withOpacity(0.45),
                 child: ListTile(
                   leading: const Icon(Icons.lock_open),
                   title: Text(_formatOpenedSince(items.firstOrNull?.openedAt)),
-                  subtitle: const Text("Tap an item below to update the opened date"),
+                  subtitle:
+                      const Text("Tap an item below to update the opened date"),
                 ),
               ),
             ),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
             child: Align(
               alignment: Alignment.centerLeft,
               child: Text(
                 "Inventory Items (${items.length})",
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                style: Theme.of(context)
+                    .textTheme
+                    .titleMedium
+                    ?.copyWith(fontWeight: FontWeight.bold),
               ),
             ),
           ),
@@ -372,37 +462,145 @@ class _ItemDetailRouteState extends State<ItemDetailRoute> {
               itemBuilder: (context, index) {
                 final item = items[index];
                 return Card(
-                  color: widget.list.isOpenList && _isExpired(item)
-                      ? Theme.of(context).colorScheme.errorContainer
-                      : null,
-                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  // 1. Removed the color property from here
+                  margin:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
                   elevation: 1,
-                  child: ListTile(
-                    leading: Icon(
-                        widget.list.isOpenList ? Icons.lock_open : (item.expirationDate != null ? Icons.event : Icons.event_available),
+                  child: Column(
+                    children: [
+                      if (widget.list.isOpenList)
+                        _DateDetailRow(
+                          icon: Icons.lock_open,
+                          iconColor: Theme.of(context).colorScheme.secondary,
+                          label: _openedAtLabel(item),
+                          valueHint: _openedDaysCount(item),
+                          onTap: () => _editOpenedDate(item),
+                        ),
+                      if (widget.list.isOpenList) const Divider(height: 1),
+
+                      // 2. Wrapped the middle row in a Container to apply the color
+                      Container(
                         color: widget.list.isOpenList && _isExpired(item)
-                            ? Theme.of(context).colorScheme.error
-                            : item.expirationDate != null
-                                ? Theme.of(context).colorScheme.primary
-                                : Colors.grey),
-                    title: Text(item.expirationDate != null ? "Expires: ${item.expirationDate}" : "No Expiration Date"),
-                    subtitle: Text(widget.list.isOpenList
-                        ? "${_formatOpenedSince(item.openedAt)}\nTap to edit expiration date or the opened date"
-                        : "Tap to edit expiration date"),
-                    isThreeLine: widget.list.isOpenList,
-                    onTap: () => _editExpirationDate(item),
-                    onLongPress: widget.list.isOpenList ? () => _editOpenedDate(item) : null,
-                    trailing: IconButton(
-                      icon: Icon(Icons.delete_outline, color: Theme.of(context).colorScheme.error),
-                      onPressed: () => _handleItemRemoval(item),
-                    ),
+                            ? Theme.of(context).colorScheme.errorContainer
+                            : null, // null means transparent/default background
+                        child: widget.list.isOpenList
+                            ? _DateDetailRow(
+                                icon: item.expirationDate != null
+                                    ? Icons.event
+                                    : Icons.event_available,
+                                iconColor: item.expirationDate != null
+                                    ? Theme.of(context).colorScheme.secondary
+                                    : Colors.grey,
+                                label: _expirationLabel(item),
+                                valueHint: _remainingDaysCount(item),
+                                onTap: () => _editExpirationDate(item),
+                              )
+                            : ListTile(
+                                leading: Icon(
+                                  item.expirationDate != null
+                                      ? Icons.event
+                                      : Icons.event_available,
+                                  color: item.expirationDate != null
+                                      ? Theme.of(context).colorScheme.secondary
+                                      : Colors.grey,
+                                ),
+                                title: Text(_expirationLabel(item)),
+                                subtitle:
+                                    const Text("Tap to edit expiration date"),
+                                trailing: IconButton(
+                                  icon: Icon(Icons.delete_outline,
+                                      color:
+                                          Theme.of(context).colorScheme.error),
+                                  onPressed: () => _handleItemRemoval(item),
+                                ),
+                                onTap: () => _editExpirationDate(item),
+                              ),
+                      ),
+
+                      if (widget.list.isOpenList) const Divider(height: 1),
+                      if (widget.list.isOpenList)
+                        SizedBox(
+                          width: double.infinity,
+                          child: TextButton.icon(
+                            onPressed: () => _handleItemRemoval(item),
+                            icon: Icon(
+                              Icons.delete_outline,
+                              color: Theme.of(context).colorScheme.onSurface,
+                            ),
+                            label: Text(
+                              "Remove",
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.onSurface,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            style: TextButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 14),
+                              alignment: Alignment.center,
+                              shape: const RoundedRectangleBorder(
+                                borderRadius: BorderRadius.vertical(
+                                  bottom: Radius.circular(16.0),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                 );
               },
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _DateDetailRow extends StatelessWidget {
+  final IconData icon;
+  final Color iconColor;
+  final String label;
+  final String valueHint;
+  final VoidCallback onTap;
+
+  const _DateDetailRow({
+    required this.icon,
+    required this.iconColor,
+    required this.label,
+    required this.valueHint,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Row(
+          children: [
+            Icon(icon, color: iconColor),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                label,
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
+            ),
+            if (valueHint.isNotEmpty)
+              Text(
+                valueHint,
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.secondary,
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
+          ],
+        ),
       ),
     );
   }

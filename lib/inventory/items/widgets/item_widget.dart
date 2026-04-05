@@ -85,6 +85,14 @@ class InventoryItemWidget extends StatelessWidget {
     return "Opened $days day${days == 1 ? '' : 's'} ago";
   }
 
+  String? _getExpirationLabel() {
+    final nextExpiring = _getNextExpiring();
+    if (nextExpiring == null) {
+      return null;
+    }
+    return _hasExpiredItem() ? "Expired: $nextExpiring" : "Expires: $nextExpiring";
+  }
+
   @override
   Widget build(BuildContext context) {
     final bool expiringSoon = focusExpiring && _isExpiringSoon();
@@ -163,14 +171,14 @@ class InventoryItemWidget extends StatelessWidget {
                               letterSpacing: 1.2,
                             ),
                       ),
-                      if (_getNextExpiring() != null) ...[
+                      if (_getExpirationLabel() != null) ...[
                         const SizedBox(height: 6),
                         Row(
                           children: [
                             Icon(Icons.event_busy, size: 14, color: Theme.of(context).colorScheme.secondary),
                             const SizedBox(width: 4),
                             Text(
-                              "Expires: ${_getNextExpiring()}",
+                              _getExpirationLabel()!,
                               style: Theme.of(context).textTheme.labelSmall?.copyWith(
                                     color: Theme.of(context).colorScheme.secondary,
                                     fontWeight: FontWeight.bold,
@@ -186,17 +194,13 @@ class InventoryItemWidget extends StatelessWidget {
                             Icon(
                               Icons.schedule,
                               size: 14,
-                              color: expiredOpenItem
-                                  ? Theme.of(context).colorScheme.error
-                                  : Theme.of(context).colorScheme.tertiary,
+                              color: Theme.of(context).colorScheme.secondary,
                             ),
                             const SizedBox(width: 4),
                             Text(
                               _getOpenedSince()!,
                               style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                    color: expiredOpenItem
-                                        ? Theme.of(context).colorScheme.error
-                                        : Theme.of(context).colorScheme.tertiary,
+                                    color: Theme.of(context).colorScheme.secondary,
                                     fontWeight: FontWeight.bold,
                                   ),
                             ),
