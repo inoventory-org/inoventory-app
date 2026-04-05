@@ -18,7 +18,7 @@ void main() {
   testWidgets('InventoryListRoute renders lists properly', (tester) async {
     when(() => mockListService.all()).thenAnswer((_) async => [
           InventoryList(1, 'Kitchen'),
-          InventoryList(2, 'Pantry'),
+          InventoryList(2, 'Open', type: 'OPEN'),
         ]);
 
     await tester.pumpWidget(TestWrapper(
@@ -32,7 +32,9 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Kitchen'), findsOneWidget);
-    expect(find.text('Pantry'), findsOneWidget);
+    expect(find.text('Open'), findsOneWidget);
+    expect(find.text('Opened items'), findsOneWidget);
+    expect(find.byIcon(Icons.lock_open), findsOneWidget);
     expect(find.byIcon(Icons.add), findsOneWidget);
   });
 }

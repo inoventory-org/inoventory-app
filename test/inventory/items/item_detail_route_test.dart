@@ -60,6 +60,8 @@ void main() {
     expect(deleteButtons, findsNWidgets(2));
     await tester.tap(deleteButtons.first);
     await tester.pumpAndSettle();
+    await tester.tap(find.text('Check Out'));
+    await tester.pumpAndSettle();
 
     verify(() => mockItemService.delete(1, 1)).called(1);
     expect(find.text('Item deleted'), findsOneWidget);
@@ -83,6 +85,8 @@ void main() {
 
     // Tap delete
     await tester.tap(find.byIcon(Icons.delete_outline));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Check Out'));
     await tester.pumpAndSettle();
 
     verify(() => mockItemService.delete(1, 1)).called(1);

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:inoventory_ui/config/injection.dart';
 import 'package:inoventory_ui/ean/barcode_scan_route.dart';
+import 'package:inoventory_ui/inventory/items/models/item.dart';
 import 'package:inoventory_ui/inventory/items/item_search_route.dart';
 import 'package:inoventory_ui/inventory/items/item_service.dart';
 import 'package:inoventory_ui/inventory/items/models/item_wrapper.dart';
@@ -20,6 +21,7 @@ import 'package:inoventory_ui/shared/widgets/expandable_floating_action_button.d
 import 'package:inoventory_ui/shared/widgets/inoventory_appbar.dart';
 
 enum SORTING { dateAdded, name, expirationDate, quantity }
+enum _RemovalAction { checkout, open }
 
 class ItemListRoute extends StatefulWidget {
   final InventoryList list;
@@ -101,15 +103,39 @@ class _ItemListRouteState extends State<ItemListRoute> {
   Future<bool> onDelete(ItemWrapper itemWrapper) async {
     final scaffoldMessenger = ScaffoldMessenger.of(context);
 
-    final int? itemId = await getItemIdToDelete(itemWrapper);
-    if (itemId == null) {
+    final item = await _getItemToRemove(itemWrapper);
+    if (item == null) {
       return false;
     }
 
     try {
-      await _itemService.delete(widget.list.id, itemId);
+      if (widget.list.isOpenList) {
+        await _itemService.delete(widget.list.id, item.id);
+        scaffoldMessenger.showSnackBar(
+          _getSnackBar("Removed opened item", Colors.green),
+        );
+      } else {
+        final action = await _chooseRemovalAction(itemWrapper);
+        if (action == null) {
+          return false;
+        }
 
-      scaffoldMessenger.showSnackBar(_getSnackBar("Successfully deleted item", Colors.green, withUndo: true));
+        if (action == _RemovalAction.checkout) {
+          await _itemService.delete(widget.list.id, item.id);
+          scaffoldMessenger.showSnackBar(
+            _getSnackBar("Successfully deleted item", Colors.green, withUndo: true),
+          );
+        } else {
+          final expirationDate = item.expirationDate ?? await _pickRequiredExpirationDate();
+          if (expirationDate == null) {
+            return false;
+          }
+          await _itemService.open(widget.list.id, item.id, expirationDate: expirationDate);
+          scaffoldMessenger.showSnackBar(
+            _getSnackBar("Moved item to open list", Colors.green),
+          );
+        }
+      }
     } catch (e) {
       scaffoldMessenger.showSnackBar(_getSnackBar("Error deleting item: ", Colors.red));
 
@@ -120,6 +146,60 @@ class _ItemListRouteState extends State<ItemListRoute> {
 
     await _refreshList();
     return true;
+  }
+
+  Future<_RemovalAction?> _chooseRemovalAction(ItemWrapper itemWrapper) {
+    return showModalBottomSheet<_RemovalAction>(
+      context: context,
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  "What do you want to do with ${itemWrapper.displayName}?",
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 16),
+                FilledButton.icon(
+                  onPressed: () => Navigator.pop(context, _RemovalAction.open),
+                  icon: const Icon(Icons.lock_open),
+                  label: const Text("Open Item"),
+                ),
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  onPressed: () => Navigator.pop(context, _RemovalAction.checkout),
+                  icon: const Icon(Icons.check_circle_outline),
+                  label: const Text("Check Out"),
+                ),
+                const SizedBox(height: 8),
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text("Cancel"),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<String?> _pickRequiredExpirationDate() async {
+    final pickedDate = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+      helpText: "Select an expiration date for the opened item",
+    );
+    if (pickedDate == null) {
+      return null;
+    }
+    return "${pickedDate.year.toString().padLeft(4, '0')}-${pickedDate.month.toString().padLeft(2, '0')}-${pickedDate.day.toString().padLeft(2, '0')}";
   }
 
   SnackBar _getSnackBar(String text, Color color, {bool withUndo = false}) {
@@ -151,12 +231,12 @@ class _ItemListRouteState extends State<ItemListRoute> {
     });
   }
 
-  Future<int?> getItemIdToDelete(ItemWrapper itemWrapper) async {
+  Future<Item?> _getItemToRemove(ItemWrapper itemWrapper) async {
     if (itemWrapper.items.map((e) => e.expirationDate).toSet().length == 1) {
-      return itemWrapper.items.first.id;
+      return itemWrapper.items.first;
     }
 
-    return await showDialog<int>(
+    return await showDialog<Item>(
         context: context,
         builder: (context) {
           return AlertDialog(
@@ -165,7 +245,7 @@ class _ItemListRouteState extends State<ItemListRoute> {
               content: Column(mainAxisSize: MainAxisSize.min, children: [
                 const Text("Which item do you want to remove?"),
                 ...itemWrapper.items.map((e) => TextButton(
-                      onPressed: () => Navigator.pop(context, e.id),
+                      onPressed: () => Navigator.pop(context, e),
                       child: Text(e.expirationDate ?? "<no expiration date>"),
                     )),
                 OutlinedButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel"))
@@ -208,7 +288,13 @@ class _ItemListRouteState extends State<ItemListRoute> {
               : ItemsFutureBuilder<List<ItemWrapper>>(futureItems, _refreshList, (context, snapshot) {
                   sortItemsByKey(snapshot, _sortByKey, _isAsc);
                   itemWrappers = snapshot.data!;
-                  return InventoryListWidget(itemWrappers: snapshot.data!, onDelete: onDelete, onEdit: onEdit, focusExpiring: _focusExpiring);
+                  return InventoryListWidget(
+                    itemWrappers: snapshot.data!,
+                    onDelete: onDelete,
+                    onEdit: onEdit,
+                    focusExpiring: _focusExpiring,
+                    isOpenList: widget.list.isOpenList,
+                  );
                 })),
       floatingActionButton: buildFloatingActionButton(context),
     );

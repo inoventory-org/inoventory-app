@@ -67,8 +67,10 @@ void main() {
     await tester.drag(find.text('Apple'), const Offset(-500.0, 0.0));
     await tester.pumpAndSettle();
 
-    // Verify dialog NOT shown and delete called
+    // Verify item-choice dialog NOT shown and choose checkout
     expect(find.text('Choose item'), findsNothing);
+    await tester.tap(find.text('Check Out'));
+    await tester.pumpAndSettle();
     verify(() => mockItemService.delete(1, 1)).called(1);
   });
 
@@ -96,6 +98,8 @@ void main() {
     
     // Tap the specific expiration date to delete
     await tester.tap(find.text('2026-06-06'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Check Out'));
     await tester.pumpAndSettle();
 
     // Verify delete called for item2 (which has ID 2)

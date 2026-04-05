@@ -10,8 +10,9 @@ class InventoryListWidget extends StatefulWidget {
   final Future<bool> Function(ItemWrapper itemWrapper)? onDelete;
   final Future<void> Function(ItemWrapper itemWrapper)? onEdit;
   final bool focusExpiring;
+  final bool isOpenList;
 
-  const InventoryListWidget({super.key, required this.itemWrappers, this.onDelete, this.onEdit, this.focusExpiring = false});
+  const InventoryListWidget({super.key, required this.itemWrappers, this.onDelete, this.onEdit, this.focusExpiring = false, this.isOpenList = false});
 
   @override
   State<InventoryListWidget> createState() => _InventoryListWidgetState();
@@ -39,7 +40,13 @@ class _InventoryListWidgetState extends State<InventoryListWidget> {
         itemCount: widget.itemWrappers.length,
         itemBuilder: (context, index) {
           final itemWrapper = widget.itemWrappers[index];
-          return InventoryItemWidget(itemWrapper, widget.onDelete, onEdit: widget.onEdit, focusExpiring: widget.focusExpiring);
+          return InventoryItemWidget(
+            itemWrapper,
+            widget.onDelete,
+            onEdit: widget.onEdit,
+            focusExpiring: widget.focusExpiring,
+            isOpenList: widget.isOpenList,
+          );
         },
       ),
     );

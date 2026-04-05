@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:inoventory_ui/config/injection.dart';
 import 'package:inoventory_ui/inventory/items/item_service.dart';
@@ -60,17 +61,45 @@ class _ItemDetailRouteState extends State<ItemDetailRoute> {
     }
   }
 
-  Future<void> _editExpirationDate(Item item) async {
-    DateTime? initialDate = item.expirationDate != null ? DateTime.tryParse(item.expirationDate!) : null;
-    final DateTime? pickedDate = await showDatePicker(
-      context: context,
-      initialDate: initialDate ?? DateTime.now(),
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2100),
-    );
+  Future<void> _openItem(Item item) async {
+    String? expirationDate = item.expirationDate;
+    if (expirationDate == null) {
+      expirationDate = await _pickDate(
+        initialDate: DateTime.now(),
+        helpText: "Select an expiration date for the opened item",
+      );
+      if (expirationDate == null) {
+        return;
+      }
+    }
 
-    if (pickedDate != null) {
-      String newDateOptions = "${pickedDate.year.toString().padLeft(4, '0')}-${pickedDate.month.toString().padLeft(2, '0')}-${pickedDate.day.toString().padLeft(2, '0')}";
+    try {
+      await _itemService.open(widget.list.id, item.id, expirationDate: expirationDate);
+      setState(() {
+        items.remove(item);
+      });
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Item moved to open list"), backgroundColor: Colors.green),
+      );
+      if (items.isEmpty) {
+        Navigator.of(context).pop(true);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error opening item: $e"), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  Future<void> _editExpirationDate(Item item) async {
+    final initialDate = item.expirationDate != null ? DateTime.tryParse(item.expirationDate!) : null;
+    final newDateOptions = await _pickDate(initialDate: initialDate);
+    if (newDateOptions != null) {
       if (newDateOptions != item.expirationDate) {
         try {
           // Send updated values back so itemService recognizes them
@@ -80,6 +109,7 @@ class _ItemDetailRouteState extends State<ItemDetailRoute> {
             item.productEan,
             item.displayName,
             expirationDate: newDateOptions,
+            openedAt: item.openedAt,
             imageUrl: item.imageUrl,
             thumbUrl: item.thumbUrl,
             tags: item.tags,
@@ -102,6 +132,140 @@ class _ItemDetailRouteState extends State<ItemDetailRoute> {
         }
       }
     }
+  }
+
+  Future<void> _editOpenedDate(Item item) async {
+    final initialDate = item.openedAt != null ? DateTime.tryParse(item.openedAt!) : null;
+    final newOpenedDate = await _pickDate(
+      initialDate: initialDate ?? DateTime.now(),
+      helpText: "Select the date this item was opened",
+    );
+    if (newOpenedDate == null || newOpenedDate == item.openedAt) {
+      return;
+    }
+
+    try {
+      final updatedItem = Item(
+        item.id,
+        item.listId,
+        item.productEan,
+        item.displayName,
+        expirationDate: item.expirationDate,
+        openedAt: newOpenedDate,
+        imageUrl: item.imageUrl,
+        thumbUrl: item.thumbUrl,
+        tags: item.tags,
+      );
+      await _itemService.update(item.id, updatedItem);
+      setState(() {
+        item.openedAt = newOpenedDate;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Opened date updated"), backgroundColor: Colors.green),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error updating opened date: $e"), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  Future<String?> _pickDate({DateTime? initialDate, String? helpText}) async {
+    final pickedDate = await showDatePicker(
+      context: context,
+      initialDate: initialDate ?? DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+      helpText: helpText,
+    );
+
+    if (pickedDate == null) {
+      return null;
+    }
+    return "${pickedDate.year.toString().padLeft(4, '0')}-${pickedDate.month.toString().padLeft(2, '0')}-${pickedDate.day.toString().padLeft(2, '0')}";
+  }
+
+  Future<void> _handleItemRemoval(Item item) async {
+    if (widget.list.isOpenList) {
+      await _deleteItem(item);
+      return;
+    }
+
+    final action = await showModalBottomSheet<String>(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                "What do you want to do with this item?",
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+              FilledButton.icon(
+                onPressed: () => Navigator.pop(context, 'open'),
+                icon: const Icon(Icons.lock_open),
+                label: const Text("Open Item"),
+              ),
+              const SizedBox(height: 8),
+              OutlinedButton.icon(
+                onPressed: () => Navigator.pop(context, 'checkout'),
+                icon: const Icon(Icons.check_circle_outline),
+                label: const Text("Check Out"),
+              ),
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text("Cancel"),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (action == 'checkout') {
+      await _deleteItem(item);
+    } else if (action == 'open') {
+      await _openItem(item);
+    }
+  }
+
+  bool _isExpired(Item item) {
+    if (item.expirationDate == null) {
+      return false;
+    }
+    return DateTime.tryParse(item.expirationDate!)?.isBefore(
+          DateTime.now().subtract(const Duration(days: 1)),
+        ) ??
+        false;
+  }
+
+  String _formatOpenedSince(String? openedAt) {
+    if (openedAt == null) {
+      return "Not opened yet";
+    }
+    final openedDate = DateTime.tryParse(openedAt);
+    if (openedDate == null) {
+      return openedAt;
+    }
+    final days = DateTime.now().difference(openedDate).inDays;
+    if (days >= 60) {
+      final months = (days / 30).floor();
+      return "Opened $months month${months == 1 ? '' : 's'} ago";
+    }
+    if (days >= 14) {
+      final weeks = (days / 7).floor();
+      return "Opened $weeks week${weeks == 1 ? '' : 's'} ago";
+    }
+    return "Opened $days day${days == 1 ? '' : 's'} ago";
   }
 
   Future<void> _viewProductDetails() async {
@@ -127,7 +291,7 @@ class _ItemDetailRouteState extends State<ItemDetailRoute> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Item Details"),
+        title: Text(widget.list.isOpenList ? "Opened Item Details" : "Item Details"),
       ),
       body: Column(
         children: [
@@ -180,6 +344,18 @@ class _ItemDetailRouteState extends State<ItemDetailRoute> {
           ),
           const SizedBox(height: 16),
           const Divider(),
+          if (widget.list.isOpenList)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Card(
+                color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.45),
+                child: ListTile(
+                  leading: const Icon(Icons.lock_open),
+                  title: Text(_formatOpenedSince(items.firstOrNull?.openedAt)),
+                  subtitle: const Text("Tap an item below to update the opened date"),
+                ),
+              ),
+            ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
             child: Align(
@@ -196,19 +372,30 @@ class _ItemDetailRouteState extends State<ItemDetailRoute> {
               itemBuilder: (context, index) {
                 final item = items[index];
                 return Card(
+                  color: widget.list.isOpenList && _isExpired(item)
+                      ? Theme.of(context).colorScheme.errorContainer
+                      : null,
                   margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   elevation: 1,
                   child: ListTile(
                     leading: Icon(
-                        item.expirationDate != null ? Icons.event : Icons.event_available,
-                        color: item.expirationDate != null ? Theme.of(context).colorScheme.primary : Colors.grey),
+                        widget.list.isOpenList ? Icons.lock_open : (item.expirationDate != null ? Icons.event : Icons.event_available),
+                        color: widget.list.isOpenList && _isExpired(item)
+                            ? Theme.of(context).colorScheme.error
+                            : item.expirationDate != null
+                                ? Theme.of(context).colorScheme.primary
+                                : Colors.grey),
                     title: Text(item.expirationDate != null ? "Expires: ${item.expirationDate}" : "No Expiration Date"),
-                    subtitle: const Text("Tap to edit expiration date"),
+                    subtitle: Text(widget.list.isOpenList
+                        ? "${_formatOpenedSince(item.openedAt)}\nTap to edit expiration date or the opened date"
+                        : "Tap to edit expiration date"),
+                    isThreeLine: widget.list.isOpenList,
                     onTap: () => _editExpirationDate(item),
+                    onLongPress: widget.list.isOpenList ? () => _editOpenedDate(item) : null,
                     trailing: IconButton(
                       icon: Icon(Icons.delete_outline, color: Theme.of(context).colorScheme.error),
-                      onPressed: () => _deleteItem(item),
+                      onPressed: () => _handleItemRemoval(item),
                     ),
                   ),
                 );
