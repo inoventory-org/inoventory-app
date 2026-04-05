@@ -37,4 +37,33 @@ void main() {
     expect(find.byIcon(Icons.lock_open), findsOneWidget);
     expect(find.byIcon(Icons.add), findsOneWidget);
   });
+
+  testWidgets('InventoryListRoute persists reordered lists', (tester) async {
+    final initialLists = [
+      InventoryList(1, 'Kitchen', sortOrder: 0),
+      InventoryList(2, 'Pantry', sortOrder: 1),
+      InventoryList(3, 'Open', type: 'OPEN', sortOrder: 2),
+    ];
+
+    when(() => mockListService.all()).thenAnswer((_) async => initialLists);
+    when(() => mockListService.reorder(any())).thenAnswer(
+      (_) async => [
+        InventoryList(2, 'Pantry', sortOrder: 0),
+        InventoryList(1, 'Kitchen', sortOrder: 1),
+        InventoryList(3, 'Open', type: 'OPEN', sortOrder: 2),
+      ],
+    );
+
+    await tester.pumpWidget(TestWrapper(
+      child: InventoryListRoute(logout: () async {}),
+    ));
+    await tester.pumpAndSettle();
+
+    final reorderable =
+        tester.widget<ReorderableListView>(find.byType(ReorderableListView));
+    reorderable.onReorder!(0, 2);
+    await tester.pumpAndSettle();
+
+    verify(() => mockListService.reorder([2, 1, 3])).called(1);
+  });
 }

@@ -23,11 +23,15 @@ class InventoryListRoute extends StatefulWidget {
 class _InventoryListRouteState extends State<InventoryListRoute> {
   final listService = getIt<InventoryListService>();
   late Future<List<InventoryList>> futureLists;
+  List<InventoryList>? _lists;
 
   @override
   void initState() {
     super.initState();
-    futureLists = listService.all();
+    futureLists = listService.all().then((lists) {
+      _lists = List.of(lists);
+      return lists;
+    });
   }
 
   Future<void> onEdit(InventoryList list) async {
@@ -55,8 +59,49 @@ class _InventoryListRouteState extends State<InventoryListRoute> {
 
   Future<void> _refreshList() async {
     setState(() {
-      futureLists = listService.all();
+      futureLists = listService.all().then((lists) {
+        _lists = List.of(lists);
+        return lists;
+      });
     });
+  }
+
+  Future<void> _onReorder(int oldIndex, int newIndex) async {
+    final currentLists = _lists;
+    if (currentLists == null) {
+      return;
+    }
+
+    final normalizedNewIndex = newIndex > oldIndex ? newIndex - 1 : newIndex;
+    final previousLists = List<InventoryList>.from(currentLists);
+    final reorderedLists = List<InventoryList>.from(currentLists);
+    final movedList = reorderedLists.removeAt(oldIndex);
+    reorderedLists.insert(normalizedNewIndex, movedList);
+
+    setState(() {
+      _lists = reorderedLists;
+    });
+
+    try {
+      final persistedLists = await listService
+          .reorder(reorderedLists.map((list) => list.id).toList());
+      setState(() {
+        _lists = persistedLists;
+      });
+    } catch (e) {
+      setState(() {
+        _lists = previousLists;
+      });
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Could not save list order: $e"),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   @override
@@ -64,8 +109,7 @@ class _InventoryListRouteState extends State<InventoryListRoute> {
     return Scaffold(
       appBar: const InoventoryAppBar(), //AppBar(title: const Text("My Lists")),
       drawer: InoDrawer(logout: widget.logout),
-      body:
-      RefreshIndicator(
+      body: RefreshIndicator(
         onRefresh: _refreshList,
         backgroundColor: Theme.of(context).colorScheme.secondary,
         child: FutureBuilder<List<InventoryList>>(
@@ -73,11 +117,21 @@ class _InventoryListRouteState extends State<InventoryListRoute> {
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.done) {
               if (snapshot.hasError) {
-                developer.log("An error occurred while retrieving inventory lists.", error: snapshot.error);
-                return FutureErrorRetryWidget(onRetry: _refreshList, child: const Text("An error occurred while retrieving inventory lists. Try again"));
+                developer.log(
+                    "An error occurred while retrieving inventory lists.",
+                    error: snapshot.error);
+                return FutureErrorRetryWidget(
+                    onRetry: _refreshList,
+                    child: const Text(
+                        "An error occurred while retrieving inventory lists. Try again"));
               }
               if (snapshot.hasData) {
-                return MyInventoryListsWidget(lists: snapshot.data!, onDelete: onDelete, onEdit: onEdit);
+                return MyInventoryListsWidget(
+                  lists: _lists ?? snapshot.data!,
+                  onDelete: onDelete,
+                  onEdit: onEdit,
+                  onReorder: _onReorder,
+                );
               }
             }
             return const Center(child: CircularProgressIndicator());
