@@ -4,6 +4,8 @@ import 'package:inoventory_ui/inventory/items/item_service.dart';
 import 'package:inoventory_ui/inventory/lists/inventory_list_service.dart';
 import 'package:inoventory_ui/products/open_food_facts_service.dart';
 import 'package:inoventory_ui/products/product_service.dart';
+import 'package:inoventory_ui/products/product_upload_job_service.dart';
+import 'package:inoventory_ui/settings/off_settings_service.dart';
 import 'package:mocktail/mocktail.dart';
 import 'mocks.dart';
 
@@ -25,14 +27,35 @@ void setupMockGetIt({
   MockItemService? mockItemService,
   MockInventoryListService? mockInventoryListService,
   MockProductService? mockProductService,
+  MockProductUploadJobService? mockProductUploadJobService,
   MockOpenFoodFactsService? mockOpenFoodFactsService,
+  MockOffSettingsService? mockOffSettingsService,
 }) {
+  final settingsService = mockOffSettingsService ?? MockOffSettingsService();
+  final jobService =
+      mockProductUploadJobService ?? MockProductUploadJobService();
+  when(() => settingsService.loadContributionSettings()).thenAnswer(
+    (_) async => const OffContributionSettings(
+      region: OffSettingsService.defaultRegion,
+      language: OffSettingsService.defaultLanguage,
+    ),
+  );
+  when(() => settingsService.hasContributionSettings()).thenAnswer(
+    (_) async => true,
+  );
+  when(() => jobService.jobs).thenReturn(const []);
+  when(() => jobService.events).thenAnswer((_) => const Stream.empty());
+  when(() => jobService.addListener(any())).thenReturn(null);
+  when(() => jobService.removeListener(any())).thenReturn(null);
+
   GetIt.I.reset();
   GetIt.I.registerSingleton<ItemService>(mockItemService ?? MockItemService());
   GetIt.I.registerSingleton<InventoryListService>(
       mockInventoryListService ?? MockInventoryListService());
   GetIt.I.registerSingleton<ProductService>(
       mockProductService ?? MockProductService());
+  GetIt.I.registerSingleton<ProductUploadJobService>(jobService);
   GetIt.I.registerSingleton<OpenFoodFactsService>(
       mockOpenFoodFactsService ?? MockOpenFoodFactsService());
+  GetIt.I.registerSingleton<OffSettingsService>(settingsService);
 }

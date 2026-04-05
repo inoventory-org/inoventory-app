@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:developer' as developer;
 
 import 'package:flutter/material.dart';
@@ -7,8 +8,8 @@ import 'package:inoventory_ui/ean/scanner.dart';
 import 'package:inoventory_ui/inventory/items/widgets/add_item.dart';
 import 'package:inoventory_ui/inventory/lists/models/inventory_list.dart';
 import 'package:inoventory_ui/products/product_model.dart';
+import 'package:inoventory_ui/products/routes/add_product_route.dart';
 import 'package:inoventory_ui/products/product_service.dart';
-import 'package:inoventory_ui/products/widgets/add_product.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
 class ProductScanRoute extends StatefulWidget {
@@ -26,6 +27,7 @@ class _ProductScanRouteState extends State<ProductScanRoute> {
   String _barcode = "";
   bool _productFound = true;
   Product? _product;
+  bool _isHandlingUnknownBarcode = false;
 
   SnackBar _getSnackBar(String text, Color color) {
     TextStyle style = const TextStyle(color: Colors.white);
@@ -39,10 +41,24 @@ class _ProductScanRouteState extends State<ProductScanRoute> {
         _getSnackBar("Failed to lookup barcode $barcode", Colors.red));
   }
 
-  void onSuccessfulProductAddition(String barcode) {
-    setState(() {
-      _barcode = "";
-    });
+  Future<void> onSuccessfulProductAddition(String barcode) async {
+    try {
+      final products = await _productService.search(barcode, fresh: true);
+      if (!mounted) return;
+      setState(() {
+        _barcode = barcode;
+        if (products.isNotEmpty) {
+          _product = products.last;
+          _productFound = true;
+        } else {
+          _product = null;
+          _productFound = false;
+        }
+      });
+    } catch (e) {
+      onErrorProductAddition(e);
+      return;
+    }
     final scaffoldMessenger = ScaffoldMessenger.of(context);
     scaffoldMessenger.clearSnackBars();
     scaffoldMessenger.showSnackBar(
@@ -50,22 +66,64 @@ class _ProductScanRouteState extends State<ProductScanRoute> {
   }
 
   void onErrorProductAddition(Object e) {
-    setState(() {
-      _barcode = "";
-    });
     final scaffoldMessenger = ScaffoldMessenger.of(context);
     scaffoldMessenger.clearSnackBars();
     scaffoldMessenger.showSnackBar(_getSnackBar(
         "Failed to add new product item: ${e.toString()}", Colors.red));
   }
 
-  void onCancelProductAddition() {
+  Future<void> _promptToAddUnknownProduct(String barcode) async {
+    if (_isHandlingUnknownBarcode) {
+      return;
+    }
     setState(() {
-      _barcode = "";
+      _isHandlingUnknownBarcode = true;
+    });
+
+    final shouldAdd = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Unknown Barcode'),
+            content: Text(
+              'Barcode $barcode is not known yet. Do you want to add it as a new product?',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('No'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text('Yes'),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+
+    if (shouldAdd && mounted) {
+      await Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => AddProductRoute(
+            barcode: barcode,
+            onSuccessfulProductAddition: onSuccessfulProductAddition,
+          ),
+        ),
+      );
+    }
+
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _isHandlingUnknownBarcode = false;
     });
   }
 
   dynamic onDetect(BarcodeCapture barcodeCapture) async {
+    if (_isHandlingUnknownBarcode) {
+      return;
+    }
     final List<Barcode> barcodes = barcodeCapture.barcodes;
     if (barcodes.isEmpty) {
       debugPrint('Failed to scan Barcode');
@@ -82,22 +140,27 @@ class _ProductScanRouteState extends State<ProductScanRoute> {
 
       List<Product> products = [];
       try {
-        products = await _productService.search(code, fresh: Globals.forceFetchProducts);
+        products = await _productService.search(code,
+            fresh: Globals.forceFetchProducts);
       } catch (e) {
         onFailedToLookupBarcode(code);
         developer.log("An error occurred while looking up barcode $code",
             error: e);
       }
       setState(() {
-        _barcode = code;
         if (products.isNotEmpty) {
+          _barcode = code;
           _product = products.last;
           _productFound = true;
         } else {
-          _productFound = false;
+          _barcode = "";
           _product = null;
+          _productFound = false;
         }
       });
+      if (products.isEmpty && mounted) {
+        unawaited(_promptToAddUnknownProduct(code));
+      }
       debugPrint("Product Found: $_productFound");
     }
   }
@@ -106,7 +169,12 @@ class _ProductScanRouteState extends State<ProductScanRoute> {
   Widget build(BuildContext context) {
     return Scaffold(
         body: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-      Expanded(flex: 4, child: BarcodeScannerWidget(onDetect: onDetect)),
+      Expanded(
+        flex: 4,
+        child: _isHandlingUnknownBarcode
+            ? Container(color: Colors.black)
+            : BarcodeScannerWidget(onDetect: onDetect),
+      ),
       _barcode != ""
           ? Expanded(
               flex: 6,
@@ -133,12 +201,7 @@ class _ProductScanRouteState extends State<ProductScanRoute> {
                             _getSnackBar("Failed to add item", Colors.red));
                       },
                     )
-                  : AddProductView(
-                      barcode: _barcode,
-                      onCancelProductAddition: onCancelProductAddition,
-                      onSuccessfulProductAddition: onSuccessfulProductAddition,
-                      onErrorProductAddition: onErrorProductAddition,
-                    ),
+                  : const SizedBox.shrink(),
             )
           : const SizedBox.shrink() // empty widget
     ]));

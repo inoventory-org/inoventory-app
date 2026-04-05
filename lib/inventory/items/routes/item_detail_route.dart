@@ -173,6 +173,7 @@ class _ItemDetailRouteState extends State<ItemDetailRoute> {
               icon: const Icon(Icons.info_outline),
               label: const Text("View Product Details"),
               style: OutlinedButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.secondary.withOpacity(0.8),
                 minimumSize: const Size.fromHeight(40),
               ),
             ),

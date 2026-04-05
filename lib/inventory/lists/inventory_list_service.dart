@@ -7,8 +7,8 @@ import 'package:inoventory_ui/inventory/items/models/item.dart';
 import 'package:inoventory_ui/inventory/lists/models/inventory_list.dart';
 
 abstract class InventoryListService {
-  static const backendUrl = Constants.inoventoryBackendUrl;
-  static const listUrl = "$backendUrl/api/v1/inventory-lists";
+  static String backendUrl = Constants.inoventoryBackendUrl;
+  static String listUrl = "$backendUrl/api/v1/inventory-lists";
 
   Future<List<InventoryList>> all();
   Future<InventoryList> get(int listId);

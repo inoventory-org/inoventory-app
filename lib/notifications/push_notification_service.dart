@@ -6,8 +6,8 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import '../config/constants.dart';
 
 class PushNotificationService {
-  static const backendUrl = Constants.inoventoryBackendUrl;
-  static const fcmTokenUrl = "$backendUrl/api/v1/user/fcm-token";
+  static String backendUrl = Constants.inoventoryBackendUrl;
+  static String fcmTokenUrl = "$backendUrl/api/v1/user/fcm-token";
 
   final Dio _dio;
   final FirebaseMessaging _fcm = FirebaseMessaging.instance;

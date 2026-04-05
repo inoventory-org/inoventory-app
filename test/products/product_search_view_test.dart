@@ -5,6 +5,8 @@
 // gestures. You can also use WidgetTester to find child widgets in the widget
 // tree, read text, and verify that the values of widget properties are correct.
 
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:inoventory_ui/inventory/lists/models/inventory_list.dart';
@@ -19,7 +21,7 @@ class FakeProductService implements ProductService {
   ];
 
   @override
-  Future<List<Product>> search(String query,  { bool fresh = false }) async {
+  Future<List<Product>> search(String query, {bool fresh = false}) async {
     return _products.where((p) => p.ean == query).toList();
   }
 
@@ -46,6 +48,15 @@ class FakeProductService implements ProductService {
     // TODO: implement update
     throw UnimplementedError();
   }
+
+  @override
+  Future<void> upsertToOpenFoodFacts(
+    Product product,
+    Map<String, File> images, {
+    String language = 'en',
+    String region = 'world',
+    void Function(int sent, int total)? onSendProgress,
+  }) async {}
 }
 
 void main() {

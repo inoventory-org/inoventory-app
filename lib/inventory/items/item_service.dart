@@ -7,8 +7,8 @@ import 'package:inoventory_ui/inventory/items/models/item.dart';
 import 'package:inoventory_ui/inventory/items/models/item_wrapper.dart';
 
 abstract class ItemService {
-  static const backendUrl = Constants.inoventoryBackendUrl;
-  static const listUrl = "$backendUrl/api/v1/inventory-lists";
+  static String backendUrl = Constants.inoventoryBackendUrl;
+  static String listUrl = "$backendUrl/api/v1/inventory-lists";
   final timeout = const Duration(seconds: 5);
 
   Future<List<ItemWrapper>> all(int listId);
