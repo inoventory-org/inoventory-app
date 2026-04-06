@@ -44,7 +44,7 @@ class BarcodeScannerPane extends StatefulWidget {
 
 class _BarcodeScannerPaneState extends State<BarcodeScannerPane> {
   late MobileScannerController _controller;
-  DetectionSpeed _detectionSpeed = DetectionSpeed.normal;
+  DetectionSpeed _detectionSpeed = DetectionSpeed.noDuplicates;
   bool _isChangingController = false;
 
   @override
@@ -210,17 +210,18 @@ class _BarcodeScannerPaneState extends State<BarcodeScannerPane> {
                               onSelected: _onDetectionSpeedChanged,
                               itemBuilder: (context) => [
                                 CheckedPopupMenuItem(
-                                  value: DetectionSpeed.normal,
-                                  checked:
-                                      _detectionSpeed == DetectionSpeed.normal,
-                                  child: const Text('Normal'),
-                                ),
-                                CheckedPopupMenuItem(
                                   value: DetectionSpeed.noDuplicates,
                                   checked: _detectionSpeed ==
                                       DetectionSpeed.noDuplicates,
                                   child: const Text('No Duplicates'),
                                 ),
+                                CheckedPopupMenuItem(
+                                  value: DetectionSpeed.normal,
+                                  checked:
+                                      _detectionSpeed == DetectionSpeed.normal,
+                                  child: const Text('Normal'),
+                                ),
+       
                                 CheckedPopupMenuItem(
                                   value: DetectionSpeed.unrestricted,
                                   checked: _detectionSpeed ==
