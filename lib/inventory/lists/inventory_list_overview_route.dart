@@ -2,6 +2,8 @@ import 'dart:developer' as developer;
 
 import 'package:flutter/material.dart';
 import 'package:inoventory_ui/config/injection.dart';
+import 'package:inoventory_ui/inventory/items/item_service.dart';
+import 'package:inoventory_ui/inventory/items/models/item_wrapper.dart';
 import 'package:inoventory_ui/inventory/lists/inventory_list_service.dart';
 import 'package:inoventory_ui/inventory/lists/models/inventory_list.dart';
 import 'package:inoventory_ui/inventory/lists/widgets/create_list_widget.dart';
@@ -22,12 +24,37 @@ class InventoryListRoute extends StatefulWidget {
 
 class _InventoryListRouteState extends State<InventoryListRoute> {
   final listService = getIt<InventoryListService>();
+  final itemService = getIt<ItemService>();
   late Future<List<InventoryList>> futureLists;
+  List<InventoryList>? _lists;
+  Map<int, int> _listCounts = {};
 
   @override
   void initState() {
     super.initState();
-    futureLists = listService.all();
+    futureLists = _loadLists();
+  }
+
+  Future<List<InventoryList>> _loadLists() async {
+    final lists = await listService.all();
+    final counts = await _loadListCounts(lists);
+    _lists = List.of(lists);
+    _listCounts = counts;
+    return lists;
+  }
+
+  Future<Map<int, int>> _loadListCounts(List<InventoryList> lists) async {
+    final entries = await Future.wait(
+      lists.map((list) async {
+        final wrappers = await itemService.all(list.id);
+        final count = wrappers.fold<int>(
+          0,
+          (sum, wrapper) => sum + wrapper.items.length,
+        );
+        return MapEntry(list.id, count);
+      }),
+    );
+    return Map<int, int>.fromEntries(entries);
   }
 
   Future<void> onEdit(InventoryList list) async {
@@ -55,8 +82,46 @@ class _InventoryListRouteState extends State<InventoryListRoute> {
 
   Future<void> _refreshList() async {
     setState(() {
-      futureLists = listService.all();
+      futureLists = _loadLists();
     });
+  }
+
+  Future<void> _onReorder(int oldIndex, int newIndex) async {
+    final currentLists = _lists;
+    if (currentLists == null) {
+      return;
+    }
+
+    final normalizedNewIndex = newIndex > oldIndex ? newIndex - 1 : newIndex;
+    final previousLists = List<InventoryList>.from(currentLists);
+    final reorderedLists = List<InventoryList>.from(currentLists);
+    final movedList = reorderedLists.removeAt(oldIndex);
+    reorderedLists.insert(normalizedNewIndex, movedList);
+
+    setState(() {
+      _lists = reorderedLists;
+    });
+
+    try {
+      final persistedLists = await listService
+          .reorder(reorderedLists.map((list) => list.id).toList());
+      setState(() {
+        _lists = persistedLists;
+      });
+    } catch (e) {
+      setState(() {
+        _lists = previousLists;
+      });
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Could not save list order: $e"),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   @override
@@ -64,8 +129,7 @@ class _InventoryListRouteState extends State<InventoryListRoute> {
     return Scaffold(
       appBar: const InoventoryAppBar(), //AppBar(title: const Text("My Lists")),
       drawer: InoDrawer(logout: widget.logout),
-      body:
-      RefreshIndicator(
+      body: RefreshIndicator(
         onRefresh: _refreshList,
         backgroundColor: Theme.of(context).colorScheme.secondary,
         child: FutureBuilder<List<InventoryList>>(
@@ -73,11 +137,22 @@ class _InventoryListRouteState extends State<InventoryListRoute> {
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.done) {
               if (snapshot.hasError) {
-                developer.log("An error occurred while retrieving inventory lists.", error: snapshot.error);
-                return FutureErrorRetryWidget(onRetry: _refreshList, child: const Text("An error occurred while retrieving inventory lists. Try again"));
+                developer.log(
+                    "An error occurred while retrieving inventory lists.",
+                    error: snapshot.error);
+                return FutureErrorRetryWidget(
+                    onRetry: _refreshList,
+                    child: const Text(
+                        "An error occurred while retrieving inventory lists. Try again"));
               }
               if (snapshot.hasData) {
-                return MyInventoryListsWidget(lists: snapshot.data!, onDelete: onDelete, onEdit: onEdit);
+                return MyInventoryListsWidget(
+                  lists: _lists ?? snapshot.data!,
+                  listCounts: _listCounts,
+                  onDelete: onDelete,
+                  onEdit: onEdit,
+                  onReorder: _onReorder,
+                );
               }
             }
             return const Center(child: CircularProgressIndicator());

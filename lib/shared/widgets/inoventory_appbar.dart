@@ -5,6 +5,7 @@ import '../models/sorting_options.dart';
 
 class InoventoryAppBar extends StatefulWidget implements PreferredSizeWidget {
   final String title;
+  final String? subtitle;
   final Function()? onSearchButtonPressed;
   final Function()? onGroupButtonPressed;
   final SortingOptions? sortingOptions;
@@ -14,6 +15,7 @@ class InoventoryAppBar extends StatefulWidget implements PreferredSizeWidget {
   const InoventoryAppBar({
     super.key,
     this.title = "inoventory",
+    this.subtitle,
     this.onSearchButtonPressed,
     this.sortingOptions,
     this.onGroupButtonPressed,
@@ -40,32 +42,94 @@ class _InoventoryAppBarState extends State<InoventoryAppBar> {
 
   @override
   Widget build(BuildContext context) {
+    final actions = _buildActions(context);
     return AppBar(
-      title: Text(widget.title),
-      actions: [
-        if (widget.onFocusExpiringToggled != null)
-          IconButton(
-            icon: Icon(
-              widget.isFocusExpiring ? Icons.notification_important : Icons.notifications_none,
-              color: widget.isFocusExpiring ? Theme.of(context).colorScheme.error : null,
+      titleSpacing: 16,
+      title: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(widget.title),
+          if (widget.subtitle != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Text(
+                widget.subtitle!,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      fontWeight: FontWeight.w600,
+                    ),
+              ),
             ),
-            onPressed: widget.onFocusExpiringToggled,
+        ],
+      ),
+      actions: actions,
+    );
+  }
+
+  List<Widget> _buildActions(BuildContext context) {
+    return [
+      if (widget.onFocusExpiringToggled != null)
+        _buildCompactAction(
+          context: context,
+          icon: Icon(
+            widget.isFocusExpiring
+                ? Icons.notification_important
+                : Icons.notifications_none,
+            color:
+                widget.isFocusExpiring ? Theme.of(context).colorScheme.error : null,
           ),
-        widget.onGroupButtonPressed != null ? IconButton(icon: const Icon(Icons.line_style), onPressed: widget.onGroupButtonPressed) : Container(),
-        _withSorting
-            ? IconButton(
-                icon: _isAsc ? const Icon(Icons.arrow_upward) : const Icon(Icons.arrow_downward),
-                onPressed: () {
-                  setState(() {
-                    _isAsc = !_isAsc;
-                  });
-                  widget.sortingOptions!.onSortingDirectionChange();
-                },
-              )
-            : Container(),
-        _withSorting ? InoventoryPopupMenu(sortingOptions: widget.sortingOptions!) : Container(),
-        IconButton(icon: const Icon(Icons.search), onPressed: widget.onSearchButtonPressed ?? () {}),
-      ],
+          onPressed: widget.onFocusExpiringToggled!,
+        ),
+      if (widget.onGroupButtonPressed != null)
+        _buildCompactAction(
+          context: context,
+          icon: const Icon(Icons.line_style),
+          onPressed: widget.onGroupButtonPressed!,
+        ),
+      if (_withSorting)
+        _buildCompactAction(
+          context: context,
+          icon: _isAsc
+              ? const Icon(Icons.arrow_upward)
+              : const Icon(Icons.arrow_downward),
+          onPressed: () {
+            setState(() {
+              _isAsc = !_isAsc;
+            });
+            widget.sortingOptions!.onSortingDirectionChange();
+          },
+        ),
+      if (_withSorting)
+        Theme(
+          data: Theme.of(context).copyWith(
+            visualDensity: VisualDensity.compact,
+          ),
+          child: InoventoryPopupMenu(sortingOptions: widget.sortingOptions!),
+        ),
+      _buildCompactAction(
+        context: context,
+        icon: const Icon(Icons.search),
+        onPressed: widget.onSearchButtonPressed ?? () {},
+      ),
+    ];
+  }
+
+  Widget _buildCompactAction({
+    required BuildContext context,
+    required Widget icon,
+    required VoidCallback onPressed,
+  }) {
+    return IconButton(
+      icon: icon,
+      onPressed: onPressed,
+      padding: const EdgeInsets.symmetric(horizontal: 6),
+      constraints: const BoxConstraints(
+        minWidth: 36,
+        minHeight: 36,
+      ),
+      visualDensity: VisualDensity.compact,
+      splashRadius: 20,
     );
   }
 }

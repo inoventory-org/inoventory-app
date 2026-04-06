@@ -1,6 +1,7 @@
 import 'dart:developer' as developer;
 
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:inoventory_ui/config/injection.dart';
 import 'package:inoventory_ui/inventory/items/item_service.dart';
 import 'package:inoventory_ui/inventory/items/models/item.dart';
@@ -37,11 +38,20 @@ class _AddItemViewState extends State<AddItemView> {
   final List<Item> _items = <Item>[];
   int _amount = 0;
 
+  String? get _defaultOpenedAt => widget.list.isOpenList
+      ? DateFormat('yyyy-MM-dd').format(DateTime.now())
+      : null;
+
   @override
   void initState() {
     super.initState();
-    _items.add(
-        Item(_amount, widget.list.id, widget.product.ean, widget.product.name));
+    _items.add(Item(
+      _amount,
+      widget.list.id,
+      widget.product.ean,
+      widget.product.name,
+      openedAt: _defaultOpenedAt,
+    ));
     _amount++;
   }
 
@@ -52,7 +62,8 @@ class _AddItemViewState extends State<AddItemView> {
 
       _items.add(Item(
           _amount, widget.list.id, widget.product.ean, widget.product.name,
-          expirationDate: lastExpiryDate));
+          expirationDate: lastExpiryDate,
+          openedAt: _defaultOpenedAt));
       _amount++;
     });
   }
@@ -66,14 +77,41 @@ class _AddItemViewState extends State<AddItemView> {
     });
   }
 
-  void onAddToListPressed() {
+  Future<void> onAddToListPressed() async {
+    if (widget.list.isOpenList &&
+        _items.any((item) => item.expirationDate == null)) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            "Please add an expiration date before opening an item.",
+            style: TextStyle(color: Colors.white),
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     for (var item in _items) {
       try {
-        _itemService.add(item);
+        await _itemService.add(item);
         widget.onSuccess?.call(item);
       } catch (e) {
         developer.log("An error occurred while adding item.", error: e);
         widget.onError?.call(item);
+        if (!mounted) {
+          return;
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Error adding item: $e"),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
       }
     }
 
@@ -83,7 +121,11 @@ class _AddItemViewState extends State<AddItemView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Adding ${widget.product.name} to List")),
+      appBar: AppBar(
+        title: Text(widget.list.isOpenList
+            ? "Opening ${widget.product.name}"
+            : "Adding ${widget.product.name} to List"),
+      ),
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(12.0),

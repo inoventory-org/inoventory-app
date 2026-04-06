@@ -43,7 +43,7 @@ void main() {
     expect(find.text('Apple'), findsOneWidget); // Column display name
     expect(find.text('EAN: 111'), findsOneWidget);
     expect(find.text('Inventory Items (2)'), findsOneWidget);
-    expect(find.text('Expires: 2025-01-01'), findsOneWidget);
+    expect(find.text('Expired: 2025-01-01'), findsOneWidget);
     expect(find.text('Expires: 2026-06-06'), findsOneWidget);
   });
 
@@ -59,6 +59,8 @@ void main() {
     Finder deleteButtons = find.byIcon(Icons.delete_outline);
     expect(deleteButtons, findsNWidgets(2));
     await tester.tap(deleteButtons.first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Check Out'));
     await tester.pumpAndSettle();
 
     verify(() => mockItemService.delete(1, 1)).called(1);
@@ -83,6 +85,8 @@ void main() {
 
     // Tap delete
     await tester.tap(find.byIcon(Icons.delete_outline));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Check Out'));
     await tester.pumpAndSettle();
 
     verify(() => mockItemService.delete(1, 1)).called(1);

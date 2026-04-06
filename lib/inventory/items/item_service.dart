@@ -19,6 +19,8 @@ abstract class ItemService {
 
   Future<Item> update(int itemId, Item updatedItem);
 
+  Future<Item> open(int listId, int itemId, {String? expirationDate, String? openedAt});
+
   Future<void> delete(int listId, int itemId);
 
   Future<void> undoDeletion();
@@ -42,7 +44,12 @@ class ItemServiceImpl extends ItemService {
   Future<Item> add(Item item) async {
     final response = await dio.post(getSpecificListUrl(item.listId),
         options: Options(headers: {HttpHeaders.contentTypeHeader: "application/json"}),
-        data: {"listId": item.listId.toString(), "productEan": item.productEan, "expirationDate": item.expirationDate}).timeout(timeout);
+        data: {
+          "listId": item.listId.toString(),
+          "productEan": item.productEan,
+          "expirationDate": item.expirationDate,
+          "openedAt": item.openedAt,
+        }).timeout(timeout);
 
     if (response.statusCode != HttpStatus.created) {
       throw Exception("Failed to add item with barcode ${item.productEan} to list ${item.listId}");
@@ -91,10 +98,33 @@ class ItemServiceImpl extends ItemService {
   Future<Item> update(int itemId, Item updatedItem) async {
     final response = await dio.put(getSpecificItemUrl(updatedItem.listId, updatedItem.id),
         options: Options(headers: {HttpHeaders.contentTypeHeader: "application/json"}),
-        data: {"listId": updatedItem.listId.toString(), "productEan": updatedItem.productEan, "expirationDate": updatedItem.expirationDate}).timeout(timeout);
+        data: {
+          "listId": updatedItem.listId.toString(),
+          "productEan": updatedItem.productEan,
+          "expirationDate": updatedItem.expirationDate,
+          "openedAt": updatedItem.openedAt,
+        }).timeout(timeout);
 
     if (response.statusCode != HttpStatus.ok) {
       throw Exception("Failed to update item $itemId");
+    }
+
+    return Item.fromJson(response.data);
+  }
+
+  @override
+  Future<Item> open(int listId, int itemId, {String? expirationDate, String? openedAt}) async {
+    final response = await dio.post(
+      "${getSpecificItemUrl(listId, itemId)}/open",
+      options: Options(headers: {HttpHeaders.contentTypeHeader: "application/json"}),
+      data: {
+        "expirationDate": expirationDate,
+        "openedAt": openedAt,
+      },
+    ).timeout(timeout);
+
+    if (response.statusCode != HttpStatus.ok) {
+      throw Exception("Failed to open item $itemId from list $listId");
     }
 
     return Item.fromJson(response.data);
