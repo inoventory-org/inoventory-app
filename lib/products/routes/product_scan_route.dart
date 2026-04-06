@@ -42,6 +42,7 @@ class _ProductScanRouteState extends State<ProductScanRoute> {
   bool _isLookingUpBarcode = false;
   bool _isBarcodeCooldownActive = false;
   int _barcodeLookupRequestId = 0;
+  int _barcodeScannerSession = 0;
   double _sheetDragDismissDistance = 0;
   bool _isDraggingSheet = false;
 
@@ -167,6 +168,7 @@ class _ProductScanRouteState extends State<ProductScanRoute> {
 
   void _dismissActiveProductSheet() {
     _expiryScanController.stopScanning();
+    _resetBarcodeDetectionState();
     setState(() {
       _sheetDragDismissDistance = 0;
       _isDraggingSheet = false;
@@ -174,6 +176,14 @@ class _ProductScanRouteState extends State<ProductScanRoute> {
       _barcode = "";
       _productFound = false;
     });
+  }
+
+  void _resetBarcodeDetectionState() {
+    _barcodeCooldownTimer?.cancel();
+    _isBarcodeCooldownActive = false;
+    _isLookingUpBarcode = false;
+    _barcodeLookupRequestId++;
+    _barcodeScannerSession++;
   }
 
   void _onSheetHandleDragUpdate(DragUpdateDetails details) {
@@ -319,7 +329,7 @@ class _ProductScanRouteState extends State<ProductScanRoute> {
                       )
                     else
                       BarcodeScannerPane(
-                        key: const ValueKey('barcode-pane'),
+                        key: ValueKey('barcode-pane-$_barcodeScannerSession'),
                         onDetect: onDetect,
                         enableDetection: !hasProduct,
                       ),
@@ -468,6 +478,7 @@ class _ProductScanRouteState extends State<ProductScanRoute> {
                                     onDismiss: _dismissActiveProductSheet,
                                     postAddCallback: () {
                                       _expiryScanController.stopScanning();
+                                      _resetBarcodeDetectionState();
                                       setState(() {
                                         _product = null;
                                         _barcode = "";
