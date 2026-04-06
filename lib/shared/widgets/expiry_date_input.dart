@@ -1,91 +1,178 @@
 import 'dart:developer' as developer;
 
 import 'package:flutter/material.dart';
+import 'package:inoventory_ui/expiry_scan/controllers/expiry_scan_controller.dart';
 import 'package:inoventory_ui/shared/widgets/container_with_box_decoration.dart';
 import 'package:intl/intl.dart';
 
 class ExpiryDateEntry extends StatefulWidget {
+  final String label;
   final String? initialDate;
-  final void Function(String date)? onDateSet;
+  final void Function(String? date)? onDateSet;
+  final VoidCallback? onScanRequested;
+  final bool isScanSupported;
+  final bool isScanning;
+  final bool isTargeted;
+  final String? applyToAllHint;
+  final ExpiryScanStatus status;
 
-  const ExpiryDateEntry({Key? key, this.initialDate, this.onDateSet})
-      : super(key: key);
+  const ExpiryDateEntry({
+    super.key,
+    this.label = 'Expiry Date (Optional)',
+    this.initialDate,
+    this.onDateSet,
+    this.onScanRequested,
+    this.isScanSupported = false,
+    this.isScanning = false,
+    this.isTargeted = false,
+    this.applyToAllHint,
+    this.status = ExpiryScanStatus.idle,
+  });
 
   @override
   State<ExpiryDateEntry> createState() => _ExpiryDateEntryState();
 }
 
 class _ExpiryDateEntryState extends State<ExpiryDateEntry> {
-  TextEditingController dateInput = TextEditingController();
-
-  //text editing controller for text field
+  late final TextEditingController _dateInput;
 
   @override
   void initState() {
-    dateInput.text =
-        widget.initialDate ?? ""; //set the initial value of text field
     super.initState();
+    _dateInput = TextEditingController(text: widget.initialDate ?? '');
+  }
+
+  @override
+  void didUpdateWidget(covariant ExpiryDateEntry oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final String nextValue = widget.initialDate ?? '';
+    if (nextValue != _dateInput.text) {
+      _dateInput.text = nextValue;
+    }
+  }
+
+  Future<void> _pickDate() async {
+    final DateTime now = DateTime.now();
+    final DateTime initialDate = DateTime.tryParse(_dateInput.text) ?? now;
+    final DateTime? pickedDate = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2101),
+    );
+
+    if (pickedDate == null) {
+      developer.log('Date is not selected');
+      return;
+    }
+
+    final String formattedDate = DateFormat('yyyy-MM-dd').format(pickedDate);
+    widget.onDateSet?.call(formattedDate);
+    setState(() {
+      _dateInput.text = formattedDate;
+    });
+  }
+
+  Color _borderColor(BuildContext context) {
+    switch (widget.status) {
+      case ExpiryScanStatus.success:
+        return Colors.green;
+      case ExpiryScanStatus.warning:
+        return Colors.amber;
+      case ExpiryScanStatus.scanning:
+      case ExpiryScanStatus.textDetected:
+        return Theme.of(context).colorScheme.primary;
+      case ExpiryScanStatus.idle:
+        return Theme.of(context).dividerColor;
+    }
+  }
+
+  Color _backgroundColor(BuildContext context) {
+    switch (widget.status) {
+      case ExpiryScanStatus.success:
+        return Colors.green.withValues(alpha: 0.08);
+      case ExpiryScanStatus.warning:
+        return Colors.amber.withValues(alpha: 0.1);
+      case ExpiryScanStatus.scanning:
+      case ExpiryScanStatus.textDetected:
+        return Theme.of(context).colorScheme.primary.withValues(alpha: 0.05);
+      case ExpiryScanStatus.idle:
+        return Theme.of(context).colorScheme.surface;
+    }
+  }
+
+  @override
+  void dispose() {
+    _dateInput.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        dateInput.text != ""
-            ? IconButton(
-                onPressed: () {
-                  setState(() {
-                    dateInput.text = "";
-                    widget.onDateSet?.call("");
-                  });
-                },
-                icon: const Icon(Icons.clear_outlined))
-            : const SizedBox.shrink(),
-        Expanded(
-          child: ContainerWithBoxDecoration(
-              boxColor: Theme.of(context).colorScheme.background,
-              externalPadding: 5,
-              internalPadding: 0,
-              child: Container(
-                  padding: const EdgeInsets.all(12),
-                  height: 80,
-                  child: Center(
-                      child: TextField(
-                    controller: dateInput,
-                    //editing controller of this TextField
-                    decoration: const InputDecoration(
-                      icon: Icon(Icons.calendar_today),
-                      labelText: "Expiry Date (Optional)",
-                    ),
-                    readOnly: true,
-                    //set it true, so that user will not able to edit text
-                    onTap: () async {
-                      DateTime? pickedDate = await showDatePicker(
-                        context: context,
-                        initialDate: DateTime.now(),
-                        firstDate: DateTime(2000),
-                        //DateTime.now() - not to allow to choose before today.
-                        lastDate: DateTime(2101),
-                      );
+    final bool hasDate = _dateInput.text.isNotEmpty;
 
-                      if (pickedDate != null) {
-                        String formattedDate =
-                            DateFormat('yyyy-MM-dd').format(pickedDate);
-                        //you can implement different kind of Date Format here according to your requirement
-                        if (widget.onDateSet != null) {
-                          widget.onDateSet!(formattedDate);
-                        }
-                        setState(() {
-                          dateInput.text =
-                              formattedDate; //set output date to TextField value.
-                        });
-                      } else {
-                        developer.log("Date is not selected");
-                      }
-                    },
-                  )))),
-        )
-      ],
+    return ContainerWithBoxDecoration(
+      boxColor: Colors.transparent,
+      externalPadding: 5,
+      internalPadding: 0,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 220),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: _backgroundColor(context),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: _borderColor(context),
+            width: widget.isTargeted ? 2.2 : 1.2,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TextField(
+              controller: _dateInput,
+              readOnly: true,
+              onTap: _pickDate,
+              decoration: InputDecoration(
+                icon: const Icon(Icons.calendar_today),
+                labelText: widget.label,
+                helperText: widget.isScanning
+                    ? 'Point the camera at the printed expiry date'
+                    : widget.applyToAllHint,
+                suffixIconConstraints: const BoxConstraints(minWidth: 112),
+                suffixIcon: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (widget.isScanSupported)
+                      IconButton(
+                        tooltip: 'Scan Expiry',
+                        onPressed: widget.onScanRequested,
+                        icon: Icon(
+                          widget.isScanning
+                              ? Icons.center_focus_strong
+                              : Icons.document_scanner_outlined,
+                          color: widget.isScanning
+                              ? Theme.of(context).colorScheme.primary
+                              : null,
+                        ),
+                      ),
+                    if (hasDate)
+                      IconButton(
+                        onPressed: () {
+                          widget.onDateSet?.call(null);
+                          setState(() {
+                            _dateInput.text = '';
+                          });
+                        },
+                        icon: const Icon(Icons.clear_outlined),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

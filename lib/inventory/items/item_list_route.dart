@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:inoventory_ui/config/injection.dart';
 import 'package:inoventory_ui/ean/barcode_scan_route.dart';
+import 'package:inoventory_ui/expiry_scan/expiry_date_picker.dart';
 import 'package:inoventory_ui/inventory/items/models/item.dart';
 import 'package:inoventory_ui/inventory/items/item_search_route.dart';
 import 'package:inoventory_ui/inventory/items/item_service.dart';
@@ -22,13 +23,15 @@ import 'package:inoventory_ui/shared/widgets/expandable_floating_action_button.d
 import 'package:inoventory_ui/shared/widgets/inoventory_appbar.dart';
 
 enum SORTING { dateAdded, name, expirationDate, quantity }
+
 enum _RemovalAction { checkout, open }
 
 class ItemListRoute extends StatefulWidget {
   final InventoryList list;
   final bool focusExpiring;
 
-  const ItemListRoute({super.key, required this.list, this.focusExpiring = false});
+  const ItemListRoute(
+      {super.key, required this.list, this.focusExpiring = false});
 
   @override
   State<ItemListRoute> createState() => _ItemListRouteState();
@@ -39,7 +42,7 @@ class _ItemListRouteState extends State<ItemListRoute> {
   final ItemService _itemService = getIt<ItemService>();
   final InventoryListService _listService = getIt<InventoryListService>();
   final _storage = const FlutterSecureStorage();
-  
+
   late Future<List<ItemWrapper>> futureItems;
   late List<ItemWrapper> itemWrappers;
   late Future<Map<String, List<ItemWrapper>>> futureGroupedItems;
@@ -67,7 +70,8 @@ class _ItemListRouteState extends State<ItemListRoute> {
 
   Future<List<ItemWrapper>> _loadItems() async {
     final wrappers = await _itemService.all(widget.list.id);
-    final count = wrappers.fold<int>(0, (sum, wrapper) => sum + wrapper.items.length);
+    final count =
+        wrappers.fold<int>(0, (sum, wrapper) => sum + wrapper.items.length);
     if (mounted && _itemCount != count) {
       setState(() {
         _itemCount = count;
@@ -79,7 +83,8 @@ class _ItemListRouteState extends State<ItemListRoute> {
   }
 
   Future<Map<String, List<ItemWrapper>>> _loadGroupedItems() async {
-    final groupedItems = await _itemService.allGroupedBy(widget.list.id, "category");
+    final groupedItems =
+        await _itemService.allGroupedBy(widget.list.id, "category");
     final count = groupedItems.values
         .expand((wrappers) => wrappers)
         .fold<int>(0, (sum, wrapper) => sum + wrapper.items.length);
@@ -94,7 +99,8 @@ class _ItemListRouteState extends State<ItemListRoute> {
   }
 
   Future<void> _loadFocusPreference() async {
-    final value = await _storage.read(key: "list_${widget.list.id}_focusExpiring");
+    final value =
+        await _storage.read(key: "list_${widget.list.id}_focusExpiring");
     if (!mounted) return;
     final storedFocus = value == 'true';
     // Merge: show focus expiring if the user has it stored OR this session was
@@ -110,7 +116,8 @@ class _ItemListRouteState extends State<ItemListRoute> {
   }
 
   Future<void> _saveFocusPreference(bool value) async {
-    await _storage.write(key: "list_${widget.list.id}_focusExpiring", value: value.toString());
+    await _storage.write(
+        key: "list_${widget.list.id}_focusExpiring", value: value.toString());
   }
 
   void _toggleFocusExpiring() {
@@ -154,19 +161,23 @@ class _ItemListRouteState extends State<ItemListRoute> {
         if (action == _RemovalAction.checkout) {
           await _itemService.delete(widget.list.id, item.id);
           scaffoldMessenger.showSnackBar(
-            _getSnackBar("Successfully deleted item", Colors.green, withUndo: true),
+            _getSnackBar("Successfully deleted item", Colors.green,
+                withUndo: true),
           );
         } else {
-          final expirationDate = item.expirationDate ?? await _pickRequiredExpirationDate();
+          final expirationDate =
+              item.expirationDate ?? await _pickRequiredExpirationDate();
           if (expirationDate == null) {
             return false;
           }
-          await _itemService.open(widget.list.id, item.id, expirationDate: expirationDate);
+          await _itemService.open(widget.list.id, item.id,
+              expirationDate: expirationDate);
           await _showMovedToOpenListSnackBar(scaffoldMessenger);
         }
       }
     } catch (e) {
-      scaffoldMessenger.showSnackBar(_getSnackBar("Error deleting item: ", Colors.red));
+      scaffoldMessenger
+          .showSnackBar(_getSnackBar("Error deleting item: ", Colors.red));
 
       developer.log("Could not delete item", error: e);
 
@@ -190,7 +201,10 @@ class _ItemListRouteState extends State<ItemListRoute> {
               children: [
                 Text(
                   "What do you want to do with ${itemWrapper.displayName}?",
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleMedium
+                      ?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 16),
                 FilledButton.icon(
@@ -200,7 +214,8 @@ class _ItemListRouteState extends State<ItemListRoute> {
                 ),
                 const SizedBox(height: 8),
                 OutlinedButton.icon(
-                  onPressed: () => Navigator.pop(context, _RemovalAction.checkout),
+                  onPressed: () =>
+                      Navigator.pop(context, _RemovalAction.checkout),
                   icon: const Icon(Icons.check_circle_outline),
                   label: const Text("Check Out"),
                 ),
@@ -218,17 +233,13 @@ class _ItemListRouteState extends State<ItemListRoute> {
   }
 
   Future<String?> _pickRequiredExpirationDate() async {
-    final pickedDate = await showDatePicker(
-      context: context,
+    return pickExpiryDate(
+      context,
       initialDate: DateTime.now(),
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2100),
       helpText: "Select an expiration date for the opened item",
+      scanTitle: 'Scan Expiry Date',
+      confirmationMode: ExpiryDateConfirmationMode.requireConfirmation,
     );
-    if (pickedDate == null) {
-      return null;
-    }
-    return "${pickedDate.year.toString().padLeft(4, '0')}-${pickedDate.month.toString().padLeft(2, '0')}-${pickedDate.day.toString().padLeft(2, '0')}";
   }
 
   SnackBar _getSnackBar(String text, Color color, {bool withUndo = false}) {
@@ -299,7 +310,8 @@ class _ItemListRouteState extends State<ItemListRoute> {
 
   Future<void> onEanDeleteScan(String ean) async {
     futureItems.then((value) async {
-      ItemWrapper? result = value.firstWhereOrNull((element) => element.productEan == ean);
+      ItemWrapper? result =
+          value.firstWhereOrNull((element) => element.productEan == ean);
       if (result == null) {
         return;
       }
@@ -325,7 +337,9 @@ class _ItemListRouteState extends State<ItemListRoute> {
                       onPressed: () => Navigator.pop(context, e),
                       child: Text(e.expirationDate ?? "<no expiration date>"),
                     )),
-                OutlinedButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel"))
+                OutlinedButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text("Cancel"))
               ]));
         });
   }
@@ -342,13 +356,26 @@ class _ItemListRouteState extends State<ItemListRoute> {
     });
   }
 
-  void transitToProductSearchPage(BuildContext context, String? initialSearchValue) {
-    Navigator.push(context, MaterialPageRoute(builder: (context) => ProductSearchRoute(productService: _productService, initialSearchValue: initialSearchValue, list: widget.list)))
-        .whenComplete(_refreshList);
+  void transitToProductSearchPage(
+      BuildContext context, String? initialSearchValue) {
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) => ProductSearchRoute(
+                productService: _productService,
+                initialSearchValue: initialSearchValue,
+                list: widget.list))).whenComplete(_refreshList);
   }
 
-  void transitToItemSearchPage(BuildContext context, String? initialSearchValue) {
-    Navigator.push(context, MaterialPageRoute(builder: (context) => ItemSearchRoute(itemWrappers: itemWrappers, onDelete: onDelete, onEdit: onEdit)));
+  void transitToItemSearchPage(
+      BuildContext context, String? initialSearchValue) {
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) => ItemSearchRoute(
+                itemWrappers: itemWrappers,
+                onDelete: onDelete,
+                onEdit: onEdit)));
   }
 
   @override
@@ -359,11 +386,14 @@ class _ItemListRouteState extends State<ItemListRoute> {
           onRefresh: _refreshList,
           backgroundColor: Theme.of(context).colorScheme.secondary,
           child: groupByCategory
-              ? ItemsFutureBuilder<Map<String, List<ItemWrapper>>>(futureGroupedItems, _refreshList, (context, snapshot) {
+              ? ItemsFutureBuilder<Map<String, List<ItemWrapper>>>(
+                  futureGroupedItems, _refreshList, (context, snapshot) {
                   final groupedItems = snapshot.data!;
-                  return GroupedInventoryListWidget(groupedItems, onDelete, onEdit);
+                  return GroupedInventoryListWidget(
+                      groupedItems, onDelete, onEdit);
                 })
-              : ItemsFutureBuilder<List<ItemWrapper>>(futureItems, _refreshList, (context, snapshot) {
+              : ItemsFutureBuilder<List<ItemWrapper>>(futureItems, _refreshList,
+                  (context, snapshot) {
                   sortItemsByKey(snapshot, _sortByKey, _isAsc);
                   itemWrappers = snapshot.data!;
                   return InventoryListWidget(
@@ -413,13 +443,21 @@ class _ItemListRouteState extends State<ItemListRoute> {
           icon: const Icon(Icons.camera_alt, color: Colors.black),
           onPressed: () async {
             final navigator = Navigator.of(context);
-            navigator.push(MaterialPageRoute(builder: (context) => ProductScanRoute(inventoryList: widget.list))).whenComplete((_refreshList));
+            navigator
+                .push(MaterialPageRoute(
+                    builder: (context) =>
+                        ProductScanRoute(inventoryList: widget.list)))
+                .whenComplete((_refreshList));
           }),
       ActionButton(
           icon: const Icon(Icons.search_off_outlined, color: Colors.black),
           onPressed: () async {
             final navigator = Navigator.of(context);
-            navigator.push(MaterialPageRoute(builder: (context) => ProductSearchRoute(productService: _productService, list: widget.list))).whenComplete((_refreshList));
+            navigator
+                .push(MaterialPageRoute(
+                    builder: (context) => ProductSearchRoute(
+                        productService: _productService, list: widget.list)))
+                .whenComplete((_refreshList));
           }),
       // delete scan button
       ActionButton(
@@ -437,27 +475,34 @@ class _ItemListRouteState extends State<ItemListRoute> {
     ]);
   }
 
-  void sortItemsByKey(AsyncSnapshot<List<ItemWrapper>> snapshot, SORTING sortByKey, bool isAsc) {
+  void sortItemsByKey(AsyncSnapshot<List<ItemWrapper>> snapshot,
+      SORTING sortByKey, bool isAsc) {
     int direction = isAsc ? 1 : -1;
     snapshot.data?.sort((wrapper1, wrapper2) {
       switch (sortByKey) {
         case SORTING.dateAdded:
-          final id1 = wrapper1.items.map((e) => e.id).reduce((a, b) => a < b ? a : b);
-          final id2 = wrapper2.items.map((e) => e.id).reduce((a, b) => a < b ? a : b);
+          final id1 =
+              wrapper1.items.map((e) => e.id).reduce((a, b) => a < b ? a : b);
+          final id2 =
+              wrapper2.items.map((e) => e.id).reduce((a, b) => a < b ? a : b);
           return direction * id1.compareTo(id2);
         case SORTING.name:
-          return direction * wrapper1.displayName.compareTo(wrapper2.displayName);
+          return direction *
+              wrapper1.displayName.compareTo(wrapper2.displayName);
         case SORTING.expirationDate:
           return compareByExpirationDates(wrapper1, wrapper2, isAsc);
         case SORTING.quantity:
-          return direction * wrapper1.items.length.compareTo(wrapper2.items.length);
+          return direction *
+              wrapper1.items.length.compareTo(wrapper2.items.length);
       }
     });
   }
 
-  int compareByExpirationDates(ItemWrapper wrapper1, ItemWrapper wrapper2, bool isAsc) {
+  int compareByExpirationDates(
+      ItemWrapper wrapper1, ItemWrapper wrapper2, bool isAsc) {
     int direction = isAsc ? 1 : -1;
-    DateTime defaultDate = isAsc ? DateTime.parse("9999-01-01") : DateTime.parse("1970-01-01");
+    DateTime defaultDate =
+        isAsc ? DateTime.parse("9999-01-01") : DateTime.parse("1970-01-01");
     List<DateTime> firstDates = wrapper1.items //
         .where((item) => item.expirationDate != null) //
         .map((item) => DateTime.parse(item.expirationDate!)) //

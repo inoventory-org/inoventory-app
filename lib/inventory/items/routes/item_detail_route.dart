@@ -1,6 +1,7 @@
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:inoventory_ui/config/injection.dart';
+import 'package:inoventory_ui/expiry_scan/expiry_date_picker.dart';
 import 'package:inoventory_ui/inventory/items/item_service.dart';
 import 'package:inoventory_ui/inventory/items/item_list_route.dart';
 import 'package:inoventory_ui/inventory/items/models/item.dart';
@@ -70,7 +71,7 @@ class _ItemDetailRouteState extends State<ItemDetailRoute> {
   Future<void> _openItem(Item item) async {
     String? expirationDate = item.expirationDate;
     if (expirationDate == null) {
-      expirationDate = await _pickDate(
+      expirationDate = await _pickExpiryDate(
         initialDate: DateTime.now(),
         helpText: "Select an expiration date for the opened item",
       );
@@ -90,6 +91,9 @@ class _ItemDetailRouteState extends State<ItemDetailRoute> {
       }
       await _showMovedToOpenListSnackBar();
       if (items.isEmpty) {
+        if (!mounted) {
+          return;
+        }
         Navigator.of(context).pop(true);
       }
     } catch (e) {
@@ -107,7 +111,7 @@ class _ItemDetailRouteState extends State<ItemDetailRoute> {
     final initialDate = item.expirationDate != null
         ? DateTime.tryParse(item.expirationDate!)
         : null;
-    final newDateOptions = await _pickDate(initialDate: initialDate);
+    final newDateOptions = await _pickExpiryDate(initialDate: initialDate);
     if (newDateOptions != null) {
       if (newDateOptions != item.expirationDate) {
         try {
@@ -150,7 +154,7 @@ class _ItemDetailRouteState extends State<ItemDetailRoute> {
   Future<void> _editOpenedDate(Item item) async {
     final initialDate =
         item.openedAt != null ? DateTime.tryParse(item.openedAt!) : null;
-    final newOpenedDate = await _pickDate(
+    final newOpenedDate = await _pickCalendarDate(
       initialDate: initialDate ?? DateTime.now(),
       helpText: "Select the date this item was opened",
     );
@@ -192,7 +196,23 @@ class _ItemDetailRouteState extends State<ItemDetailRoute> {
     }
   }
 
-  Future<String?> _pickDate({DateTime? initialDate, String? helpText}) async {
+  Future<String?> _pickExpiryDate({
+    DateTime? initialDate,
+    String? helpText,
+  }) async {
+    return pickExpiryDate(
+      context,
+      initialDate: initialDate,
+      helpText: helpText,
+      scanTitle: 'Scan Expiry Date',
+      confirmationMode: ExpiryDateConfirmationMode.requireConfirmation,
+    );
+  }
+
+  Future<String?> _pickCalendarDate({
+    DateTime? initialDate,
+    String? helpText,
+  }) async {
     final pickedDate = await showDatePicker(
       context: context,
       initialDate: initialDate ?? DateTime.now(),
@@ -467,7 +487,8 @@ class _ItemDetailRouteState extends State<ItemDetailRoute> {
               style: OutlinedButton.styleFrom(
                 backgroundColor:
                     Theme.of(context).colorScheme.secondaryContainer,
-                textStyle: TextStyle(color: Theme.of(context).colorScheme.onSecondaryContainer),
+                textStyle: TextStyle(
+                    color: Theme.of(context).colorScheme.onSecondaryContainer),
                 minimumSize: const Size.fromHeight(40),
               ),
             ),
@@ -510,8 +531,9 @@ class _ItemDetailRouteState extends State<ItemDetailRoute> {
               itemBuilder: (context, index) {
                 final item = items[index];
                 final isExpired = widget.list.isOpenList && _isExpired(item);
-                final openItemForegroundColor =
-                    isExpired ? colorScheme.onErrorContainer : colorScheme.onSurface ;
+                final openItemForegroundColor = isExpired
+                    ? colorScheme.onErrorContainer
+                    : colorScheme.onSurface;
                 return Card(
                   margin:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -566,7 +588,6 @@ class _ItemDetailRouteState extends State<ItemDetailRoute> {
                                 onTap: () => _editExpirationDate(item),
                               ),
                       ),
-
                       if (widget.list.isOpenList) const Divider(height: 1),
                       if (widget.list.isOpenList)
                         SizedBox(

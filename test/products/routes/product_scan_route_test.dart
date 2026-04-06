@@ -40,9 +40,9 @@ void main() {
       child: ProductScanRoute(inventoryList: dummyList),
     ));
 
-    // Get the scanner widget and manually trigger the scan event since camera won't run headless
+    // Get the pane widget and manually trigger the scan event since camera won't run headless
     final scannerWidget =
-        tester.widget<BarcodeScannerWidget>(find.byType(BarcodeScannerWidget));
+        tester.widget<BarcodeScannerPane>(find.byType(BarcodeScannerPane));
 
     // Create fake barcode capture
     final fakeBarcode = Barcode(rawValue: '123');
@@ -65,7 +65,7 @@ void main() {
     ));
 
     final scannerWidget =
-        tester.widget<BarcodeScannerWidget>(find.byType(BarcodeScannerWidget));
+        tester.widget<BarcodeScannerPane>(find.byType(BarcodeScannerPane));
 
     final fakeBarcode = Barcode(rawValue: '404');
     final fakeCapture = BarcodeCapture(barcodes: [fakeBarcode]);

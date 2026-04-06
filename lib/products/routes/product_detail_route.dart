@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:inoventory_ui/config/injection.dart';
+import 'package:inoventory_ui/expiry_scan/controllers/expiry_scan_controller.dart';
 import 'package:inoventory_ui/inventory/lists/models/inventory_list.dart';
 import 'package:inoventory_ui/products/product_model.dart';
 import 'package:inoventory_ui/inventory/items/widgets/add_item.dart';
@@ -128,6 +129,10 @@ class _ProductDetailRouteState extends State<ProductDetailRoute> {
             return AddItemView(
               _product,
               widget.list,
+              expiryScanController: ExpiryScanController(),
+              onDismiss: () {
+                Navigator.of(context).pop();
+              },
               postAddCallback: () {
                 Navigator.of(context).pop();
                 Navigator.of(context).pop();
