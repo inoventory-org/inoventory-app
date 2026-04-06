@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:inoventory_ui/expiry_scan/controllers/expiry_scan_controller.dart';
+import 'package:inoventory_ui/expiry_scan/models/expiry_scan_candidate.dart';
 import 'package:inoventory_ui/expiry_scan/routes/expiry_date_scan_route.dart';
 
 enum ExpiryDateConfirmationMode { autoApply, requireConfirmation }
@@ -93,6 +94,25 @@ Future<String?> pickExpiryDate(
   );
 }
 
+Future<ExpiryDateScanConfirmationResult?> confirmScannedExpiryDate(
+  BuildContext context, {
+  required List<ExpiryScanCandidate> candidates,
+  required String initialDate,
+  String? title,
+  String? helpText,
+}) {
+  return showModalBottomSheet<ExpiryDateScanConfirmationResult>(
+    context: context,
+    isScrollControlled: true,
+    builder: (context) => _ExpiryScanConfirmationSheet(
+      title: title,
+      helpText: helpText,
+      candidates: candidates,
+      initialDate: initialDate,
+    ),
+  );
+}
+
 Future<String?> _pickDateManually(
   BuildContext context, {
   DateTime? initialDate,
@@ -113,3 +133,169 @@ Future<String?> _pickDateManually(
 }
 
 enum _ExpiryDatePickerAction { scan, manual }
+
+enum ExpiryScanConfirmationAction { confirm, retry, cancel }
+
+class ExpiryDateScanConfirmationResult {
+  final ExpiryScanConfirmationAction action;
+  final String? isoDate;
+
+  const ExpiryDateScanConfirmationResult({
+    required this.action,
+    this.isoDate,
+  });
+}
+
+class _ExpiryScanConfirmationSheet extends StatefulWidget {
+  final String? title;
+  final String? helpText;
+  final List<ExpiryScanCandidate> candidates;
+  final String initialDate;
+
+  const _ExpiryScanConfirmationSheet({
+    this.title,
+    this.helpText,
+    required this.candidates,
+    required this.initialDate,
+  });
+
+  @override
+  State<_ExpiryScanConfirmationSheet> createState() =>
+      _ExpiryScanConfirmationSheetState();
+}
+
+class _ExpiryScanConfirmationSheetState
+    extends State<_ExpiryScanConfirmationSheet> {
+  late final TextEditingController _dateController;
+
+  @override
+  void initState() {
+    super.initState();
+    _dateController = TextEditingController(text: widget.initialDate);
+  }
+
+  Future<void> _pickDateFromCalendar() async {
+    final String? pickedDate = await _pickDateManually(
+      context,
+      initialDate: DateTime.tryParse(_dateController.text),
+      helpText: widget.helpText,
+    );
+    if (!mounted || pickedDate == null) {
+      return;
+    }
+    setState(() {
+      _dateController.text = pickedDate;
+    });
+  }
+
+  @override
+  void dispose() {
+    _dateController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    return SafeArea(
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(
+          16,
+          16,
+          16,
+          16 + MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              widget.title ?? 'Confirm expiry date',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              widget.helpText ?? 'Check the scanned date before applying it.',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 14),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: widget.candidates
+                  .map(
+                    (candidate) => ActionChip(
+                      label: Text(
+                          '${candidate.isoDate} · ${candidate.scoreLabel}'),
+                      onPressed: () {
+                        setState(() {
+                          _dateController.text = candidate.isoDate;
+                        });
+                      },
+                    ),
+                  )
+                  .toList(),
+            ),
+            const SizedBox(height: 14),
+            TextField(
+              controller: _dateController,
+              readOnly: true,
+              onTap: _pickDateFromCalendar,
+              decoration: InputDecoration(
+                labelText: 'Selected expiry date',
+                prefixIcon: const Icon(Icons.calendar_today),
+                suffixIcon: IconButton(
+                  tooltip: 'Pick manually',
+                  onPressed: _pickDateFromCalendar,
+                  icon: const Icon(Icons.edit_calendar_outlined),
+                ),
+              ),
+            ),
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => Navigator.of(context).pop(
+                      const ExpiryDateScanConfirmationResult(
+                        action: ExpiryScanConfirmationAction.retry,
+                      ),
+                    ),
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Retry'),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: FilledButton.icon(
+                    onPressed: () => Navigator.of(context).pop(
+                      ExpiryDateScanConfirmationResult(
+                        action: ExpiryScanConfirmationAction.confirm,
+                        isoDate: _dateController.text,
+                      ),
+                    ),
+                    icon: const Icon(Icons.check_circle_outline),
+                    label: const Text('Confirm'),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(
+                const ExpiryDateScanConfirmationResult(
+                  action: ExpiryScanConfirmationAction.cancel,
+                ),
+              ),
+              child: const Text('Cancel'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

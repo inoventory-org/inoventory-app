@@ -18,8 +18,7 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 class ProductScanRoute extends StatefulWidget {
   final InventoryList inventoryList;
 
-  const ProductScanRoute({Key? key, required this.inventoryList})
-      : super(key: key);
+  const ProductScanRoute({super.key, required this.inventoryList});
 
   @override
   State<ProductScanRoute> createState() => _ProductScanRouteState();
@@ -33,6 +32,10 @@ class _ProductScanRouteState extends State<ProductScanRoute> {
   bool _productFound = true;
   Product? _product;
   bool _isHandlingUnknownBarcode = false;
+  bool _showModeFlash = false;
+  String _modeFlashLabel = 'Barcode Scan';
+  Timer? _modeFlashTimer;
+  bool _lastExpiryModeActive = false;
 
   SnackBar _getSnackBar(String text, Color color) {
     TextStyle style = const TextStyle(color: Colors.white);
@@ -125,6 +128,35 @@ class _ProductScanRouteState extends State<ProductScanRoute> {
     });
   }
 
+  @override
+  void initState() {
+    super.initState();
+    _lastExpiryModeActive = _expiryScanController.isActive;
+    _expiryScanController.addListener(_handleExpiryModeChange);
+  }
+
+  void _handleExpiryModeChange() {
+    final bool isExpiryModeActive = _expiryScanController.isActive;
+    if (_lastExpiryModeActive == isExpiryModeActive || !mounted) {
+      return;
+    }
+    _lastExpiryModeActive = isExpiryModeActive;
+    _modeFlashTimer?.cancel();
+    setState(() {
+      _showModeFlash = true;
+      _modeFlashLabel =
+          isExpiryModeActive ? 'Expiry Scan Mode' : 'Barcode Scan Mode';
+    });
+    _modeFlashTimer = Timer(const Duration(milliseconds: 1200), () {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _showModeFlash = false;
+      });
+    });
+  }
+
   dynamic onDetect(BarcodeCapture barcodeCapture) async {
     if (_isHandlingUnknownBarcode) {
       return;
@@ -174,6 +206,14 @@ class _ProductScanRouteState extends State<ProductScanRoute> {
   }
 
   @override
+  void dispose() {
+    _modeFlashTimer?.cancel();
+    _expiryScanController.removeListener(_handleExpiryModeChange);
+    _expiryScanController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: AnimatedBuilder(
@@ -187,20 +227,127 @@ class _ProductScanRouteState extends State<ProductScanRoute> {
             children: [
               Expanded(
                 flex: hasProduct ? 3 : 4,
-                child: _isHandlingUnknownBarcode
-                    ? Container(color: Colors.black)
-                    : hasProduct && _expiryScanController.isActive
-                        ? ExpiryScanCameraPane(
-                            key: ValueKey(
-                                'expiry-${_expiryScanController.targetRowIndex}-${_expiryScanController.eventId}'),
-                            controller: _expiryScanController,
-                            parser: _expiryDateParser,
-                          )
-                        : BarcodeScannerPane(
-                            key: const ValueKey('barcode-pane'),
-                            onDetect: onDetect,
-                            enableDetection: !hasProduct,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    if (_isHandlingUnknownBarcode)
+                      Container(
+                        key: const ValueKey('unknown-product-pane'),
+                        color: Colors.black,
+                      )
+                    else if (hasProduct &&
+                        _expiryScanController.awaitingConfirmation)
+                      _ExpiryConfirmationPane(
+                        key: ValueKey(
+                          'expiry-confirm-${_expiryScanController.targetRowIndex ?? 0}',
+                        ),
+                      )
+                    else if (hasProduct && _expiryScanController.isActive)
+                      ExpiryScanCameraPane(
+                        key: ValueKey(
+                          'expiry-${_expiryScanController.targetRowIndex ?? 0}',
+                        ),
+                        controller: _expiryScanController,
+                        parser: _expiryDateParser,
+                      )
+                    else
+                      BarcodeScannerPane(
+                        key: const ValueKey('barcode-pane'),
+                        onDetect: onDetect,
+                        enableDetection: !hasProduct,
+                      ),
+                    IgnorePointer(
+                      child: AnimatedOpacity(
+                        duration: const Duration(milliseconds: 180),
+                        opacity: _showModeFlash ? 1 : 0,
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Theme.of(context)
+                                    .colorScheme
+                                    .secondary
+                                    .withValues(alpha: 0.22),
+                                Colors.transparent,
+                              ],
+                            ),
                           ),
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      top: 18,
+                      left: 18,
+                      right: 18,
+                      child: AnimatedSlide(
+                        duration: const Duration(milliseconds: 220),
+                        offset: _showModeFlash
+                            ? Offset.zero
+                            : const Offset(0, -0.3),
+                        child: AnimatedOpacity(
+                          duration: const Duration(milliseconds: 180),
+                          opacity: _showModeFlash ? 1 : 0,
+                          child: Center(
+                            child: DecoratedBox(
+                              decoration: BoxDecoration(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .surface
+                                    .withValues(alpha: 0.94),
+                                borderRadius: BorderRadius.circular(999),
+                                border: Border.all(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .secondary
+                                      .withValues(alpha: 0.7),
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.14),
+                                    blurRadius: 14,
+                                    offset: const Offset(0, 8),
+                                  ),
+                                ],
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 10,
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      _expiryScanController.isActive
+                                          ? Icons.document_scanner_outlined
+                                          : Icons.qr_code_scanner,
+                                      size: 18,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .secondary,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      _modeFlashLabel,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .labelLarge
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
               _barcode != ""
                   ? Expanded(
@@ -281,10 +428,120 @@ class _ProductScanRouteState extends State<ProductScanRoute> {
       ),
     );
   }
+}
+
+class _ExpiryConfirmationPane extends StatelessWidget {
+  const _ExpiryConfirmationPane({super.key});
 
   @override
-  void dispose() {
-    _expiryScanController.dispose();
-    super.dispose();
+  Widget build(BuildContext context) {
+    final ColorScheme colorScheme = Theme.of(context).colorScheme;
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            colorScheme.secondaryContainer.withValues(alpha: 0.92),
+            colorScheme.surfaceContainerHighest.withValues(alpha: 0.98),
+          ],
+        ),
+      ),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          Positioned.fill(
+            child: CustomPaint(
+              painter: _ConfirmationPanePatternPainter(
+                color: colorScheme.secondary.withValues(alpha: 0.08),
+              ),
+            ),
+          ),
+          Center(
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 24),
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+              decoration: BoxDecoration(
+                color: colorScheme.surface.withValues(alpha: 0.9),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(
+                  color: colorScheme.secondary.withValues(alpha: 0.45),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.08),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 54,
+                    height: 54,
+                    decoration: BoxDecoration(
+                      color: colorScheme.secondary.withValues(alpha: 0.14),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.document_scanner_outlined,
+                      color: colorScheme.secondary,
+                      size: 28,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  Text(
+                    'Expiry Captured',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Review the detected date in the popup, or retry to scan again.',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ConfirmationPanePatternPainter extends CustomPainter {
+  final Color color;
+
+  const _ConfirmationPanePatternPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final Paint paint = Paint()
+      ..color = color
+      ..strokeWidth = 1.2
+      ..style = PaintingStyle.stroke;
+
+    const double gap = 26;
+    for (double x = -size.height; x < size.width; x += gap) {
+      canvas.drawLine(
+        Offset(x, 0),
+        Offset(x + size.height, size.height),
+        paint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _ConfirmationPanePatternPainter oldDelegate) {
+    return oldDelegate.color != color;
   }
 }

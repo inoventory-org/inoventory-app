@@ -120,22 +120,22 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Review the captured expiry date before applying it.'),
-        findsOneWidget);
-    expect(find.text('Confirm Date'), findsOneWidget);
-    expect(find.text('Retry Capture'), findsOneWidget);
+    expect(find.text('Confirm expiry date'), findsOneWidget);
+    expect(find.text('Retry'), findsOneWidget);
+    expect(find.text('Confirm'), findsOneWidget);
 
-    await tester.tap(find.byIcon(Icons.bookmark));
+    await tester.tap(find.text('Cancel'));
     await tester.pumpAndSettle();
 
-    final List<dynamic> firstSaveCalls =
-        verify(() => mockItemService.add(captureAny())).captured;
-    expect(firstSaveCalls, hasLength(1));
-    expect((firstSaveCalls.single as Item).expirationDate, isNull);
-    clearInteractions(mockItemService);
+    verifyNever(() => mockItemService.add(any()));
 
-    await tester.ensureVisible(find.text('Confirm Date'));
-    await tester.tap(find.text('Confirm Date'));
+    controller.startScanning(targetRowIndex: 0);
+    controller.publishDetection(
+      _testDetection('2026-07-02', DateTime(2026, 7, 2)),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Confirm'));
     await tester.pumpAndSettle();
 
     await tester.tap(find.byIcon(Icons.bookmark));
@@ -148,6 +148,32 @@ void main() {
       (secondSaveCalls.single as Item).expirationDate,
       '2026-07-02',
     );
+  });
+
+  testWidgets('AddItemView shows popup confirmation for scanned expiry',
+      (tester) async {
+    final ExpiryScanController controller = ExpiryScanController();
+
+    await tester.pumpWidget(TestWrapper(
+      child: AddItemView(
+        dummyProduct,
+        dummyList,
+        expiryScanController: controller,
+      ),
+    ));
+    await tester.pumpAndSettle();
+
+    controller.startScanning(targetRowIndex: 0);
+    controller.publishDetection(
+      _testDetection('2026-07-02', DateTime(2026, 7, 2)),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Confirm expiry date'), findsOneWidget);
+    expect(find.text('Choose the scanned date before applying it.'),
+        findsOneWidget);
+    expect(find.text('Retry'), findsOneWidget);
+    expect(find.text('Confirm'), findsOneWidget);
   });
 
   testWidgets('AddItemView applies confirmed first scanned expiry to all rows',
@@ -179,8 +205,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.ensureVisible(find.text('Confirm Date'));
-    await tester.tap(find.text('Confirm Date'));
+    await tester.tap(find.text('Confirm'));
     await tester.pumpAndSettle();
     await tester.tap(find.byIcon(Icons.bookmark));
     await tester.pumpAndSettle();
@@ -215,11 +240,10 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(controller.awaitingConfirmation, isFalse);
+    expect(controller.awaitingConfirmation, isTrue);
     expect(controller.isScanning, isFalse);
 
-    await tester.ensureVisible(find.text('Retry Capture'));
-    await tester.tap(find.text('Retry Capture'));
+    await tester.tap(find.text('Retry'));
     await tester.pumpAndSettle();
 
     expect(controller.isScanning, isTrue);

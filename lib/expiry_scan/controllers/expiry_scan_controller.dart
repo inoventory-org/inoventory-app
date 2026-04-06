@@ -73,7 +73,7 @@ class ExpiryScanController extends ChangeNotifier {
       _status = ExpiryScanStatus.warning;
     } else if (detection.bestCandidate != null) {
       _isScanning = false;
-      _awaitingConfirmation = false;
+      _awaitingConfirmation = true;
       _status = ExpiryScanStatus.success;
     } else {
       _status = detection.detectedTextInTarget

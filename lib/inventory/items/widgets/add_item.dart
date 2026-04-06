@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:inoventory_ui/config/injection.dart';
 import 'package:inoventory_ui/expiry_scan/controllers/expiry_scan_controller.dart';
+import 'package:inoventory_ui/expiry_scan/expiry_date_picker.dart';
 import 'package:inoventory_ui/expiry_scan/models/expiry_scan_candidate.dart';
 import 'package:inoventory_ui/inventory/items/item_service.dart';
 import 'package:inoventory_ui/inventory/items/models/item.dart';
@@ -46,14 +47,12 @@ class AddItemView extends StatefulWidget {
 class _AddItemViewState extends State<AddItemView> {
   final ItemService _itemService = getIt<ItemService>();
   final List<Item> _items = <Item>[];
-  final Map<int, List<ExpiryScanCandidate>> _rowSuggestions =
-      <int, List<ExpiryScanCandidate>>{};
-  final Map<int, String> _pendingScannedDates = <int, String>{};
   final ScrollController _scrollController = ScrollController();
   int _amount = 0;
   int _lastProcessedDetectionEvent = 0;
   double _dragDismissDistance = 0;
   bool _showScanExpiryPulse = false;
+  bool _isShowingScanConfirmation = false;
   Timer? _scanExpiryPulseTimer;
   Timer? _scanExpiryPulseStopTimer;
 
@@ -97,7 +96,7 @@ class _AddItemViewState extends State<AddItemView> {
     });
   }
 
-  void _handleExpiryScanUpdates() {
+  Future<void> _handleExpiryScanUpdates() async {
     if (!mounted) {
       return;
     }
@@ -111,7 +110,9 @@ class _AddItemViewState extends State<AddItemView> {
 
     final detection = widget.expiryScanController.latestDetection;
     final int? targetRowIndex = widget.expiryScanController.targetRowIndex;
-    if (targetRowIndex == null || detection.candidates.isEmpty) {
+    if (targetRowIndex == null ||
+        detection.candidates.isEmpty ||
+        _isShowingScanConfirmation) {
       setState(() {});
       return;
     }
@@ -122,14 +123,36 @@ class _AddItemViewState extends State<AddItemView> {
       return;
     }
 
-    setState(() {
-      _rowSuggestions
-        ..clear()
-        ..[targetRowIndex] = detection.candidates;
-      _pendingScannedDates
-        ..clear()
-        ..[targetRowIndex] = candidate.isoDate;
-    });
+    _isShowingScanConfirmation = true;
+    final ExpiryDateScanConfirmationResult? result =
+        await confirmScannedExpiryDate(
+      context,
+      candidates: detection.candidates,
+      initialDate: candidate.isoDate,
+      title: 'Confirm expiry date',
+      helpText: targetRowIndex == 0 && _items.length > 1
+          ? 'Choose the scanned date to apply to all items, or retry the capture.'
+          : 'Choose the scanned date before applying it.',
+    );
+    _isShowingScanConfirmation = false;
+    if (!mounted || result == null) {
+      widget.expiryScanController.cancelSuggestions();
+      return;
+    }
+
+    switch (result.action) {
+      case ExpiryScanConfirmationAction.confirm:
+        final String? isoDate = result.isoDate;
+        if (isoDate != null && isoDate.isNotEmpty) {
+          _applyScannedDate(isoDate, rowIndex: targetRowIndex);
+        } else {
+          widget.expiryScanController.cancelSuggestions();
+        }
+      case ExpiryScanConfirmationAction.retry:
+        _onExpiryScanRequested(targetRowIndex);
+      case ExpiryScanConfirmationAction.cancel:
+        widget.expiryScanController.cancelSuggestions();
+    }
   }
 
   void _applyScannedDate(String isoDate, {required int rowIndex}) {
@@ -141,44 +164,12 @@ class _AddItemViewState extends State<AddItemView> {
       } else if (rowIndex >= 0 && rowIndex < _items.length) {
         _items[rowIndex].expirationDate = isoDate;
       }
-      _clearPendingScanState();
+      widget.expiryScanController.markSuccess();
     });
-
-    widget.expiryScanController.markSuccess();
     HapticFeedback.lightImpact();
   }
 
-  void _clearPendingScanState() {
-    _rowSuggestions.clear();
-    _pendingScannedDates.clear();
-  }
-
-  void _onExpirySuggestionSelected(
-    int rowIndex,
-    ExpiryScanCandidate candidate,
-  ) {
-    setState(() {
-      _pendingScannedDates[rowIndex] = candidate.isoDate;
-    });
-  }
-
-  void _onConfirmPendingScannedDate(int rowIndex) {
-    final String? pendingDate = _pendingScannedDates[rowIndex];
-    if (pendingDate == null || pendingDate.isEmpty) {
-      return;
-    }
-    _applyScannedDate(pendingDate, rowIndex: rowIndex);
-  }
-
-  void _dismissPendingSuggestions() {
-    setState(_clearPendingScanState);
-    widget.expiryScanController.cancelSuggestions();
-  }
-
   void _onExpiryScanRequested(int rowIndex) {
-    setState(() {
-      _clearPendingScanState();
-    });
     widget.expiryScanController.startScanning(targetRowIndex: rowIndex);
   }
 
@@ -489,37 +480,21 @@ class _AddItemViewState extends State<AddItemView> {
                   ? 'Expiry Date ${entry.$1 + 1}'
                   : 'Expiry Date (Optional)',
               initialDate: entry.$2.expirationDate,
-              pendingScannedDate: _pendingScannedDates[entry.$1],
               isScanSupported: widget.expiryScanController.isSupported,
               isScanning: widget.expiryScanController.isScanning &&
                   widget.expiryScanController.targetRowIndex == entry.$1,
               isTargeted:
                   widget.expiryScanController.targetRowIndex == entry.$1,
-              suggestions: _rowSuggestions[entry.$1] ?? const [],
               applyToAllHint: entry.$1 == 0 && _items.length > 1
                   ? 'Applies to all ${_items.length} items by default'
                   : null,
               onScanRequested: () => _onExpiryScanRequested(entry.$1),
-              onRetryScan: () => _onExpiryScanRequested(entry.$1),
-              onConfirmPendingDate: () =>
-                  _onConfirmPendingScannedDate(entry.$1),
-              onSuggestionSelected: (candidate) =>
-                  _onExpirySuggestionSelected(entry.$1, candidate),
-              onDismissSuggestions: _dismissPendingSuggestions,
               status: widget.expiryScanController.targetRowIndex == entry.$1
                   ? widget.expiryScanController.status
                   : ExpiryScanStatus.idle,
               onDateSet: (date) {
                 setState(() {
-                  if (_pendingScannedDates.containsKey(entry.$1)) {
-                    if (date == null || date.isEmpty) {
-                      _pendingScannedDates.remove(entry.$1);
-                    } else {
-                      _pendingScannedDates[entry.$1] = date;
-                    }
-                  } else {
-                    entry.$2.expirationDate = date;
-                  }
+                  entry.$2.expirationDate = date;
                 });
               },
             ),
