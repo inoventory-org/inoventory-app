@@ -42,6 +42,8 @@ class _ProductScanRouteState extends State<ProductScanRoute> {
   bool _isLookingUpBarcode = false;
   bool _isBarcodeCooldownActive = false;
   int _barcodeLookupRequestId = 0;
+  double _sheetDragDismissDistance = 0;
+  bool _isDraggingSheet = false;
 
   SnackBar _getSnackBar(String text, Color color) {
     TextStyle style = const TextStyle(color: Colors.white);
@@ -160,6 +162,45 @@ class _ProductScanRouteState extends State<ProductScanRoute> {
       setState(() {
         _showModeFlash = false;
       });
+    });
+  }
+
+  void _dismissActiveProductSheet() {
+    _expiryScanController.stopScanning();
+    setState(() {
+      _sheetDragDismissDistance = 0;
+      _isDraggingSheet = false;
+      _product = null;
+      _barcode = "";
+      _productFound = false;
+    });
+  }
+
+  void _onSheetHandleDragUpdate(DragUpdateDetails details) {
+    if (details.delta.dy <= 0) {
+      setState(() {
+        _sheetDragDismissDistance = 0;
+        _isDraggingSheet = false;
+      });
+      return;
+    }
+    setState(() {
+      _isDraggingSheet = true;
+      _sheetDragDismissDistance =
+          (_sheetDragDismissDistance + details.delta.dy).clamp(0.0, 220.0);
+    });
+  }
+
+  void _onSheetHandleDragEnd(DragEndDetails details) {
+    final bool shouldDismiss = _sheetDragDismissDistance > 36 ||
+        (details.primaryVelocity != null && details.primaryVelocity! > 500);
+    if (shouldDismiss) {
+      _dismissActiveProductSheet();
+      return;
+    }
+    setState(() {
+      _sheetDragDismissDistance = 0;
+      _isDraggingSheet = false;
     });
   }
 
@@ -379,22 +420,42 @@ class _ProductScanRouteState extends State<ProductScanRoute> {
                   ? Expanded(
                       flex: 7,
                       child: _productFound
-                          ? Column(
+                          ? AnimatedContainer(
+                              duration: _isDraggingSheet
+                                  ? Duration.zero
+                                  : const Duration(milliseconds: 220),
+                              curve: Curves.easeOutCubic,
+                              transform: Matrix4.translationValues(
+                                0,
+                                _sheetDragDismissDistance,
+                                0,
+                              ),
+                              child: Opacity(
+                                opacity: (1 - (_sheetDragDismissDistance / 260))
+                                    .clamp(0.72, 1.0),
+                                child: Column(
                               children: [
-                                Padding(
-                                  padding:
-                                      const EdgeInsets.only(top: 4, bottom: 6),
-                                  child: Center(
-                                    child: Container(
-                                      width: 46,
-                                      height: 5,
-                                      decoration: BoxDecoration(
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onSurface
-                                            .withValues(alpha: 0.22),
-                                        borderRadius:
-                                            BorderRadius.circular(999),
+                                GestureDetector(
+                                  behavior: HitTestBehavior.opaque,
+                                  onTap: _dismissActiveProductSheet,
+                                  onVerticalDragUpdate:
+                                      _onSheetHandleDragUpdate,
+                                  onVerticalDragEnd: _onSheetHandleDragEnd,
+                                  child: Padding(
+                                    padding:
+                                        const EdgeInsets.only(top: 4, bottom: 6),
+                                    child: Center(
+                                      child: Container(
+                                        width: 46,
+                                        height: 5,
+                                        decoration: BoxDecoration(
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onSurface
+                                              .withValues(alpha: 0.22),
+                                          borderRadius:
+                                              BorderRadius.circular(999),
+                                        ),
                                       ),
                                     ),
                                   ),
@@ -404,14 +465,7 @@ class _ProductScanRouteState extends State<ProductScanRoute> {
                                     _product!,
                                     widget.inventoryList,
                                     expiryScanController: _expiryScanController,
-                                    onDismiss: () {
-                                      _expiryScanController.stopScanning();
-                                      setState(() {
-                                        _product = null;
-                                        _barcode = "";
-                                        _productFound = false;
-                                      });
-                                    },
+                                    onDismiss: _dismissActiveProductSheet,
                                     postAddCallback: () {
                                       _expiryScanController.stopScanning();
                                       setState(() {
@@ -444,6 +498,8 @@ class _ProductScanRouteState extends State<ProductScanRoute> {
                                   ),
                                 ),
                               ],
+                                ),
+                              ),
                             )
                           : const SizedBox.shrink(),
                     )
