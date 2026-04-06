@@ -34,6 +34,7 @@ class _ExpiryScanCameraPaneState extends State<ExpiryScanCameraPane> {
   double _maxZoomLevel = 1;
   double _zoomLevel = 1;
   Offset? _focusIndicatorPosition;
+  bool _showReadabilityHint = false;
   DateTime _lastAnalyzedAt = DateTime.fromMillisecondsSinceEpoch(0);
 
   double get _usableMinZoomLevel =>
@@ -146,6 +147,13 @@ class _ExpiryScanCameraPaneState extends State<ExpiryScanCameraPane> {
         blocks: blocks,
         targetBox: _targetBox,
       );
+      final bool shouldShowReadabilityHint =
+          detection.detectedTextInTarget && detection.bestCandidate == null;
+      if (mounted && shouldShowReadabilityHint != _showReadabilityHint) {
+        setState(() {
+          _showReadabilityHint = shouldShowReadabilityHint;
+        });
+      }
       widget.controller.updateTextPresence(detection.detectedTextInTarget);
       if (detection.bestCandidate != null) {
         widget.controller.publishDetection(detection);
@@ -240,11 +248,17 @@ class _ExpiryScanCameraPaneState extends State<ExpiryScanCameraPane> {
     int score(CameraDescription camera) {
       final String name = camera.name.toLowerCase();
       int value = 0;
+      if (name.contains('macro')) {
+        value -= 20;
+      }
+      if (name.contains('main') || name.contains('primary')) {
+        value -= 8;
+      }
       if (name.contains('wide') || name.contains('ultra')) {
         value += 10;
       }
-      if (name.contains('macro')) {
-        value += 4;
+      if (name.contains('tele')) {
+        value += 3;
       }
       if (name.contains('back')) {
         value -= 1;
@@ -292,6 +306,25 @@ class _ExpiryScanCameraPaneState extends State<ExpiryScanCameraPane> {
       setState(() {
         _focusIndicatorPosition = null;
       });
+    });
+  }
+
+  Future<void> _focusCenter() async {
+    final CameraController? cameraController = _cameraController;
+    if (cameraController == null || !cameraController.value.isInitialized) {
+      return;
+    }
+    await cameraController.setFocusMode(FocusMode.auto);
+    if (cameraController.value.focusPointSupported) {
+      await cameraController.setFocusPoint(const Offset(0.5, 0.5));
+    }
+    await HapticFeedback.selectionClick();
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _focusIndicatorPosition = null;
+      _showReadabilityHint = false;
     });
   }
 
@@ -383,8 +416,23 @@ class _ExpiryScanCameraPaneState extends State<ExpiryScanCameraPane> {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
+                            IconButton(
+                              onPressed: () => _setZoomLevel(_zoomLevel - 0.5),
+                              icon: const Icon(
+                                Icons.remove,
+                                size: 16,
+                                color: Colors.white,
+                              ),
+                              visualDensity: VisualDensity.compact,
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints.tightFor(
+                                width: 24,
+                                height: 24,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
                             SizedBox(
-                              width: 88,
+                              width: 76,
                               child: SliderTheme(
                                 data: SliderTheme.of(context).copyWith(
                                   trackHeight: 2,
@@ -408,6 +456,21 @@ class _ExpiryScanCameraPaneState extends State<ExpiryScanCameraPane> {
                                 ),
                               ),
                             ),
+                            const SizedBox(width: 4),
+                            IconButton(
+                              onPressed: () => _setZoomLevel(_zoomLevel + 0.5),
+                              icon: const Icon(
+                                Icons.add,
+                                size: 16,
+                                color: Colors.white,
+                              ),
+                              visualDensity: VisualDensity.compact,
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints.tightFor(
+                                width: 24,
+                                height: 24,
+                              ),
+                            ),
                             const SizedBox(width: 6),
                             Text(
                               '${_zoomLevel.toStringAsFixed(1)}x',
@@ -422,6 +485,56 @@ class _ExpiryScanCameraPaneState extends State<ExpiryScanCameraPane> {
                       ),
                     )
                   : const SizedBox.shrink(),
+            ),
+            Positioned(
+              left: 10,
+              right: 10,
+              bottom: 58,
+              child: IgnorePointer(
+                ignoring: !_showReadabilityHint,
+                child: AnimatedOpacity(
+                  duration: const Duration(milliseconds: 180),
+                  opacity: _showReadabilityHint ? 1 : 0,
+                  child: Align(
+                    alignment: Alignment.bottomLeft,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.62),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: const Padding(
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                        child: Text(
+                          'Move slightly back and zoom in for sharper focus',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              left: 10,
+              top: 10,
+              child: FilledButton.tonalIcon(
+                onPressed: _focusCenter,
+                style: FilledButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  minimumSize: const Size(0, 34),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  backgroundColor: Colors.black.withValues(alpha: 0.35),
+                  foregroundColor: Colors.white,
+                ),
+                icon: const Icon(Icons.center_focus_strong, size: 16),
+                label: const Text('Focus'),
+              ),
             ),
           ],
         );
