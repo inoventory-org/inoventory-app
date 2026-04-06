@@ -206,31 +206,71 @@ class _ProductScanRouteState extends State<ProductScanRoute> {
                   ? Expanded(
                       flex: 7,
                       child: _productFound
-                          ? AddItemView(
-                              _product!,
-                              widget.inventoryList,
-                              expiryScanController: _expiryScanController,
-                              postAddCallback: () {
-                                _expiryScanController.stopScanning();
-                                setState(() {
-                                  _product = null;
-                                  _barcode = "";
-                                  _productFound = false;
-                                });
-                              },
-                              onSuccess: (item) {
-                                final scaffoldMessenger =
-                                    ScaffoldMessenger.of(context);
-                                scaffoldMessenger.clearSnackBars();
-                                scaffoldMessenger.showSnackBar(_getSnackBar(
-                                    "Successfully added item", Colors.green));
-                              },
-                              onError: (item) {
-                                final scaffoldMessenger =
-                                    ScaffoldMessenger.of(context);
-                                scaffoldMessenger.showSnackBar(_getSnackBar(
-                                    "Failed to add item", Colors.red));
-                              },
+                          ? Column(
+                              children: [
+                                Padding(
+                                  padding:
+                                      const EdgeInsets.only(top: 4, bottom: 6),
+                                  child: Center(
+                                    child: Container(
+                                      width: 46,
+                                      height: 5,
+                                      decoration: BoxDecoration(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurface
+                                            .withValues(alpha: 0.22),
+                                        borderRadius:
+                                            BorderRadius.circular(999),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                Expanded(
+                                  child: AddItemView(
+                                    _product!,
+                                    widget.inventoryList,
+                                    expiryScanController: _expiryScanController,
+                                    onDismiss: () {
+                                      _expiryScanController.stopScanning();
+                                      setState(() {
+                                        _product = null;
+                                        _barcode = "";
+                                        _productFound = false;
+                                      });
+                                    },
+                                    postAddCallback: () {
+                                      _expiryScanController.stopScanning();
+                                      setState(() {
+                                        _product = null;
+                                        _barcode = "";
+                                        _productFound = false;
+                                      });
+                                    },
+                                    onSuccess: (item) {
+                                      final scaffoldMessenger =
+                                          ScaffoldMessenger.of(context);
+                                      scaffoldMessenger.clearSnackBars();
+                                      scaffoldMessenger.showSnackBar(
+                                        _getSnackBar(
+                                          "Successfully added item",
+                                          Colors.green,
+                                        ),
+                                      );
+                                    },
+                                    onError: (item) {
+                                      final scaffoldMessenger =
+                                          ScaffoldMessenger.of(context);
+                                      scaffoldMessenger.showSnackBar(
+                                        _getSnackBar(
+                                          "Failed to add item",
+                                          Colors.red,
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                              ],
                             )
                           : const SizedBox.shrink(),
                     )

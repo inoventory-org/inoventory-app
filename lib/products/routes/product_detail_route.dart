@@ -130,6 +130,9 @@ class _ProductDetailRouteState extends State<ProductDetailRoute> {
               _product,
               widget.list,
               expiryScanController: ExpiryScanController(),
+              onDismiss: () {
+                Navigator.of(context).pop();
+              },
               postAddCallback: () {
                 Navigator.of(context).pop();
                 Navigator.of(context).pop();
