@@ -135,7 +135,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Confirm'));
+    await tester.tap(find.textContaining('2026-07-02').first);
     await tester.pumpAndSettle();
 
     await tester.tap(find.byIcon(Icons.bookmark));
@@ -248,5 +248,31 @@ void main() {
 
     expect(controller.isScanning, isTrue);
     expect(controller.targetRowIndex, 0);
+  });
+
+  testWidgets('AddItemView can exit expiry scanning mode back to barcode',
+      (tester) async {
+    final ExpiryScanController controller = ExpiryScanController();
+
+    await tester.pumpWidget(TestWrapper(
+      child: AddItemView(
+        dummyProduct,
+        dummyList,
+        expiryScanController: controller,
+      ),
+    ));
+    await tester.pumpAndSettle();
+
+    controller.startScanning(targetRowIndex: 0);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Back to Barcode'), findsOneWidget);
+    expect(controller.isActive, isTrue);
+
+    await tester.tap(find.text('Back to Barcode'));
+    await tester.pumpAndSettle();
+
+    expect(controller.isActive, isFalse);
+    expect(controller.targetRowIndex, isNull);
   });
 }

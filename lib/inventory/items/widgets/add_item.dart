@@ -173,6 +173,10 @@ class _AddItemViewState extends State<AddItemView> {
     widget.expiryScanController.startScanning(targetRowIndex: rowIndex);
   }
 
+  void _exitExpiryScanningMode() {
+    widget.expiryScanController.stopScanning();
+  }
+
   void _dismissView() {
     widget.expiryScanController.stopScanning();
     widget.onDismiss?.call();
@@ -538,6 +542,17 @@ class _AddItemViewState extends State<AddItemView> {
                 ),
               ),
             if (widget.expiryScanController.isSupported) ...[
+              if (widget.expiryScanController.isActive) ...[
+                OutlinedButton.icon(
+                  onPressed: _exitExpiryScanningMode,
+                  icon: const Icon(Icons.qr_code_scanner),
+                  label: const Text('Back to Barcode'),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(48),
+                  ),
+                ),
+                const SizedBox(height: 10),
+              ],
               AnimatedOpacity(
                 duration: const Duration(milliseconds: 240),
                 opacity: _showScanExpiryPulse ? 0.55 : 1,

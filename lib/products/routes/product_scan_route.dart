@@ -25,6 +25,8 @@ class ProductScanRoute extends StatefulWidget {
 }
 
 class _ProductScanRouteState extends State<ProductScanRoute> {
+  static const Duration _barcodeSuccessCooldown = Duration(milliseconds: 900);
+
   final ProductService _productService = getIt<ProductService>();
   final ExpiryScanController _expiryScanController = ExpiryScanController();
   final ExpiryDateParser _expiryDateParser = ExpiryDateParser();
@@ -35,7 +37,11 @@ class _ProductScanRouteState extends State<ProductScanRoute> {
   bool _showModeFlash = false;
   String _modeFlashLabel = 'Barcode Scan';
   Timer? _modeFlashTimer;
+  Timer? _barcodeCooldownTimer;
   bool _lastExpiryModeActive = false;
+  bool _isLookingUpBarcode = false;
+  bool _isBarcodeCooldownActive = false;
+  int _barcodeLookupRequestId = 0;
 
   SnackBar _getSnackBar(String text, Color color) {
     TextStyle style = const TextStyle(color: Colors.white);
@@ -158,7 +164,9 @@ class _ProductScanRouteState extends State<ProductScanRoute> {
   }
 
   dynamic onDetect(BarcodeCapture barcodeCapture) async {
-    if (_isHandlingUnknownBarcode) {
+    if (_isHandlingUnknownBarcode ||
+        _isLookingUpBarcode ||
+        _isBarcodeCooldownActive) {
       return;
     }
     if (_product != null) {
@@ -178,15 +186,25 @@ class _ProductScanRouteState extends State<ProductScanRoute> {
         return;
       }
 
+      final int requestId = ++_barcodeLookupRequestId;
+      _isLookingUpBarcode = true;
       List<Product> products = [];
       try {
         products = await _productService.search(code,
             fresh: Globals.forceFetchProducts);
       } catch (e) {
+        _isLookingUpBarcode = false;
         onFailedToLookupBarcode(code);
         developer.log("An error occurred while looking up barcode $code",
             error: e);
+        return;
       }
+      _isLookingUpBarcode = false;
+
+      if (!mounted || requestId != _barcodeLookupRequestId || _product != null) {
+        return;
+      }
+
       setState(() {
         if (products.isNotEmpty) {
           _barcode = code;
@@ -198,6 +216,13 @@ class _ProductScanRouteState extends State<ProductScanRoute> {
           _productFound = false;
         }
       });
+      if (products.isNotEmpty) {
+        _barcodeCooldownTimer?.cancel();
+        _isBarcodeCooldownActive = true;
+        _barcodeCooldownTimer = Timer(_barcodeSuccessCooldown, () {
+          _isBarcodeCooldownActive = false;
+        });
+      }
       if (products.isEmpty && mounted) {
         unawaited(_promptToAddUnknownProduct(code));
       }
@@ -208,6 +233,7 @@ class _ProductScanRouteState extends State<ProductScanRoute> {
   @override
   void dispose() {
     _modeFlashTimer?.cancel();
+    _barcodeCooldownTimer?.cancel();
     _expiryScanController.removeListener(_handleExpiryModeChange);
     _expiryScanController.dispose();
     super.dispose();

@@ -232,9 +232,12 @@ class _ExpiryScanConfirmationSheetState
                       label: Text(
                           '${candidate.isoDate} · ${candidate.scoreLabel}'),
                       onPressed: () {
-                        setState(() {
-                          _dateController.text = candidate.isoDate;
-                        });
+                        Navigator.of(context).pop(
+                          ExpiryDateScanConfirmationResult(
+                            action: ExpiryScanConfirmationAction.confirm,
+                            isoDate: candidate.isoDate,
+                          ),
+                        );
                       },
                     ),
                   )
