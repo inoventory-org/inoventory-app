@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:developer' as developer;
 
 import 'package:flutter/material.dart';
@@ -47,10 +48,14 @@ class _AddItemViewState extends State<AddItemView> {
   final List<Item> _items = <Item>[];
   final Map<int, List<ExpiryScanCandidate>> _rowSuggestions =
       <int, List<ExpiryScanCandidate>>{};
+  final Map<int, String> _pendingScannedDates = <int, String>{};
   final ScrollController _scrollController = ScrollController();
   int _amount = 0;
   int _lastProcessedDetectionEvent = 0;
   double _dragDismissDistance = 0;
+  bool _showScanExpiryPulse = false;
+  Timer? _scanExpiryPulseTimer;
+  Timer? _scanExpiryPulseStopTimer;
 
   String? get _defaultOpenedAt => widget.list.isOpenList
       ? DateFormat('yyyy-MM-dd').format(DateTime.now())
@@ -68,6 +73,7 @@ class _AddItemViewState extends State<AddItemView> {
     ));
     _amount++;
     widget.expiryScanController.addListener(_handleExpiryScanUpdates);
+    _startScanExpiryPulse();
   }
 
   void _increaseAmount() {
@@ -110,22 +116,20 @@ class _AddItemViewState extends State<AddItemView> {
       return;
     }
 
-    if (detection.requiresConfirmation) {
-      setState(() {
-        _rowSuggestions
-          ..clear()
-          ..[targetRowIndex] = detection.candidates;
-      });
-      return;
-    }
-
     final ExpiryScanCandidate? candidate = detection.bestCandidate;
     if (candidate == null) {
       setState(() {});
       return;
     }
 
-    _applyScannedDate(candidate.isoDate, rowIndex: targetRowIndex);
+    setState(() {
+      _rowSuggestions
+        ..clear()
+        ..[targetRowIndex] = detection.candidates;
+      _pendingScannedDates
+        ..clear()
+        ..[targetRowIndex] = candidate.isoDate;
+    });
   }
 
   void _applyScannedDate(String isoDate, {required int rowIndex}) {
@@ -137,23 +141,43 @@ class _AddItemViewState extends State<AddItemView> {
       } else if (rowIndex >= 0 && rowIndex < _items.length) {
         _items[rowIndex].expirationDate = isoDate;
       }
-      _rowSuggestions.clear();
+      _clearPendingScanState();
     });
 
     widget.expiryScanController.markSuccess();
     HapticFeedback.lightImpact();
   }
 
+  void _clearPendingScanState() {
+    _rowSuggestions.clear();
+    _pendingScannedDates.clear();
+  }
+
   void _onExpirySuggestionSelected(
     int rowIndex,
     ExpiryScanCandidate candidate,
   ) {
-    _applyScannedDate(candidate.isoDate, rowIndex: rowIndex);
+    setState(() {
+      _pendingScannedDates[rowIndex] = candidate.isoDate;
+    });
+  }
+
+  void _onConfirmPendingScannedDate(int rowIndex) {
+    final String? pendingDate = _pendingScannedDates[rowIndex];
+    if (pendingDate == null || pendingDate.isEmpty) {
+      return;
+    }
+    _applyScannedDate(pendingDate, rowIndex: rowIndex);
+  }
+
+  void _dismissPendingSuggestions() {
+    setState(_clearPendingScanState);
+    widget.expiryScanController.cancelSuggestions();
   }
 
   void _onExpiryScanRequested(int rowIndex) {
     setState(() {
-      _rowSuggestions.clear();
+      _clearPendingScanState();
     });
     widget.expiryScanController.startScanning(targetRowIndex: rowIndex);
   }
@@ -161,6 +185,31 @@ class _AddItemViewState extends State<AddItemView> {
   void _dismissView() {
     widget.expiryScanController.stopScanning();
     widget.onDismiss?.call();
+  }
+
+  void _startScanExpiryPulse() {
+    if (!widget.expiryScanController.isSupported) {
+      return;
+    }
+    _showScanExpiryPulse = true;
+    _scanExpiryPulseTimer =
+        Timer.periodic(const Duration(milliseconds: 420), (_) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _showScanExpiryPulse = !_showScanExpiryPulse;
+      });
+    });
+    _scanExpiryPulseStopTimer = Timer(const Duration(seconds: 3), () {
+      _scanExpiryPulseTimer?.cancel();
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _showScanExpiryPulse = false;
+      });
+    });
   }
 
   void _onDismissDragUpdate(DragUpdateDetails details) {
@@ -230,13 +279,24 @@ class _AddItemViewState extends State<AddItemView> {
   void dispose() {
     widget.expiryScanController.removeListener(_handleExpiryScanUpdates);
     _scrollController.dispose();
+    _scanExpiryPulseTimer?.cancel();
+    _scanExpiryPulseStopTimer?.cancel();
     super.dispose();
   }
 
-  void _triggerTopExpiryScan() {
-    final int rowIndex = widget.expiryScanController.targetRowIndex ?? 0;
-    _onExpiryScanRequested(rowIndex);
+  int _targetRowForQuickScan() {
+    final int missingIndex = _items.indexWhere(
+      (item) => item.expirationDate == null || item.expirationDate!.isEmpty,
+    );
+    if (missingIndex != -1) {
+      return missingIndex;
+    }
+    return widget.expiryScanController.targetRowIndex ?? 0;
   }
+
+  bool get _hasMissingExpiryDates => _items.any(
+        (item) => item.expirationDate == null || item.expirationDate!.isEmpty,
+      );
 
   Widget _buildCompactProductHeader(BuildContext context) {
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
@@ -429,6 +489,7 @@ class _AddItemViewState extends State<AddItemView> {
                   ? 'Expiry Date ${entry.$1 + 1}'
                   : 'Expiry Date (Optional)',
               initialDate: entry.$2.expirationDate,
+              pendingScannedDate: _pendingScannedDates[entry.$1],
               isScanSupported: widget.expiryScanController.isSupported,
               isScanning: widget.expiryScanController.isScanning &&
                   widget.expiryScanController.targetRowIndex == entry.$1,
@@ -439,15 +500,27 @@ class _AddItemViewState extends State<AddItemView> {
                   ? 'Applies to all ${_items.length} items by default'
                   : null,
               onScanRequested: () => _onExpiryScanRequested(entry.$1),
+              onRetryScan: () => _onExpiryScanRequested(entry.$1),
+              onConfirmPendingDate: () =>
+                  _onConfirmPendingScannedDate(entry.$1),
               onSuggestionSelected: (candidate) =>
                   _onExpirySuggestionSelected(entry.$1, candidate),
-              onDismissSuggestions:
-                  widget.expiryScanController.cancelSuggestions,
+              onDismissSuggestions: _dismissPendingSuggestions,
               status: widget.expiryScanController.targetRowIndex == entry.$1
                   ? widget.expiryScanController.status
                   : ExpiryScanStatus.idle,
               onDateSet: (date) {
-                entry.$2.expirationDate = date;
+                setState(() {
+                  if (_pendingScannedDates.containsKey(entry.$1)) {
+                    if (date == null || date.isEmpty) {
+                      _pendingScannedDates.remove(entry.$1);
+                    } else {
+                      _pendingScannedDates[entry.$1] = date;
+                    }
+                  } else {
+                    entry.$2.expirationDate = date;
+                  }
+                });
               },
             ),
         ],
@@ -455,46 +528,85 @@ class _AddItemViewState extends State<AddItemView> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        titleSpacing: 8,
-        leadingWidth: 28,
-        leading: const SizedBox.shrink(),
-        title: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Expanded(
-              child: Text(
-                widget.product.name,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 17,
-                    ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
+  Widget _buildBottomActionBar(BuildContext context) {
+    final ColorScheme colorScheme = Theme.of(context).colorScheme;
+
+    return SafeArea(
+      top: false,
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+        decoration: BoxDecoration(
+          color: Theme.of(context).scaffoldBackgroundColor,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.06),
+              blurRadius: 14,
+              offset: const Offset(0, -3),
             ),
-            if (widget.expiryScanController.isSupported)
-              Align(
-                alignment: Alignment.center,
-                child: TextButton.icon(
-                  onPressed: _triggerTopExpiryScan,
-                  style: TextButton.styleFrom(
-                    visualDensity: VisualDensity.compact,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    minimumSize: const Size(0, 34),
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                  ),
-                  icon: const Icon(Icons.document_scanner_outlined, size: 16),
-                  label: const Text('Scan Exp'),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (widget.expiryScanController.isSupported &&
+                _hasMissingExpiryDates)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Text(
+                  'Next step: scan the expiry date',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: colorScheme.secondary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                  textAlign: TextAlign.center,
                 ),
               ),
+            if (widget.expiryScanController.isSupported) ...[
+              AnimatedOpacity(
+                duration: const Duration(milliseconds: 240),
+                opacity: _showScanExpiryPulse ? 0.55 : 1,
+                child: FilledButton.icon(
+                  onPressed: () =>
+                      _onExpiryScanRequested(_targetRowForQuickScan()),
+                  icon: Icon(
+                    widget.expiryScanController.isScanning
+                        ? Icons.center_focus_strong
+                        : Icons.document_scanner_outlined,
+                  ),
+                  label: Text(
+                    widget.expiryScanController.isScanning
+                        ? 'Scanning Expiry'
+                        : 'Scan Expiry',
+                  ),
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size.fromHeight(52),
+                    backgroundColor: colorScheme.secondary,
+                    foregroundColor: colorScheme.onSecondary,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+            ],
+            FilledButton.icon(
+              onPressed: onAddToListPressed,
+              icon: const Icon(Icons.bookmark),
+              label: const Text('Save'),
+              style: FilledButton.styleFrom(
+                minimumSize: const Size.fromHeight(52),
+                backgroundColor: colorScheme.primary,
+                foregroundColor: colorScheme.onPrimary,
+              ),
+            ),
           ],
         ),
       ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
       body: GestureDetector(
         behavior: HitTestBehavior.translucent,
         onVerticalDragUpdate: _onDismissDragUpdate,
@@ -505,7 +617,7 @@ class _AddItemViewState extends State<AddItemView> {
               child: SingleChildScrollView(
                 controller: _scrollController,
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 12, 12, 110),
+                  padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
@@ -517,11 +629,10 @@ class _AddItemViewState extends State<AddItemView> {
                 ),
               ),
             ),
+            _buildBottomActionBar(context),
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-          onPressed: onAddToListPressed, child: const Icon(Icons.bookmark)),
     );
   }
 }
