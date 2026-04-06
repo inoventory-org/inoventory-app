@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:inoventory_ui/expiry_scan/controllers/expiry_scan_controller.dart';
 import 'package:inoventory_ui/inventory/items/models/item.dart';
 import 'package:inoventory_ui/inventory/items/widgets/add_item.dart';
 import 'package:inoventory_ui/inventory/lists/models/inventory_list.dart';
@@ -21,15 +22,21 @@ void main() {
 
     dummyList = InventoryList(1, 'Test List');
     dummyProduct = Product('123', 'Milk', ean: '123', brands: 'Brand X');
-    
+
     registerFallbackValue(Item(0, 1, '123', 'Milk'));
   });
 
-  testWidgets('AddItemView increments amount and fires expected add calls', (tester) async {
-    when(() => mockItemService.add(any())).thenAnswer((_) async => Item(1, 1, '123', 'Milk'));
+  testWidgets('AddItemView increments amount and fires expected add calls',
+      (tester) async {
+    when(() => mockItemService.add(any()))
+        .thenAnswer((_) async => Item(1, 1, '123', 'Milk'));
 
     await tester.pumpWidget(TestWrapper(
-      child: AddItemView(dummyProduct, dummyList),
+      child: AddItemView(
+        dummyProduct,
+        dummyList,
+        expiryScanController: ExpiryScanController(),
+      ),
     ));
 
     await tester.pumpAndSettle();
@@ -54,11 +61,16 @@ void main() {
     verify(() => mockItemService.add(any())).called(2);
   });
 
-  testWidgets('AddItemView requires expiration date for opened items', (tester) async {
+  testWidgets('AddItemView requires expiration date for opened items',
+      (tester) async {
     final openList = InventoryList(2, 'Open', type: 'OPEN');
 
     await tester.pumpWidget(TestWrapper(
-      child: AddItemView(dummyProduct, openList),
+      child: AddItemView(
+        dummyProduct,
+        openList,
+        expiryScanController: ExpiryScanController(),
+      ),
     ));
     await tester.pumpAndSettle();
 
@@ -66,6 +78,7 @@ void main() {
     await tester.pumpAndSettle();
 
     verifyNever(() => mockItemService.add(any()));
-    expect(find.text('Please add an expiration date before opening an item.'), findsOneWidget);
+    expect(find.text('Please add an expiration date before opening an item.'),
+        findsOneWidget);
   });
 }

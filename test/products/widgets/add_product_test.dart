@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:inoventory_ui/expiry_scan/controllers/expiry_scan_controller.dart';
 import 'package:inoventory_ui/inventory/lists/models/inventory_list.dart';
 import 'package:inoventory_ui/products/routes/product_detail_route.dart';
 import 'package:inoventory_ui/products/widgets/add_product.dart';
 import 'package:inoventory_ui/products/product_model.dart';
 import 'package:inoventory_ui/inventory/items/widgets/add_item.dart';
-import 'package:inoventory_ui/products/product_upload_job_service.dart';
 import 'package:inoventory_ui/settings/off_settings_service.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -133,7 +133,11 @@ void main() {
     final list = InventoryList(1, 'Test List');
 
     await tester.pumpWidget(TestWrapper(
-      child: AddItemView(product, list),
+      child: AddItemView(
+        product,
+        list,
+        expiryScanController: ExpiryScanController(),
+      ),
     ));
 
     await tester.tap(find.text('123'));

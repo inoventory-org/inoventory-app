@@ -5,6 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:inoventory_ui/config/constants.dart';
 import 'package:inoventory_ui/config/injection.dart';
 import 'package:inoventory_ui/ean/scanner.dart';
+import 'package:inoventory_ui/expiry_scan/controllers/expiry_scan_controller.dart';
+import 'package:inoventory_ui/expiry_scan/expiry_date_parser.dart';
+import 'package:inoventory_ui/expiry_scan/widgets/expiry_scan_camera_pane.dart';
 import 'package:inoventory_ui/inventory/items/widgets/add_item.dart';
 import 'package:inoventory_ui/inventory/lists/models/inventory_list.dart';
 import 'package:inoventory_ui/products/product_model.dart';
@@ -24,6 +27,8 @@ class ProductScanRoute extends StatefulWidget {
 
 class _ProductScanRouteState extends State<ProductScanRoute> {
   final ProductService _productService = getIt<ProductService>();
+  final ExpiryScanController _expiryScanController = ExpiryScanController();
+  final ExpiryDateParser _expiryDateParser = ExpiryDateParser();
   String _barcode = "";
   bool _productFound = true;
   Product? _product;
@@ -124,6 +129,9 @@ class _ProductScanRouteState extends State<ProductScanRoute> {
     if (_isHandlingUnknownBarcode) {
       return;
     }
+    if (_product != null) {
+      return;
+    }
     final List<Barcode> barcodes = barcodeCapture.barcodes;
     if (barcodes.isEmpty) {
       debugPrint('Failed to scan Barcode');
@@ -168,42 +176,75 @@ class _ProductScanRouteState extends State<ProductScanRoute> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        body: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-      Expanded(
-        flex: 4,
-        child: _isHandlingUnknownBarcode
-            ? Container(color: Colors.black)
-            : BarcodeScannerWidget(onDetect: onDetect),
-      ),
-      _barcode != ""
-          ? Expanded(
-              flex: 6,
-              child: _productFound
-                  ? AddItemView(
-                      _product!,
-                      widget.inventoryList,
-                      postAddCallback: () {
-                        setState(() {
-                          _product = null;
-                          _barcode = "";
-                          _productFound = false;
-                        });
-                      },
-                      onSuccess: (item) {
-                        final scaffoldMessenger = ScaffoldMessenger.of(context);
-                        scaffoldMessenger.clearSnackBars();
-                        scaffoldMessenger.showSnackBar(_getSnackBar(
-                            "Successfully added item", Colors.green));
-                      },
-                      onError: (item) {
-                        final scaffoldMessenger = ScaffoldMessenger.of(context);
-                        scaffoldMessenger.showSnackBar(
-                            _getSnackBar("Failed to add item", Colors.red));
-                      },
+      body: AnimatedBuilder(
+        animation: _expiryScanController,
+        builder: (context, _) {
+          final bool hasProduct =
+              _barcode.isNotEmpty && _productFound && _product != null;
+
+          return Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Expanded(
+                flex: hasProduct ? 3 : 4,
+                child: _isHandlingUnknownBarcode
+                    ? Container(color: Colors.black)
+                    : hasProduct && _expiryScanController.isActive
+                        ? ExpiryScanCameraPane(
+                            key: ValueKey(
+                                'expiry-${_expiryScanController.targetRowIndex}-${_expiryScanController.eventId}'),
+                            controller: _expiryScanController,
+                            parser: _expiryDateParser,
+                          )
+                        : BarcodeScannerPane(
+                            key: const ValueKey('barcode-pane'),
+                            onDetect: onDetect,
+                            enableDetection: !hasProduct,
+                          ),
+              ),
+              _barcode != ""
+                  ? Expanded(
+                      flex: 7,
+                      child: _productFound
+                          ? AddItemView(
+                              _product!,
+                              widget.inventoryList,
+                              expiryScanController: _expiryScanController,
+                              postAddCallback: () {
+                                _expiryScanController.stopScanning();
+                                setState(() {
+                                  _product = null;
+                                  _barcode = "";
+                                  _productFound = false;
+                                });
+                              },
+                              onSuccess: (item) {
+                                final scaffoldMessenger =
+                                    ScaffoldMessenger.of(context);
+                                scaffoldMessenger.clearSnackBars();
+                                scaffoldMessenger.showSnackBar(_getSnackBar(
+                                    "Successfully added item", Colors.green));
+                              },
+                              onError: (item) {
+                                final scaffoldMessenger =
+                                    ScaffoldMessenger.of(context);
+                                scaffoldMessenger.showSnackBar(_getSnackBar(
+                                    "Failed to add item", Colors.red));
+                              },
+                            )
+                          : const SizedBox.shrink(),
                     )
                   : const SizedBox.shrink(),
-            )
-          : const SizedBox.shrink() // empty widget
-    ]));
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _expiryScanController.dispose();
+    super.dispose();
   }
 }

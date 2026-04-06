@@ -1,8 +1,11 @@
 import 'dart:developer' as developer;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:inoventory_ui/config/injection.dart';
+import 'package:inoventory_ui/expiry_scan/controllers/expiry_scan_controller.dart';
+import 'package:inoventory_ui/expiry_scan/models/expiry_scan_candidate.dart';
 import 'package:inoventory_ui/inventory/items/item_service.dart';
 import 'package:inoventory_ui/inventory/items/models/item.dart';
 import 'package:inoventory_ui/inventory/lists/models/inventory_list.dart';
@@ -25,9 +28,14 @@ class AddItemView extends StatefulWidget {
 
   // A function that is called after adding items to the list. Can be used for example to pop elements from the navigator to return to the caller
   final void Function()? postAddCallback;
+  final ExpiryScanController expiryScanController;
 
   const AddItemView(this.product, this.list,
-      {super.key, this.postAddCallback, this.onSuccess, this.onError});
+      {super.key,
+      required this.expiryScanController,
+      this.postAddCallback,
+      this.onSuccess,
+      this.onError});
 
   @override
   State<AddItemView> createState() => _AddItemViewState();
@@ -36,7 +44,10 @@ class AddItemView extends StatefulWidget {
 class _AddItemViewState extends State<AddItemView> {
   final ItemService _itemService = getIt<ItemService>();
   final List<Item> _items = <Item>[];
+  final Map<int, List<ExpiryScanCandidate>> _rowSuggestions =
+      <int, List<ExpiryScanCandidate>>{};
   int _amount = 0;
+  int _lastProcessedDetectionEvent = 0;
 
   String? get _defaultOpenedAt => widget.list.isOpenList
       ? DateFormat('yyyy-MM-dd').format(DateTime.now())
@@ -53,6 +64,7 @@ class _AddItemViewState extends State<AddItemView> {
       openedAt: _defaultOpenedAt,
     ));
     _amount++;
+    widget.expiryScanController.addListener(_handleExpiryScanUpdates);
   }
 
   void _increaseAmount() {
@@ -62,8 +74,7 @@ class _AddItemViewState extends State<AddItemView> {
 
       _items.add(Item(
           _amount, widget.list.id, widget.product.ean, widget.product.name,
-          expirationDate: lastExpiryDate,
-          openedAt: _defaultOpenedAt));
+          expirationDate: lastExpiryDate, openedAt: _defaultOpenedAt));
       _amount++;
     });
   }
@@ -77,9 +88,77 @@ class _AddItemViewState extends State<AddItemView> {
     });
   }
 
+  void _handleExpiryScanUpdates() {
+    if (!mounted) {
+      return;
+    }
+
+    final int eventId = widget.expiryScanController.eventId;
+    if (eventId == _lastProcessedDetectionEvent) {
+      setState(() {});
+      return;
+    }
+    _lastProcessedDetectionEvent = eventId;
+
+    final detection = widget.expiryScanController.latestDetection;
+    final int? targetRowIndex = widget.expiryScanController.targetRowIndex;
+    if (targetRowIndex == null || detection.candidates.isEmpty) {
+      setState(() {});
+      return;
+    }
+
+    if (detection.requiresConfirmation) {
+      setState(() {
+        _rowSuggestions
+          ..clear()
+          ..[targetRowIndex] = detection.candidates;
+      });
+      return;
+    }
+
+    final ExpiryScanCandidate? candidate = detection.bestCandidate;
+    if (candidate == null) {
+      setState(() {});
+      return;
+    }
+
+    _applyScannedDate(candidate.isoDate, rowIndex: targetRowIndex);
+  }
+
+  void _applyScannedDate(String isoDate, {required int rowIndex}) {
+    setState(() {
+      if (rowIndex == 0 && _items.length > 1) {
+        for (final Item item in _items) {
+          item.expirationDate = isoDate;
+        }
+      } else if (rowIndex >= 0 && rowIndex < _items.length) {
+        _items[rowIndex].expirationDate = isoDate;
+      }
+      _rowSuggestions.clear();
+    });
+
+    widget.expiryScanController.markSuccess();
+    HapticFeedback.lightImpact();
+  }
+
+  void _onExpirySuggestionSelected(
+    int rowIndex,
+    ExpiryScanCandidate candidate,
+  ) {
+    _applyScannedDate(candidate.isoDate, rowIndex: rowIndex);
+  }
+
+  void _onExpiryScanRequested(int rowIndex) {
+    setState(() {
+      _rowSuggestions.clear();
+    });
+    widget.expiryScanController.startScanning(targetRowIndex: rowIndex);
+  }
+
   Future<void> onAddToListPressed() async {
     if (widget.list.isOpenList &&
-        _items.any((item) => item.expirationDate == null)) {
+        _items.any((item) =>
+            item.expirationDate == null || item.expirationDate!.isEmpty)) {
       if (!mounted) {
         return;
       }
@@ -119,6 +198,12 @@ class _AddItemViewState extends State<AddItemView> {
   }
 
   @override
+  void dispose() {
+    widget.expiryScanController.removeListener(_handleExpiryScanUpdates);
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -147,11 +232,31 @@ class _AddItemViewState extends State<AddItemView> {
             ),
             AmountInput(
                 onIncrease: _increaseAmount, onDecrease: _decreaseAmount),
-            for (var item in _items)
+            for (var entry in _items.indexed)
               ExpiryDateEntry(
-                  initialDate: item.expirationDate,
+                  label: _items.length > 1
+                      ? 'Expiry Date ${entry.$1 + 1}'
+                      : 'Expiry Date (Optional)',
+                  initialDate: entry.$2.expirationDate,
+                  isScanSupported: widget.expiryScanController.isSupported,
+                  isScanning: widget.expiryScanController.isScanning &&
+                      widget.expiryScanController.targetRowIndex == entry.$1,
+                  isTargeted:
+                      widget.expiryScanController.targetRowIndex == entry.$1,
+                  suggestions: _rowSuggestions[entry.$1] ?? const [],
+                  applyToAllHint: entry.$1 == 0 && _items.length > 1
+                      ? 'Applies to all ${_items.length} items by default'
+                      : null,
+                  onScanRequested: () => _onExpiryScanRequested(entry.$1),
+                  onSuggestionSelected: (candidate) =>
+                      _onExpirySuggestionSelected(entry.$1, candidate),
+                  onDismissSuggestions:
+                      widget.expiryScanController.cancelSuggestions,
+                  status: widget.expiryScanController.targetRowIndex == entry.$1
+                      ? widget.expiryScanController.status
+                      : ExpiryScanStatus.idle,
                   onDateSet: (date) {
-                    item.expirationDate = date;
+                    entry.$2.expirationDate = date;
                   }),
           ]),
         ),
