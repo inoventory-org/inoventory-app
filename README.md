@@ -1,32 +1,59 @@
-# inoventory_ui
+# Inoventory - Flutter App
 
-inoventory UI
+The frontend application for Inoventory, built with Flutter.
 
-Running at: https://www.inoventory.railabouni.fra.ics.inovex.io/
+## ✨ Features
+- **Barcode Scanning**: Integrated barcode scanner for rapid product identification.
+- **Product Metadata**: Automatic details (images, ingredients, nutrition) via [Open Food Facts](https://world.openfoodfacts.org/).
+- **Inventory Tracking**: Manage items, quantities, and expiration dates.
+- **Push Notifications**: Automated alerts for expiring items (via FCM).
+- **Material 3 Design**: Modern, responsive UI with Material 3 principles.
+- **Multi-Platform**: Support for Android, iOS, and Web.
 
-## Secret Keys
-In order to be able to add products to open food facts, a password is needed. 
-It must be manually supplemented to the file `lib/config/secrets.dart`
-For now, the password needs to be manually retrieved from the [repository's CI/CD variables](https://gitlab.inovex.de/railabouni/inoventory-ui/-/settings/ci_cd) (provided you have access).
-The variable is called `OPEN_FOOD_FACTS_PASSWORD`
+## 🚀 Tech Stack
+- **Framework**: Flutter 3.6.2
+- **Persistence & Auth**: [Supabase Flutter](https://pub.dev/packages/supabase_flutter)
+- **Dependency Injection**: [GetIt](https://pub.dev/packages/get_it) & [Injectable](https://pub.dev/packages/injectable)
+- **Networking**: [Dio](https://pub.dev/packages/dio)
+- **Messaging**: [Firebase Messaging](https://pub.dev/packages/firebase_messaging)
+- **Scanner**: [Mobile Scanner](https://pub.dev/packages/mobile_scanner)
 
-## Web Version
+## 🛠 Setup & Development
 
-If running the web version, the run configuration must be edited so that the app starts at port 50000. 
+### 1. Secret Keys
+A password for Open Food Facts is required for product contributions.
+1. Create `lib/config/secrets.dart`.
+2. Retrieve the `OPEN_FOOD_FACTS_PASSWORD` from the project's CI/CD variables.
+3. Supplement the file with the credentials.
 
-This is done by editing the run configuration in Android Studio and adding the commandline argument next to ´additional run args´:
-´--web-port=50000´
+### 2. Environment Configuration
+Create a `.env` file in the project root:
+```properties
+SUPABASE_URL=your_supabase_url
+SUPABASE_ANON_KEY=your_supabase_anon_key
+```
 
+### 3. Code Generation
+This project uses code generation for DI and serialization.
+Run the build_runner:
+```bash
+# Continuous watch
+flutter packages pub run build_runner watch --delete-conflicting-outputs
 
-## Dependency Injection
-This projects uses [*GetIt*](https://pub.dev/packages/get_it) and [*Injectable*](https://pub.dev/packages/injectable) for Dependency Injection.
+# One-time build
+flutter packages pub run build_runner build --delete-conflicting-outputs
+```
 
-*GetIt* is a service locator. It is initialized in `config/injection.dart`. To access a registered service service call `getIt<MyService>()`.
+## 🌐 Running the Web Version
+The web version must start on port **50000** for proper local testing:
+```bash
+flutter run -d chrome --web-port=50000
+```
+Or configure your IDE (Android Studio / VS Code) to use `--web-port=50000`.
 
-*Injectable* is a code generator for GetIt. To register a service annotate it with `@Injectable` or `@Injectable(as: MyService)` for an interface implementation.
-
-For the code generation to run on file changes run
-`flutter packages pub run build_runner watch`
-or use
-`flutter packages pub run build_runner build`
-for manual code generation.
+## 🧪 Testing
+Run tests using:
+```bash
+flutter test
+```
+See `test/` for unit, widget, and integration tests.
