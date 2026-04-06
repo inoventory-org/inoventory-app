@@ -205,6 +205,7 @@ class _ItemDetailRouteState extends State<ItemDetailRoute> {
       initialDate: initialDate,
       helpText: helpText,
       scanTitle: 'Scan Expiry Date',
+      confirmationMode: ExpiryDateConfirmationMode.requireConfirmation,
     );
   }
 

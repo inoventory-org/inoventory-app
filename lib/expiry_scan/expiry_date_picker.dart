@@ -2,11 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:inoventory_ui/expiry_scan/controllers/expiry_scan_controller.dart';
 import 'package:inoventory_ui/expiry_scan/routes/expiry_date_scan_route.dart';
 
+enum ExpiryDateConfirmationMode { autoApply, requireConfirmation }
+
 Future<String?> pickExpiryDate(
   BuildContext context, {
   DateTime? initialDate,
   String? helpText,
   String? scanTitle,
+  ExpiryDateConfirmationMode confirmationMode =
+      ExpiryDateConfirmationMode.autoApply,
 }) async {
   final ExpiryScanController probe = ExpiryScanController();
   final bool isScanSupported = probe.isSupported;
@@ -83,6 +87,7 @@ Future<String?> pickExpiryDate(
         title: scanTitle,
         helpText: helpText,
         initialDate: initialDate,
+        confirmationMode: confirmationMode,
       ),
     ),
   );

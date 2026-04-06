@@ -238,6 +238,7 @@ class _ItemListRouteState extends State<ItemListRoute> {
       initialDate: DateTime.now(),
       helpText: "Select an expiration date for the opened item",
       scanTitle: 'Scan Expiry Date',
+      confirmationMode: ExpiryDateConfirmationMode.requireConfirmation,
     );
   }
 
